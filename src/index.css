@@ -1,0 +1,73 @@
+@import "tailwindcss";
+@import "tailwindcss/preflight.css" layer(base);
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+      /*background*/
+      --primary: #003366;
+      --secondary: #3366CC;
+      --graphite: #F5F7FA;
+      --green-accent: #2ECC71;
+
+      /*foreground*/
+      
+      --foreground: #0F0E0E;
+      --foreground-secondary: #003366;
+      
+      /*accent*/
+      --accent: #ffffff;
+
+      /*card*/
+      --card-foreground: #0F0E0E;
+      --card-foreground-secondary: #003366;
+
+      /*Desktop*/
+      --text-xl-title-desktop: 3.8rem;
+      --text-m-title-desktop: 2rem;
+      --text-sm-title-desktop: 1.875rem;
+      --text-xl-body-desktop: 1.5rem;
+      --text-m-body-desktop: 1.25rem;
+      --text-sm-body-desktop: 1.125rem;
+      --text-secondary-desktop: calc(1.5rem - 2px);
+      /*Mobile*/
+      --text-xl-title-mobile: 2.5rem;
+      --text-m-title-mobile: 2.18rem;
+      --text-sm-title-mobile: 1.75rem;
+      --text-xl-body-mobile: 1.25rem;
+      --text-m-body-mobile: 1.125rem;
+      --text-sm-body-mobile: 1rem;
+      --text-secondary-mobile: calc(1.25rem - 2px);
+}
+
+@theme inline {
+      --color-primary: var(--primary);
+      --color-secondary: var(--secondary);
+      --color-foreground: var(--foreground);
+      --color-foreground-secondary: var(--foreground-secondary);
+      --color-foreground-accent: var(--accent);
+      /**Desktop**/
+      --text-xl-title-desktop: var(--text-xl-title-desktop);
+      --text-m-title-desktop: var(--text-m-title-desktop);
+      --text-sm-title-desktop: var(--text-sm-title-desktop);
+      --text-xl-body-desktop: var(--text-xl-body-desktop);
+      --text-m-body-desktop: var(--text-m-body-desktop);
+      --text-sm-body-desktop: var(--text-sm-body-desktop);
+      --text-secondary-desktop: var(--text-secondary-desktop);
+      /**Mobile**/
+      --text-xl-title-mobile: var(--text-xl-title-mobile);
+      --text-m-title-mobile: var(--text-m-title-mobile);
+      --text-sm-title-mobile: var(--text-sm-title-mobile);
+      --text-xl-body-mobile: var(--text-xl-body-mobile);
+      --text-m-body-mobile: var(--text-m-body-mobile);
+      --text-sm-body-mobile: var(--text-sm-body-mobile);
+      --text-secondary-mobile: var(--text-secondary-mobile);
+}
+
+@layer base {
+      body {
+            margin: 0;
+            box-sizing: border-box;
+            font-family: Roboto, sans-serif;
+      }
+      
+}
