@@ -1,0 +1,24 @@
+Mỗi 1 tính năng sẽ tương đương 1 folder feature. Trong folder feature sẽ có các folder như components, hooks, types, api liên quan tới trang đó tách biệt hoàn toàn. Ai làm trang nào có tính năng nào thì sẽ tạo folder mới trong folder feature này.
+
+Ví dụ:
+Trang chat:
+B1: Tạo ChatPage.tsx trong folder page
+B2: Vào folder feature, tạo mới 1 folder khác ở trong như là chat-feature
+B3: Tạo folder components, hooks, types, api hoặc folder khác cần thiết cho tính năng.
+B4: Code vào đúng các folder đó, tránh đúng tới code người khác vì mình code tính năng trang web trong folder riêng của mình
+
+Cấu trúc:
+___features
+      ___feature-1
+            ___components
+            ___api
+            ___hooks
+            ___types
+            ___...
+      ___feature-2
+            ___components
+            ___api
+            ___hooks
+            ___types
+            ___...
+      .....
