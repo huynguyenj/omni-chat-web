@@ -6,6 +6,7 @@
       /*background*/
       --primary: #003366;
       --secondary: #3366CC;
+      --light-blue: #5B7C9D;
       --graphite: #F5F7FA;
       --green-accent: #2ECC71;
 
@@ -43,6 +44,7 @@
       --color-primary: var(--primary);
       --color-secondary: var(--secondary);
       --color-foreground: var(--foreground);
+      --color-foreground-light-blue: var(--light-blue);
       --color-foreground-secondary: var(--foreground-secondary);
       --color-foreground-accent: var(--accent);
       /**Desktop**/
