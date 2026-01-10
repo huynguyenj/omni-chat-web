@@ -12,10 +12,10 @@ export default function ChatLayout() {
         <ChatNavbar/>
       </div>
       <div className='flex'>
-        <div className='flex-1'>
+        <div className='flex-1 border-r border-gray-200 h-full'>
           <ResolveMessage/>
         </div>
-        <div className='flex-2'>
+        <div className='flex-3 border-r border-gray-200 h-full'>
           <MessagePart/>
         </div>
         <div className='flex-1'>
