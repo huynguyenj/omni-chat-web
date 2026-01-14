@@ -10,7 +10,8 @@
       --light-blue: #5B7C9D;
       --graphite: #F5F7FA;
       --green-accent: #2ECC71;
-
+      --green-hover: #27AE60;
+      --secondary-hover:#2952A3;
       /*foreground*/
       
       --foreground: #0F0E0E;
@@ -45,6 +46,9 @@
       --color-primary: var(--primary);
       --color-secondary: var(--secondary);
       --color-light-secondary: var(--light-secondary);
+      --color-green-accent: var(--green-accent);
+      --color-green-hover: var(--green-hover);
+      --color-secondary-hover: var(--secondary-hover);
       --color-foreground: var(--foreground);
       --color-foreground-light-blue: var(--light-blue);
       --color-foreground-secondary: var(--foreground-secondary);
