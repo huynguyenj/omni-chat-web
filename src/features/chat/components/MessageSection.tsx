@@ -3,6 +3,7 @@ import SelectionMessageContext from '../context/SelectionMessageProvider'
 import Avatar from '@/assets/avatar-sample.jpg'
 import ChatMessageBox from './ui/ChatMessageBox'
 import { FiSend } from 'react-icons/fi'
+import { signalrConnection } from '../config/signalr'
 type MessageType = {
   message: string
   sender: boolean
@@ -84,12 +85,20 @@ export default function MessageSection() {
         })
       }
       inputRef.current.value = ''
+      signalrConnection.invoke('send', messageContent)
       setMessages([...messages, messageContent])
     }
   }
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    signalrConnection.start()
+    signalrConnection.on('receivedMessage', msg => {
+      console.log(msg)
+    })
+  }, [])
   return (
     <div className='h-full'>
       <div className='flex items-center gap-3 border-b border-gray-200 py-4 px-5'>
