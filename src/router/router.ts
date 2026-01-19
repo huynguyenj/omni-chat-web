@@ -25,5 +25,11 @@ export const router = createBrowserRouter([
         ]
       }
     ]
+  },
+  {
+    path: '/login',
+    lazy: {
+      Component: async () => (await import('@/pages/global/LoginPage')).default
+    }
   }
 ])
