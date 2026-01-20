@@ -3,6 +3,14 @@ import axios, { type AxiosInstance } from 'axios'
 export const apiPrivate: AxiosInstance = axios.create({
   baseURL: BASE_URL
 })
+export const apiPublic: AxiosInstance = axios.create({
+  baseURL: BASE_URL
+})
+
+apiPublic.interceptors.response.use((response) => {
+  return response.data
+})
+
 
 apiPrivate.interceptors.request.use((config) => {
   config.headers.Authorization = 'Bearer'

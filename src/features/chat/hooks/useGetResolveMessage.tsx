@@ -20,7 +20,7 @@ export default function useGetResolveMessage(staffId: string) {
 
   //set up signalr
   useEffect(() => {
-    const newConnection = signalrConnection('/supportConversationHub')
+    const newConnection = signalrConnection('supportConversationHub')
     if (newConnection) {
       newConnection.start().then(() => {
         console.log('connected')
