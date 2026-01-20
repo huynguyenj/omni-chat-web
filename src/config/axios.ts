@@ -1,8 +1,16 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 import axios, { type AxiosInstance } from 'axios'
-const apiPrivate: AxiosInstance = axios.create({
+export const apiPrivate: AxiosInstance = axios.create({
   baseURL: BASE_URL
 })
+export const apiPublic: AxiosInstance = axios.create({
+  baseURL: BASE_URL
+})
+
+apiPublic.interceptors.response.use((response) => {
+  return response.data
+})
+
 
 apiPrivate.interceptors.request.use((config) => {
   config.headers.Authorization = 'Bearer'
