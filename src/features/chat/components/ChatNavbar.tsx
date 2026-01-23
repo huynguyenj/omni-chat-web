@@ -1,8 +1,13 @@
-import { useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { messageItem } from '../const/chat-navbar-item'
+import SelectionMessageContext from '../context/SelectionMessageProvider'
 
 export default function ChatNavbar() {
   const [tabChoice, setTabChoice] = useState(messageItem[0].name.toLocaleLowerCase())
+  const context = useContext(SelectionMessageContext)
+  useEffect(() => {
+    context?.handleChooseProviderName(tabChoice)
+  }, [tabChoice])
   const handleChoose = (selected: string) => {
     setTabChoice(selected)
   }

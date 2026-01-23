@@ -4,15 +4,18 @@ import { IoMdTime } from 'react-icons/io'
 import { CiChat1 } from 'react-icons/ci'
 import { FiCheckCircle } from 'react-icons/fi'
 import { FaExchangeAlt } from 'react-icons/fa'
+import type { ConversationDetail } from '../types/message-type'
 
-export default function CustomerInfo() {
+type CustomerInfoType = Omit<Partial<ConversationDetail>, 'messages'>
+
+export default function CustomerInfo({ customerName, activeCustomerId, avartarUrl, createdDate, providerId }: CustomerInfoType) {
   return (
     <div className='px-3 py-4'>
       <div className='border border-gray-200 rounded-lg px-2 py-5'>
         <div className='flex flex-col justify-center items-center'>
-          <img src={Avatar} alt="avatar" className='w-20 h-20 rounded-full'/>
+          <img src={avartarUrl ?? Avatar} alt="avatar" className='w-20 h-20 rounded-full'/>
           <div>
-            <p className='text-sm-body-desktop text-center'>Nguyen Van A</p>
+            <p className='text-sm-body-desktop text-center'>{customerName}</p>
             <p className='text-[0.9rem] text-gray-500 text-center'>Khách hàng</p>
           </div>
         </div>
@@ -23,7 +26,7 @@ export default function CustomerInfo() {
              text-[1.2rem]'/>
             <div>
               <p className='text-sm-body-desktop text-gray-400'>ID khách hàng</p>
-              <p className='text-[1rem]'>#CUS0001</p>
+              <p className='text-[1rem]'>{activeCustomerId}</p>
             </div>
           </div>
           <div className='flex items-center gap-4 my-3'>
@@ -31,7 +34,7 @@ export default function CustomerInfo() {
              text-[1.2rem]'/>
             <div>
               <p className='text-sm-body-desktop text-gray-400'>Thời gian bắt đầu</p>
-              <p className='text-[1rem]'>10:30</p>
+              <p className='text-[1rem]'>{createdDate ? new Date(createdDate).toDateString() : 'N/A' }</p>
             </div>
           </div>
           <div className='flex items-center gap-4'>
@@ -39,7 +42,7 @@ export default function CustomerInfo() {
              text-[1.2rem]'/>
             <div>
               <p className='text-sm-body-desktop text-gray-400'>Nền tảng</p>
-              <p className='text-[1rem]'>Messenger</p>
+              <p className='text-[1rem]'>{providerId}</p>
             </div>
           </div>
         </div>

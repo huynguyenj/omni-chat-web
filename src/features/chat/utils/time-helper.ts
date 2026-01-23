@@ -1,4 +1,4 @@
-export const getTimeHelper = (dateStr: string) => {
+export const getTimeHelper = (dateStr: string| number) => {
   const date = new Date(dateStr)
   const hour = date.getHours()
   const minute = date.getMinutes()
