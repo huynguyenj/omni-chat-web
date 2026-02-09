@@ -7,6 +7,7 @@ import type { ConversationDetail, MessageType, SenderMessage } from '../types/me
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import { chatApi } from '../api/chat-api'
 import CustomerInfo from './CustomerInfo'
+import Button from '@/components/ui/button/Button'
 
 export default function MessageSection() {
   const context = useContext(SelectionMessageContext)
@@ -74,10 +75,10 @@ export default function MessageSection() {
         </div>
         <div className='mt-5 px-5 flex gap-5'>
           <input ref={inputRef} type="text" placeholder='Nhập tin nhắn...' className='rounded-[5px] py-2 px-3 w-full bg-[#F3F3F5]'/>
-          <button className='bg-secondary px-3 rounded-lg hover:bg-primary cursor-pointer' onClick={handleSend}>
+          <Button onClick={handleSend} variant='default'>
             {''}
             <FiSend className='text-white'/>
-          </button>
+          </Button>
         </div>
       </div>
       <div className='flex-1'>
@@ -85,8 +86,6 @@ export default function MessageSection() {
           customerName={conversationDetail?.customerName}
           activeCustomerId={conversationDetail?.activeStaffId}
           avartarUrl={conversationDetail?.avartarUrl}
-          createdDate={conversationDetail?.createdDate}
-          providerId={conversationDetail?.providerId}
         />
       </div>
     </div>
