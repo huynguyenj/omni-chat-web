@@ -13,8 +13,8 @@ export default function LoginPage() {
         </div>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className='flex flex-col gap-5 my-8'>
-            <Input {...register('username')} type='text' variant='gray' label='Email' placeHolder='example@company.com' error={errors.username?.message}/>
-            <Input {...register('password')} type='password' variant='gray' label='Mật khẩu' placeHolder='123456789' error={errors.password?.message}/>
+            <Input {...register('username')} type='text' variant='gray' label='Email' placeholder='example@company.com' error={errors.username?.message}/>
+            <Input {...register('password')} type='password' variant='gray' label='Mật khẩu' placeholder='123456789' error={errors.password?.message}/>
           </div>
           <button className='py-2 px-3 text-center bg-secondary rounded-lg text-white font-semibold w-full hover:bg-secondary-hover cursor-pointer'>Đăng nhập</button>
         </form>

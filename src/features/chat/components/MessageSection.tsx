@@ -3,11 +3,12 @@ import SelectionMessageContext from '../context/SelectionMessageProvider'
 import Avatar from '@/assets/avatar-sample.jpg'
 import ChatMessageBox from './ui/ChatMessageBox'
 import { FiSend } from 'react-icons/fi'
-import type { ConversationDetail, MessageType, SenderMessage } from '../types/message-type'
+import type { ConversationDetail, MessageType } from '../types/message-type'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import { chatApi } from '../api/chat-api'
 import CustomerInfo from './CustomerInfo'
 import Button from '@/components/ui/button/Button'
+import Input from '@/components/ui/input/Input'
 
 export default function MessageSection() {
   const context = useContext(SelectionMessageContext)
@@ -36,11 +37,11 @@ export default function MessageSection() {
     const time = new Date().getTime()
     if (!staffId) return
     if (value) {
-      const messageContent: SenderMessage = {
-        content: value,
-        conversationId: context?.conversationId,
-        staffId: staffId
-      }
+      // const messageContent: SenderMessage = {
+      //   content: value,
+      //   conversationId: context?.conversationId,
+      //   staffId: staffId
+      // }
       const newMessage: MessageType = {
         content: value,
         senderId: staffId,
@@ -74,7 +75,7 @@ export default function MessageSection() {
           <div ref={messageEndRef}></div>
         </div>
         <div className='mt-5 px-5 flex gap-5'>
-          <input ref={inputRef} type="text" placeholder='Nhập tin nhắn...' className='rounded-[5px] py-2 px-3 w-full bg-[#F3F3F5]'/>
+          <Input variant='gray' placeholder='Nhập tin nhắn...'/>
           <Button onClick={handleSend} variant='default'>
             {''}
             <FiSend className='text-white'/>

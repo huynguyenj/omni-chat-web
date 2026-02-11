@@ -1,27 +1,27 @@
 import type React from 'react'
+import { cn } from '../cn'
 
 type InputType = {
   variant: 'gray'
   label?: string
-  placeHolder?: string
-  ref?: React.Ref<HTMLInputElement>
-  type: 'text' | 'number'| 'password'
   error?: string
-  onChange?: React.ChangeEventHandler<HTMLInputElement>
-  onBlur?: React.FocusEventHandler<HTMLInputElement>
-}
-export default function Input({ variant, label, placeHolder, ref, type, error, ...rest }: InputType) {
+  icon?: React.ComponentType<{ className?:string }>
+} & React.ComponentProps<'input'>
+export default function Input({ variant, label, error, className, icon:Icon, ...rest }: InputType) {
   return (
-    <div className='flex flex-col'>
+    <div className='w-full flex flex-col'>
       <p className='mb-1'>{label}</p>
-      <input placeholder={placeHolder} type={type} ref={ref} {...rest} className={variantSelection(variant)} />
+      <div className={cn(variantSelection(variant), className)} >
+        { Icon && <Icon className='text-[1.25rem] text-gray-600'/> }
+        <input {...rest} className='w-full py-2 focus:outline-none'/>
+      </div>
       {error && <p className='text-sm-body-desktop text-red-400'>{error}</p>}
     </div>
   )
 }
 
 function variantSelection(variant: string) {
-  const defaults = 'w-full px-3 py-2 rounded-[6px]'
+  const defaults = 'w-full flex px-3 items-center gap-2 rounded-[6px] border border-gray-300 focus-within:border focus-within:shadow-[0px_0px_1px_3px_rgba(0,0,0,0.2)] transition-all'
   const variants: Record<string, string> = {
     gray: 'bg-gray-100'
   }
