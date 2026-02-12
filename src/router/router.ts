@@ -24,6 +24,7 @@ export const router = createBrowserRouter([
           }
         ]
       }
+      //admin & manager path để ở đây
     ]
   },
   {
