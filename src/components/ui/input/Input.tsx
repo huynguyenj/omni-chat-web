@@ -10,7 +10,7 @@ type InputType = {
 export default function Input({ variant, label, error, className, icon:Icon, ...rest }: InputType) {
   return (
     <div className='w-full flex flex-col'>
-      <p className='mb-1'>{label}</p>
+      <p className='mb-1 text-[0.95rem] font-bold text-primary'>{label}</p>
       <div className={cn(variantSelection(variant), className)} >
         { Icon && <Icon className='text-[1.25rem] text-gray-600'/> }
         <input {...rest} className='w-full py-2 focus:outline-none'/>
@@ -21,7 +21,7 @@ export default function Input({ variant, label, error, className, icon:Icon, ...
 }
 
 function variantSelection(variant: string) {
-  const defaults = 'w-full flex px-3 items-center gap-2 rounded-[6px] border border-gray-300 focus-within:border focus-within:shadow-[0px_0px_1px_3px_rgba(0,0,0,0.2)] transition-all'
+  const defaults = 'w-full flex px-3 items-center gap-2 rounded-[6px] focus-within:border focus-within:shadow-[0px_0px_1px_3px_rgba(0,0,0,0.2)] transition-all'
   const variants: Record<string, string> = {
     gray: 'bg-gray-100'
   }
