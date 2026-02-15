@@ -58,7 +58,7 @@ export default function MessageSection() {
 
   return (
     <div className='h-full flex'>
-      <div className='flex-2'>
+      <div className='flex-2 border-r border-gray-200'>
         <div className='flex items-center gap-3 border-b border-gray-200 py-4 px-5'>
           <img src={conversationDetail?.avartarUrl ?? Avatar} alt="avatar" className='w-12 h-12 rounded-full'/>
           <div>
@@ -74,10 +74,9 @@ export default function MessageSection() {
           ))}
           <div ref={messageEndRef}></div>
         </div>
-        <div className='mt-5 px-5 flex gap-5'>
+        <div className='mt-5 px-5 flex gap-3'>
           <Input variant='gray' placeholder='Nhập tin nhắn...'/>
-          <Button onClick={handleSend} variant='default'>
-            {''}
+          <Button onClick={handleSend} variant='default' className='py-0.5 px-4'>
             <FiSend className='text-white'/>
           </Button>
         </div>

@@ -8,11 +8,11 @@ export default function ChatPage() {
     <div>
       <SelectionMessageProvider>
         <ChatNavbar/>
-        <div className='flex h-[73vh]'>
+        <div className='flex h-[calc(100vh-8.75rem)]'>
           <div className='flex-1 border-r border-gray-200 h-full'>
             <ResolveMessage/>
           </div>
-          <div className='flex-3 border-r border-gray-200 h-full'>
+          <div className='flex-4 border-r border-gray-200 h-full'>
             <MessageSection/>
           </div>
         </div>
