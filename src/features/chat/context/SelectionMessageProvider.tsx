@@ -11,7 +11,7 @@ const SelectionMessageContext = createContext<SelectionMessageContextProps | und
 
 export function SelectionMessageProvider({ children }: PropsWithChildren) {
   const [conversationId, setConversationId] = useState('')
-  const [providerName, setProviderName] = useState('')
+  const [providerName, setProviderName] = useState('Facebook')
   const handleChoose = (conversationId: string) => {
     setConversationId(conversationId)
   }

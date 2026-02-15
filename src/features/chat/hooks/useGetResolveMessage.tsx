@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import type { ResolveMessageType } from '../types/message-type'
 import { chatApi } from '../api/chat-api'
 import { signalrConnection } from '../config/signalr'
+import SelectionMessageContext from '../context/SelectionMessageProvider'
 // import SelectionMessageContext from '../context/SelectionMessageProvider'
 
 export default function useGetResolveMessage(staffId: string | null) {
   const [resolveMessageTab, setResolveMessageTab] = useState<ResolveMessageType[]>([])
+  const context = useContext(SelectionMessageContext)
   // const context = useContext(SelectionMessageContext)
   useEffect(() => {
     const fetchResolveMessage = async () => {
       if (!staffId) return
       try {
-        const apiData = await chatApi.getSidebarConversationList(staffId)
+        const apiData = await chatApi.getSidebarConversationList(staffId, context?.providerName)
         console.log(apiData)
         setResolveMessageTab(apiData.data)
       } catch (error) {
@@ -19,7 +21,7 @@ export default function useGetResolveMessage(staffId: string | null) {
       }
     }
     fetchResolveMessage()
-  }, [staffId])
+  }, [staffId, context?.providerName])
 
   //set up signalr
   useEffect(() => {

@@ -9,6 +9,7 @@ import { chatApi } from '../api/chat-api'
 import CustomerInfo from './CustomerInfo'
 import Button from '@/components/ui/button/Button'
 import Input from '@/components/ui/input/Input'
+import { signalrConnection } from '../config/signalr'
 
 export default function MessageSection() {
   const context = useContext(SelectionMessageContext)
@@ -17,6 +18,43 @@ export default function MessageSection() {
   const [messages, setMessages] = useState<MessageType[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const messageEndRef = useRef<HTMLDivElement>(null)
+  const [isConnected, setIsConnected] = useState(false)
+  const connectionRef = useRef(signalrConnection('supportConversationHub'))
+  // Initialize SignalR connection once
+  useEffect(() => {
+    const connection = connectionRef.current
+
+    if (!context?.conversationId || !connection) return
+
+    const startConnection = async () => {
+      try {
+        await connection.start()
+        console.log('SignalR Connected')
+        setIsConnected(true)
+
+        // Join the conversation group
+        await connection.invoke("JoinConversation", context.conversationId)
+        console.log(`Joined group: conversation:${context.conversationId}`)
+        // Listen for incoming messages
+        connection.on('ReceiveMessage', (message: MessageType) => {
+          console.log('Received message:', message)
+          setMessages((prev) => [...prev, message])
+        })
+      } catch (err) {
+        console.error('SignalR Connection Error:', err)
+        setIsConnected(false)
+      }
+    }
+
+    startConnection()
+
+    // Cleanup on unmount
+    return () => {
+      connection.off('ReceiveMessage')
+      connection.stop()
+      setIsConnected(false)
+    }
+  }, [context?.conversationId])
   useEffect(() => {
     const fetchConversation = async () => {
       try {
@@ -31,11 +69,12 @@ export default function MessageSection() {
     fetchConversation()
   }, [context?.conversationId])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputRef.current) return
     const value = inputRef.current?.value
     const time = new Date().getTime()
     if (!staffId) return
+    const connection = connectionRef.current
     if (value) {
       // const messageContent: SenderMessage = {
       //   content: value,
@@ -50,6 +89,11 @@ export default function MessageSection() {
       }
       inputRef.current.value = ''
       setMessages((prevMessage) => [...prevMessage, newMessage])
+      try {
+        await connection.invoke('ReceiveMessage', newMessage)
+      } catch (error) {
+        console.log('Singlr connected fail', error)
+      }
     }
   }
   useEffect(() => {
@@ -75,7 +119,7 @@ export default function MessageSection() {
           <div ref={messageEndRef}></div>
         </div>
         <div className='mt-5 px-5 flex gap-3'>
-          <Input variant='gray' placeholder='Nhập tin nhắn...'/>
+          <Input ref={inputRef} variant='gray' placeholder='Nhập tin nhắn...'/>
           <Button onClick={handleSend} variant='default' className='py-0.5 px-4'>
             <FiSend className='text-white'/>
           </Button>

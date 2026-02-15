@@ -1,5 +1,5 @@
-import Card from "@/components/ui/card/Card"
-import Tag from "@/components/ui/tag/Tag"
+import Card from '@/components/ui/card/Card'
+import Tag from '@/components/ui/tag/Tag'
 
 type CustomerOrderType = {
   id: string
@@ -79,7 +79,7 @@ const CustomerOrderData: CustomerOrderType[] = [
 
 function OrderCard({ data }: { data: CustomerOrderType }) {
   const tag = (status: string) => {
-    switch(status) {
+    switch (status) {
     case 'Đã giao': return <Tag className="text-[0.75rem] text-white font-bold" variant='success'>Đã giao </Tag>
     case 'Đang giao': return <Tag className="text-[0.75rem] text-white font-bold" variant='primary'>Đang giao</Tag>
 
