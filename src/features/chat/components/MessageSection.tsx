@@ -3,7 +3,7 @@ import SelectionMessageContext from '../context/SelectionMessageProvider'
 import Avatar from '@/assets/avatar-sample.jpg'
 import ChatMessageBox from './ui/ChatMessageBox'
 import { FiSend } from 'react-icons/fi'
-import type { ConversationDetail, MessageType } from '../types/message-type'
+import type { ConversationDetail, MessageType, SenderMessage } from '../types/message-type'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import { chatApi } from '../api/chat-api'
 import CustomerInfo from './CustomerInfo'
@@ -33,10 +33,10 @@ export default function MessageSection() {
         setIsConnected(true)
 
         // Join the conversation group
-        await connection.invoke("JoinConversation", context.conversationId)
+        await connection.invoke("JoinConversationGroup", context.conversationId)
         console.log(`Joined group: conversation:${context.conversationId}`)
         // Listen for incoming messages
-        connection.on('ReceiveMessage', (message: MessageType) => {
+        connection.on('CustomerReceiveMessage', (message: MessageType) => {
           console.log('Received message:', message)
           setMessages((prev) => [...prev, message])
         })
@@ -76,11 +76,6 @@ export default function MessageSection() {
     if (!staffId) return
     const connection = connectionRef.current
     if (value) {
-      // const messageContent: SenderMessage = {
-      //   content: value,
-      //   conversationId: context?.conversationId,
-      //   staffId: staffId
-      // }
       const newMessage: MessageType = {
         content: value,
         senderId: staffId,
@@ -90,7 +85,13 @@ export default function MessageSection() {
       inputRef.current.value = ''
       setMessages((prevMessage) => [...prevMessage, newMessage])
       try {
-        await connection.invoke('ReceiveMessage', newMessage)
+        const message: SenderMessage = {
+          Content: value,
+          StaffId: staffId,
+          SupportConversationId: context?.conversationId
+        }
+        console.log(message)
+        await connection.invoke('StaffSendMessage', context?.providerName, message)
       } catch (error) {
         console.log('Singlr connected fail', error)
       }

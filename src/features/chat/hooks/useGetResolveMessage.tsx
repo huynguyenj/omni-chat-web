@@ -29,8 +29,25 @@ export default function useGetResolveMessage(staffId: string | null) {
     if (newConnection) {
       newConnection.start().then(() => {
         console.log('connected')
-        newConnection.on('SidebarUpdated', data => {
-          setResolveMessageTab(prev => [...prev, data])
+        newConnection.on('SidebarUpdated', (data: ResolveMessageType) => {
+          console.log(data)
+          setResolveMessageTab(prev => {
+            //Get the exited one that in previous awaited array
+            const existingIndex = prev.findIndex((m) => m.conversationId === data.conversationId)
+            if (existingIndex !=-1) {
+              //List contain awaited messages
+              const updatedExistingMessages = [...prev]
+              //Update the correct awaited message by index
+              updatedExistingMessages[existingIndex] = {
+                ...updatedExistingMessages[existingIndex],
+                lastMessage: data.lastMessage,
+                updateDate: data.updateDate
+              }
+              const [updatedItem] = updatedExistingMessages.splice(existingIndex, 1)
+              return [updatedItem, ...updatedExistingMessages]
+            }
+            return [data, ...prev]
+          })
         })
       })
         .catch(err => console.log('Signalr connected fail', err))
