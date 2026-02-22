@@ -15,7 +15,7 @@ export type MessageType = {
 }
 
 export type SenderMessage = {
-  SupportConversationId?: string
+  SupportConversationId?: string | null
   StaffId: string
   Content: string
 }

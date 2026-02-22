@@ -55,6 +55,6 @@ export default function useGetResolveMessage(staffId: string | null) {
     return () => {
       if (newConnection) newConnection.stop()
     }
-  }, [])
+  }, [context?.providerName])
   return { resolveMessageTab }
 }

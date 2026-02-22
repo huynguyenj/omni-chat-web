@@ -4,7 +4,7 @@ type AwaitMessageBoxType = {
   time: string
   avatar?: string
   message: string
-  platform: 'messenger' | 'instagram'
+  platform: string
 }
 
 export default function AwaitMessageBox({ customerName, message, time, platform, avatar }: AwaitMessageBoxType) {

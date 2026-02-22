@@ -2,7 +2,7 @@ import { CiChat1 } from 'react-icons/ci'
 import type { IconType } from 'react-icons/lib'
 import { IoDocumentTextOutline } from 'react-icons/io5'
 import { IoChatbubbleOutline } from 'react-icons/io5'
-import { FaInstagram } from 'react-icons/fa'
+import { SiZalo } from 'react-icons/si'
 
 type NavbarItemType = {
   name: string,
@@ -15,5 +15,5 @@ export const navbarItems: NavbarItemType[] = [
 
 export const messageItem: NavbarItemType[] = [
   { name: 'Facebook', icon: IoChatbubbleOutline },
-  { name: 'Zalo', icon:  FaInstagram }
+  { name: 'Zalo', icon:  SiZalo }
 ]
