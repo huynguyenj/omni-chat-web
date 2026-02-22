@@ -23,8 +23,14 @@ export const router = createBrowserRouter([
             }
           }
         ]
-      }
+      },
       //admin & manager path để ở đây
+      {
+        path: '/admin',
+        lazy: {
+          Component: async () => (await import('@/pages/admin/AdminDashboard')).default
+        }
+      },
     ]
   },
   {
