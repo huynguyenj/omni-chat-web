@@ -118,7 +118,13 @@ export default function MessageSection() {
             <div className='bg-[#F5F7FA] overflow-y-auto h-[70%] py-7 px-5'>
               {messages.map((message) => (
                 <div className={`mt-5 flex ${message.senderType !== 'Customer' && 'justify-end'}`}>
-                  <ChatMessageBox message={message.content} sender={message.senderType} time={message.timestamp}/>
+                  <ChatMessageBox
+                    message={message.content}
+                    sender={message.senderType.toLocaleLowerCase()}
+                    time={message.timestamp}
+                    highlightWords={message.extractKeywordsResponses?.highlights}
+                    recommends={message.extractKeywordsResponses?.recommends}
+                  />
                 </div>
               ))}
               <div ref={messageEndRef}></div>

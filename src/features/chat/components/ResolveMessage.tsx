@@ -28,7 +28,9 @@ export default function ResolveMessage() {
             customerName={data.customerName}
             message={data.lastMessage}
             time={getTimeHelper(data.updateDate)}
-            platform={platform}/>
+            platform={platform}
+            totalAwaitMessage={data.unreadMessageCount}
+          />
         </div>
       )) :
         <p className='text-sm-body-desktop'>Chưa có tin nhắn chờ</p>

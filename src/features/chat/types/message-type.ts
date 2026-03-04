@@ -1,3 +1,5 @@
+import type { KeywordsRecommendation } from './system-recommendation-type'
+
 export type ResolveMessageType = {
   conversationId: string
   customerName: string
@@ -5,13 +7,15 @@ export type ResolveMessageType = {
   providerName: string
   lastMessage: string
   updateDate: string
+  unreadMessageCount: number
 }
 
-export type MessageType = {
+export interface MessageType {
    senderType: string
    senderId: string
    content: string
    timestamp: number
+   extractKeywordsResponses?: null | KeywordsRecommendation
 }
 
 export type SenderMessage = {
