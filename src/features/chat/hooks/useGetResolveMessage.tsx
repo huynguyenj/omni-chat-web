@@ -3,15 +3,23 @@ import type { ResolveMessageType } from '../types/message-type'
 import { chatApi } from '../api/chat-api'
 import { signalrConnection } from '../config/signalr'
 import SelectionMessageContext from '../context/SelectionMessageProvider'
+import { toast } from 'react-toastify'
+import { useNavigate } from 'react-router'
+import { PUBLIC_PATH } from '@/router/path'
 // import SelectionMessageContext from '../context/SelectionMessageProvider'
 
 export default function useGetResolveMessage(staffId: string | null) {
   const [resolveMessageTab, setResolveMessageTab] = useState<ResolveMessageType[]>([])
   const context = useContext(SelectionMessageContext)
+  const navigate = useNavigate()
   // const context = useContext(SelectionMessageContext)
   useEffect(() => {
     const fetchResolveMessage = async () => {
-      if (!staffId) return
+      if (!staffId) {
+        toast.warning('Hãy đăng nhập để thực hiện chức năng')
+        navigate(PUBLIC_PATH.LOGIN)
+        return
+      }
       try {
         const apiData = await chatApi.getSidebarConversationList(staffId, context?.providerName)
         console.log(apiData)

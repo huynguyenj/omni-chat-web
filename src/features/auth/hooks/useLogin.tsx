@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthApi } from '../api/auth-api'
 import { useAuthStore } from '../store/auth-store'
 import { useNavigate } from 'react-router'
+import { PRIVATE_PATH } from '@/router/path'
+import { toast } from 'react-toastify'
 
 const LoginFormSchema = z.object({
   username: z.email(),
@@ -18,13 +20,12 @@ export default function useLogin() {
   const onSubmit = async (formData: LoginFormType) => {
     try {
       const loginData = await AuthApi.login(formData)
-      console.log(loginData)
       const { accessToken, role, accountId, staffId } = loginData.data
       addAuthStore(accessToken, accountId, staffId, role)
-      console.log(accessToken)
-      navigate('/chat')
+      navigate(PRIVATE_PATH.CHAT)
     } catch (error) {
       console.log(error)
+      toast.error('Login fail')
     }
   }
   return { register, handleSubmit, onSubmit, errors }
