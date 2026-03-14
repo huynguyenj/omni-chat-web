@@ -17,7 +17,7 @@ export default function useGetResolveMessage(staffId: string | null) {
     const fetchResolveMessage = async () => {
       if (!staffId) {
         toast.warning('Hãy đăng nhập để thực hiện chức năng')
-        navigate(PUBLIC_PATH.LOGIN)
+        // navigate(PUBLIC_PATH.LOGIN)
         return
       }
       try {
@@ -45,13 +45,15 @@ export default function useGetResolveMessage(staffId: string | null) {
             if (existingIndex !=-1) {
               //List contain awaited messages
               const updatedExistingMessages = [...prev]
-              //Update the correct awaited message by index
+              //Update the old awaited message existed with new message and date
               updatedExistingMessages[existingIndex] = {
                 ...updatedExistingMessages[existingIndex],
                 lastMessage: data.lastMessage,
                 updateDate: data.updateDate
               }
+              // Get the updated object by splice method
               const [updatedItem] = updatedExistingMessages.splice(existingIndex, 1)
+              // Put the updated message to top
               return [updatedItem, ...updatedExistingMessages]
             }
             return [data, ...prev]
