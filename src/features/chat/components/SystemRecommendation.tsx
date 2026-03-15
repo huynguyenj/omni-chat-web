@@ -3,7 +3,7 @@ import Button from '@/components/ui/button/Button'
 import PopupBasic from '@/components/ui/popup/PopupBasic'
 import { useState } from 'react'
 import { BsStars } from 'react-icons/bs'
-import { LuPackage } from 'react-icons/lu'
+import { LuCircleCheckBig, LuPackage } from 'react-icons/lu'
 import type { Recommendation } from '../types/system-recommendation-type'
 import { MdHistory } from 'react-icons/md'
 import type { ProductType } from '../types/product-type'
@@ -16,6 +16,9 @@ import TutorialBox from './ui/TutorialBox'
 import Select from '@/components/ui/select/Select'
 import Input from '@/components/ui/input/Input'
 import { IoIosArrowForward } from 'react-icons/io'
+import SelectionBox from './ui/SelectionBox'
+import { GiCheckMark } from 'react-icons/gi'
+import Checkbox from '@/components/ui/input/Checkbox'
 
 
 function ProductButton({ productData }: { productData: ProductType}) {
@@ -123,7 +126,6 @@ type ProductListType = {
   storage: number
   productId: string
 }
-
 const listProducts: ProductListType[] = [
   { name: 'Sữa tươi Vinamilk - Sữa tươi', storage: 286, productId: 'gojgoaehioeg1324' },
   { name: 'Sữa chua uống TH True Milk - Sữa chua', storage: 195, productId: 'gojgoaehihow1324' },
@@ -132,11 +134,35 @@ const listProducts: ProductListType[] = [
   { name: 'Sữa tươi tiệt trùng Da Lat Milk - Sữa tươi', storage: 210, productId: 'olkmvojagta1324' },
   { name: 'Sữa chua uống Vinamilk - Sữa chua', storage: 125, productId: 'qouoiuetiouw1324' }
 ]
+
+type BatchesType = {
+  batchId: string
+  date: string
+  storage: number
+}
+
+const listBatches: BatchesType[] = [
+  { batchId: 'LOT20260125', date: '25/03/2026', storage: 120 },
+  { batchId: 'LOT20260122', date: '22/03/2026', storage: 89 },
+  { batchId: 'LOT20260118', date: '18/03/2026', storage: 71 }
+]
+
 function OrderButton() {
   const [isOpen, setIsOpen] = useState(false)
   const [index, setIndex] = useState(1)
+  const [typeProduct, setTypeProduct] = useState<{ type: 'less' | 'have' | 'not' }>({ type: 'not' })
+  const [capacityProduct, setCapacityProduct] = useState(180)
+  const [batchChosen, setBatchChosen] = useState<BatchesType>(listBatches[0])
+  const [checked, setChecked] = useState(false)
+  const [product, setProduct] = useState<ProductListType>()
+  const [numberOfProduct, setNumberOfProduct] = useState(1)
+  const [dateOfShipment, setDateOfShipment] = useState<string>()
   const handleOpen = () => {
     setIsOpen((prev) => !prev)
+  }
+  const handleSelectProduct = (productId: string) => {
+    const product = listProducts.find((product) => product.productId === productId)
+    setProduct(product)
   }
   const handlePrev = () => {
     if (index == 1) return
@@ -146,6 +172,13 @@ function OrderButton() {
     if (index == 4) return
     setIndex((page) => page + 1)
   }
+  const handleSelectTypeProduct = (type: typeof typeProduct) => {
+    setTypeProduct(type)
+  }
+  const handleChecked = () => {
+    setChecked((prev) => !prev)
+    setBatchChosen(listBatches[0])
+  }
   return (
     <>
       <Button variant='outline' className='rounded-2xl py-2 border border-border-secondary hover:bg-secondary hover:text-white hover:border-none gap-2' onClick={handleOpen}>
@@ -154,66 +187,200 @@ function OrderButton() {
       </Button>
       <AnimatePresence>
         {isOpen &&
-                  <PopupBasic title='Tạo đơn hàng mới' onClose={handleOpen}>
-                    <p className='text-soft-gray text-[1rem]'>Hướng dẫn tạo đơn hàng mới</p>
-                    { index == 1 &&
-                    <div id='index#1'>
-                      <div className='mt-7'>
-                        <TutorialBox step='Bước 1: Chọn sản phẩm sữa' description='Hãy chọn sản phẩm khách hàng muốn đặt'/>
-                        <div className='my-5'>
-                          <label htmlFor="select-product" className='text-primary text-sm-body-desktop font-bold'>Tên sản phẩm</label>
-                          <Select id='select-product' className='border border-border-primary mt-2'>
-                            <option value="">Chọn sản phẩm...</option>
-                            {listProducts.map((product) => (
-                              <option id={product.productId} value={product.productId}>{product.name} <span>({product.storage})</span></option>
-                            ))}
-                          </Select>
-                        </div>
-                        <Input label='Số lượng' variant='gray' type='number'/>
-                      </div>
-                      <Button className='w-full font-bold mt-5' onClick={handleNext}>
-                          Tiếp theo
-                        <IoIosArrowForward/>
-                      </Button>
-                    </div>
-                    }
-                    { index == 2 &&
-                    <div id='index#2'>
-                      <div className='mt-7'>
-                        <TutorialBox step='Bước 2: Chọn dung tích và loại' description='Chọn phiên bản sản phẩm khách hàng mong muốn'/>
-                        <div className='my-5'>
-                          <label htmlFor="select-product" className='text-primary text-sm-body-desktop font-bold'>Tên sản phẩm</label>
-                          <Select id='select-product' className='border border-border-primary mt-2'>
-                            <option value="">Chọn sản phẩm...</option>
-                            {listProducts.map((product) => (
-                              <option id={product.productId} value={product.productId}>{product.name} <span>({product.storage})</span></option>
-                            ))}
-                          </Select>
-                        </div>
-                        <Input label='Số lượng' variant='gray' type='number'/>
-                      </div>
-                      <div className='flex gap-2'>
-                        <Button variant='outline' className='w-full font-bold mt-5 border-2 border-border-primary text-black hover:bg-gray-100' onClick={handlePrev}>
-                          Quay lại
-                        </Button>
-                        <Button className='w-full font-bold mt-5' onClick={handleNext}>
-                          Tiếp theo
-                          <IoIosArrowForward/>
-                        </Button>
-                      </div>
-                    </div>
-                    }
-                    { index == 3 &&
-                    <div id='index#3'>
+          <PopupBasic title='Tạo đơn hàng mới' onClose={handleOpen}>
+            <p className='text-soft-gray text-[1rem]'>Hướng dẫn tạo đơn hàng mới</p>
+            { index == 1 &&
+            <div id='index#1'>
+              <div className='mt-7'>
+                <TutorialBox step='Bước 1: Chọn sản phẩm sữa' description='Hãy chọn sản phẩm khách hàng muốn đặt'/>
+                <div className='my-5'>
+                  <label htmlFor="select-product" className='text-primary text-sm-body-desktop font-bold'>Tên sản phẩm</label>
+                  <Select id='select-product' className='border border-border-primary mt-2' onChange={(e) => handleSelectProduct(e.target.value)}>
+                    <option value="">Chọn sản phẩm...</option>
+                    {listProducts.map((product) => (
+                      <option id={product.productId} value={product.productId}>{product.name} <span>({product.storage})</span></option>
+                    ))}
+                  </Select>
+                </div>
+                <Input label='Số lượng' variant='gray' type='number' onChange={(e) => setNumberOfProduct(Number(e.target.value))}/>
+              </div>
+              <Button className='w-full font-bold mt-5' onClick={handleNext}>
+                  Tiếp theo
+                <IoIosArrowForward/>
+              </Button>
+            </div>
+            }
+            { index == 2 &&
+            <div id='index#2'>
+              <div className='mt-7'>
+                <TutorialBox step='Bước 2: Chọn dung tích và loại' description='Chọn phiên bản sản phẩm khách hàng mong muốn'/>
+                <div className='my-5'>
+                  <label htmlFor="select-capacity" className='text-primary text-sm-body-desktop font-bold'>Dung tích / Khối lượng</label>
+                  <div className='grid grid-cols-3 gap-3 mt-2' id='select-capacity'>
+                    <SelectionBox
+                      isChosen={capacityProduct == 180 ? true : false}
+                      onClick={() => setCapacityProduct(180)}
+                    >
+                      <p className="text-sm-body-desktop">180ml</p>
+                    </SelectionBox>
+                    <SelectionBox
+                      isChosen={capacityProduct == 1000 ? true : false}
+                      onClick={() => setCapacityProduct(1000)}
+                    >
+                      <p className="text-sm-body-desktop">1 lít</p>
+                    </SelectionBox>
+                    <SelectionBox
+                      isChosen={capacityProduct == 2000 ? true : false}
+                      onClick={() => setCapacityProduct(2000)}
+                    >
+                      <p className="text-sm-body-desktop">2 lít</p>
+                    </SelectionBox>
+                  </div>
+                </div>
+                <div className='my-1'>
+                  <label htmlFor="select-type" className='text-primary text-sm-body-desktop font-bold'>Loại</label>
+                  <div id='select-type' className='grid grid-cols-2 gap-3 mt-2'>
+                    <SelectionBox
+                      isChosen={typeProduct.type == 'not' ? true : false}
+                      onClick={() => handleSelectTypeProduct({ type: 'not' })}
+                    >
+                      <p className="text-sm-body-desktop">Không đường</p>
+                    </SelectionBox>
+                    <SelectionBox
+                      content='Có đường'
+                      isChosen={typeProduct.type == 'have' ? true : false}
+                      onClick={() => handleSelectTypeProduct({ type: 'have' })}
+                    >
+                      <p className="text-sm-body-desktop">Có đường</p>
+                    </SelectionBox>
+                    <SelectionBox
+                      content='Ít đường'
+                      isChosen={typeProduct.type == 'less' ? true: false}
+                      onClick={() => handleSelectTypeProduct({ type: 'less' })}>
+                      <p className="text-sm-body-desktop">Ít đường</p>
+                    </SelectionBox>
+                  </div>
+                </div>
+              </div>
+              <div className='flex gap-2'>
+                <Button variant='outline' className='w-full font-bold mt-5 border-2 border-border-primary text-black hover:bg-gray-100' onClick={handlePrev}>
+                  Quay lại
+                </Button>
+                <Button className='w-full font-bold mt-5' onClick={handleNext}>
+                  Tiếp theo
+                  <IoIosArrowForward/>
+                </Button>
+              </div>
+            </div>
+            }
+            { index == 3 &&
+            <div id='index#3'>
+              <div className='mt-7'>
+                <TutorialBox step='Bước 3: Hạn sử dụng và ngày giao' description='Chọn lô hàng và ngày giao hàng'/>
+                <div className='flex items-center gap-2 my-4'>
+                  <Checkbox id='check-batch' onCheckedChange={handleChecked}/>
+                  <label htmlFor="check-batch" className='text-sm-body-desktop font-semibold text-primary'>Tự động chọn lô hàng mới nhất (FIFO)</label>
+                </div>
+                <div>
 
+                  { checked ?
+                    <Tag variant='success' className='bg-[#F0FDF4] border border-[#D0FBDE] py-3 justify-start gap-2 my-5'>
+                      <GiCheckMark className='text-sm-body-desktop text-[#1E7948]'/>
+                      <p className='text-sm-body-desktop font-normal text-[#1E7948]'>Sẽ tự động chọn lô hàng: <span className='font-bold'>{batchChosen.batchId}</span> (HSD: {batchChosen.date})</p>
+                    </Tag>
+                    :
+                    <>
+                      <p className='text-sm-body-desktop text-primary font-medium mt-2'>Chọn lô hàng theo HSD</p>
+                      { listBatches.map((batch) => (
+                        <SelectionBox
+                          id={batch.batchId}
+                          className='px-4 py-3 my-2'
+                          isChosen={batch.batchId == batchChosen.batchId ? true : false }
+                          onClick={() => setBatchChosen(batch)}>
+                          <div className='w-full flex flex-col'>
+                            <div className='w-full flex items-center justify-between'>
+                              <p className='text-m-body-desktop font-medium text-primary'>Lô: {batch.batchId}</p>
+                              <Tag variant='success' className='py-1 flex items-center'>
+                                <p className='text-[0.85rem] text-center font-medium'>Tồn:{batch.storage}</p>
+                              </Tag>
+                            </div>
+                            <p className='text-sm-body-desktop text-soft-gray'>HSD: {batch.date}</p>
+                          </div>
+                        </SelectionBox>
+                      )) }
+                    </>
+                  }
+                </div>
+                <Input label='Ngày giao hàng' type='date' variant='gray' onChange={(e) => setDateOfShipment(e.target.value)}/>
+              </div>
+              <div className='flex gap-2 mt-3'>
+                <Button variant='outline' className='w-full font-bold border-2 border-border-primary text-black hover:bg-gray-100' onClick={handlePrev}>
+                  Quay lại
+                </Button>
+                <Button className='w-full font-bold' onClick={handleNext}>
+                  Tiếp theo
+                  <IoIosArrowForward/>
+                </Button>
+              </div>
+            </div>
+            }
+            { index == 4 &&
+            <div id='index#4'>
+              <div id='index#2'>
+                <div className='mt-7'>
+                  <TutorialBox step='Bước 4: Xác nhận đơn hàng' description='Kiểm tra lại thông tin khi tạo đơn'/>
+                  <Card variant='default' className='py-4 px-5 my-5 border-2 border-border-primary text-m-body-desktop'>
+                    <p className='text-m-body-desktop text-primary'>Thông tin đơn hàng</p>
+                    <div className='mt-10'>
+                      <div className='flex justify-between mt-3'>
+                        <p className='text-soft-gray'>Sản phẩm: </p>
+                        <p className='font-medium'>{product?.name}</p>
+                      </div>
+                      <div className='flex justify-between mt-3'>
+                        <p className='text-soft-gray'>Dung tích: </p>
+                        <p className='font-medium'>{capacityProduct}</p>
+                      </div>
+                      <div className='flex justify-between mt-3'>
+                        <p className='text-soft-gray'>Loại: </p>
+                        <p className='font-medium'>{typeProduct.type}</p>
+                      </div>
+                      <div className='flex justify-between mt-3'>
+                        <p className='text-soft-gray'>Số lượng: </p>
+                        <p className='font-medium'>{numberOfProduct}</p>
+                      </div>
+                      <div className='flex justify-between mt-3'>
+                        <p className='text-soft-gray'>Lô hàng: </p>
+                        <p className='font-medium'>{batchChosen.batchId}</p>
+                      </div>
+                      <div className='flex justify-between mt-3'>
+                        <p className='text-soft-gray'>HSD: </p>
+                        <p className='font-medium'>{batchChosen.date}</p>
+                      </div>
+                      <div className='flex justify-between mt-3'>
+                        <p className='text-soft-gray'>Ngày giao: </p>
+                        <p className='font-medium'>{dateOfShipment}</p>
+                      </div>
+                      <hr className='border border-border-primary my-3'/>
+                      <div className='flex justify-between font-medium mt-3'>
+                        <p className='text-primary'>Tổng tiền</p>
+                        <p className='text-green-accent'>42.000đ</p>
+                      </div>
                     </div>
-                    }
-                    { index == 4 &&
-                    <div id='index#4'>
-
-                    </div>
-                    }
-                  </PopupBasic>
+                  </Card>
+                </div>
+                <div className='flex gap-2'>
+                  <Button variant='outline' className='w-full font-bold border-2 border-border-primary text-black hover:bg-gray-100' onClick={handlePrev}>
+                  Quay lại
+                  </Button>
+                  <Button variant='success' className='w-full font-bold items-center'>
+                    <LuCircleCheckBig/>
+                  Tạo đơn hàng
+                  </Button>
+                </div>
+              </div>
+            </div>
+            }
+          </PopupBasic>
         }
       </AnimatePresence>
     </>

@@ -10,7 +10,7 @@ type InputType = {
 export default function Input({ variant, label, error, className, icon:Icon, ...rest }: InputType) {
   return (
     <div className='w-full flex flex-col'>
-      <p className='mb-1 text-sm-body-desktop font-bold text-primary'>{label}</p>
+      <p className='mb-1 text-sm-body-desktop font-medium text-primary'>{label}</p>
       <div className={cn(variantSelection(variant), className)} >
         { Icon && <Icon className='text-[1.25rem] text-gray-600'/> }
         <input {...rest} className='w-full py-2 focus:outline-none'/>

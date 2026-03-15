@@ -29,7 +29,7 @@
       --text-m-title-desktop: 2rem;
       --text-sm-title-desktop: 1.875rem;
       --text-xl-body-desktop: 1.5rem;
-      --text-m-body-desktop: 1.25rem;
+      --text-m-body-desktop: 1.2rem;
       --text-sm-body-desktop: 1rem;
       --text-secondary-desktop: calc(1.5rem - 2px);
       /*Mobile*/
@@ -84,7 +84,7 @@
       body {
             margin: 0;
             box-sizing: border-box;
-            font-family: Roboto, sans-serif;
+            /* font-family: Roboto, sans-serif; */
       }
       
 }

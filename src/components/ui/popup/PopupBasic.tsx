@@ -13,7 +13,7 @@ export default function PopupBasic({ onClose, title, children }: PopupProps) {
         initial = {{ scale: 0, opacity: 0 }}
         animate = {{ scale: 1, opacity: 1 }}
         exit={{ scale: 0, opacity: 0 }}
-        className="min-w-[35%] max-h-[90vh] bg-white px-5 py-5 rounded-xl relative">
+        className="min-w-[35%] max-h-[95vh] bg-white px-5 py-5 rounded-xl relative overflow-y-auto">
         <p className="text-m-body-desktop font-bold text-primary">{title}</p>
         <div className="absolute top-4 right-4 cursor-pointer active:border active:border-gray-400 rounded-lg" onClick={onClose}>
           <IoIosClose className="text-xl-body-desktop"/>
