@@ -224,14 +224,20 @@ function OrderButton() {
                       <p className="text-sm-body-desktop">180ml</p>
                     </SelectionBox>
                     <SelectionBox
-                      isChosen={capacityProduct == 1000 ? true : false}
-                      onClick={() => setCapacityProduct(1000)}
+                      isChosen={capacityProduct == 490 ? true : false}
+                      onClick={() => setCapacityProduct(490)}
                     >
-                      <p className="text-sm-body-desktop">1 lít</p>
+                      <p className="text-sm-body-desktop">500 lít</p>
                     </SelectionBox>
                     <SelectionBox
-                      isChosen={capacityProduct == 2000 ? true : false}
-                      onClick={() => setCapacityProduct(2000)}
+                      isChosen={capacityProduct == 880 ? true : false}
+                      onClick={() => setCapacityProduct(880)}
+                    >
+                      <p className="text-sm-body-desktop">2 lít</p>
+                    </SelectionBox>
+                    <SelectionBox
+                      isChosen={capacityProduct == 1760 ? true : false}
+                      onClick={() => setCapacityProduct(1760)}
                     >
                       <p className="text-sm-body-desktop">2 lít</p>
                     </SelectionBox>
@@ -252,12 +258,6 @@ function OrderButton() {
                       onClick={() => handleSelectTypeProduct({ type: 'have' })}
                     >
                       <p className="text-sm-body-desktop">Có đường</p>
-                    </SelectionBox>
-                    <SelectionBox
-                      content='Ít đường'
-                      isChosen={typeProduct.type == 'less' ? true: false}
-                      onClick={() => handleSelectTypeProduct({ type: 'less' })}>
-                      <p className="text-sm-body-desktop">Ít đường</p>
                     </SelectionBox>
                   </div>
                 </div>

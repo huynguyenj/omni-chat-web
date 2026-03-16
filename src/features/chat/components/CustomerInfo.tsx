@@ -10,6 +10,8 @@ import CustomerOrder from './CustomerOrder'
 import Ticket from './Ticket'
 import { IoPerson } from 'react-icons/io5'
 import { FaShoppingBag, FaTicketAlt } from 'react-icons/fa'
+import { GoTasklist } from 'react-icons/go'
+import TaskList from './TaskList'
 
 type CustomerInfoType = Omit<Partial<ConversationDetail>, 'messages'>
 
@@ -21,9 +23,10 @@ export default function CustomerInfo({ customerName, activeCustomerId, avartarUr
   }
   function Tab() {
     switch (tab) {
-    case 1: return <CustomerProfile/>
-    case 2: return <CustomerOrder/>
-    case 3: return <Ticket/>
+    case 1: return <TaskList/>
+    case 2: return <CustomerProfile/>
+    case 3: return <CustomerOrder/>
+    case 4: return <Ticket/>
     default: return <CustomerProfile/>
     }
   }
@@ -57,14 +60,18 @@ export default function CustomerInfo({ customerName, activeCustomerId, avartarUr
         </div>
         <div className='bg-gray-200 w-full px-2 py-1 flex gap-2 items-center justify-between'>
           <Button className={`text-sm-body-desktop px-7 py-1 gap-2 ${tab === 1 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(1)}>
+            <GoTasklist className='text-[1rem]'/>
+              Tasks
+          </Button>
+          <Button className={`text-sm-body-desktop px-7 py-1 gap-2 ${tab === 2 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(1)}>
             <IoPerson className='text-[1rem]'/>
               Hồ sơ
           </Button>
-          <Button className={`text-sm-body-desktop px-7 py-1 gap-2 ${tab === 2 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(2)}>
+          <Button className={`text-sm-body-desktop px-7 py-1 gap-2 ${tab === 3 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(2)}>
             <FaShoppingBag className='text-[1rem]'/>
               Đơn hàng
           </Button>
-          <Button className={`text-sm-body-desktop px-7 py-1 gap-2 ${tab === 3 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(3)}>
+          <Button className={`text-sm-body-desktop px-7 py-1 gap-2 ${tab === 4 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(3)}>
             <FaTicketAlt className='text-[1rem]'/>
               Tickets
           </Button>

@@ -17,7 +17,7 @@ export default function useGetResolveMessage(staffId: string | null) {
     const fetchResolveMessage = async () => {
       if (!staffId) {
         toast.warning('Hãy đăng nhập để thực hiện chức năng')
-        // navigate(PUBLIC_PATH.LOGIN)
+        navigate(PUBLIC_PATH.LOGIN)
         return
       }
       try {
