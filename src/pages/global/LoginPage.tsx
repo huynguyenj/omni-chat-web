@@ -1,8 +1,9 @@
 import Logo from '@/assets/logo.jpg'
+import Button from '@/components/ui/button/Button'
 import Input from '@/components/ui/input/Input'
 import useLogin from '@/features/auth/hooks/useLogin'
 export default function LoginPage() {
-  const { errors, handleSubmit, onSubmit, register } = useLogin()
+  const { errors, handleSubmit, onSubmit, register, loading } = useLogin()
   return (
     <div className='w-screen h-screen flex items-center justify-center'>
       <div className='w-100 md:w-[60] xl:w-120 min-w-90 px-10 py-12 shadow-[0px_5px_10px_1px_rgba(0,0,0,0.2)] rounded-2xl'>
@@ -16,7 +17,9 @@ export default function LoginPage() {
             <Input {...register('username')} type='text' variant='gray' label='Email' placeholder='example@company.com' error={errors.username?.message}/>
             <Input {...register('password')} type='password' variant='gray' label='Mật khẩu' placeholder='123456789' error={errors.password?.message}/>
           </div>
-          <button className='py-2 px-3 text-center bg-secondary rounded-lg text-white font-semibold w-full hover:bg-secondary-hover cursor-pointer'>Đăng nhập</button>
+          <Button variant='default' className={`w-full ${loading && 'bg-soft-gray text-white'}`} disabled={loading ? true: false}>
+            Đăng nhập
+          </Button>
         </form>
       </div>
     </div>
