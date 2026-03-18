@@ -6,11 +6,14 @@ import { GiHamburgerMenu } from 'react-icons/gi'
 import { BsListTask } from 'react-icons/bs'
 import { CgDanger } from 'react-icons/cg'
 import { AnimatePresence, motion } from 'motion/react'
+import { useNavigate } from 'react-router'
+import { PRIVATE_PATH } from '@/router/path'
 
 export default function ChatNavbar() {
   const [tabChoice, setTabChoice] = useState(messageItem[0].name)
   const [isOpen, setIsOpen] = useState(false)
   const context = useContext(SelectionMessageContext)
+  const navigate = useNavigate()
   useEffect(() => {
     context?.handleChooseProviderName(tabChoice)
   }, [tabChoice])
@@ -40,14 +43,14 @@ export default function ChatNavbar() {
               initial={{ opacity: 0, y: -40, x: 10 }}
               animate={{ opacity: 1, y: 0, x: 0 }}
               exit={{ opacity: 0, y: -20, x: 10 }}
-              className='absolute flex flex-col gap-1 min-w-[250px] w-fit right-0 mt-1 py-2 px-1 rounded-[8px] shadow-[0px_1px_6px_0px_rgba(0,0,0,0.2)] bg-white'>
-              <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start'>
+              className='absolute flex flex-col gap-1 min-w-62.5 w-fit right-0 mt-1 py-2 px-1 rounded-lg shadow-[0px_1px_6px_0px_rgba(0,0,0,0.2)] bg-white'>
+              <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start font-normal' onClick={() => navigate(PRIVATE_PATH.TASK)}>
                 <BsListTask className='text-green-accent text-[1.2rem]'/>
                 Xem lịch sử tasks
               </Button>
-              <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start'>
+              <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start font-normal' onClick={() => navigate(PRIVATE_PATH.CLAIM)}>
                 <CgDanger className='text-[#FB2C36] text-[1.2rem]'/>
-                Xem lịch sử tasks
+                Tạo claim
               </Button>
             </motion.div>
           }
