@@ -20,7 +20,7 @@ export default function AdminDashboard() {
   return (
     // Provider boundary: everything inside can read/write dashboard state via `useAdminDashboard()`.
     <AdminDashboardProvider>
-      // Shell = consistent spacing + max width + background for the whole dashboard.
+      {/* // Shell = consistent spacing + max width + background for the whole dashboard.  */}
       <AdminDashboardShell>
         {/* Header = title + date range display (UI placeholder for now). */}
         <AdminDashboardHeader />

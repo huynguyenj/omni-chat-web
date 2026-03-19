@@ -1,10 +1,13 @@
-import Button from '@/components/ui/button/Button'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { useAdminDashboard } from '../hooks/useAdminDashboard'
-import { formatDateVi } from '../utils/date'
+import { fromDateInputValue, toDateInputValue } from '../utils/date'
 
 export default function AdminDashboardHeader() {
-  const { dateFrom, dateTo } = useAdminDashboard()
+  const { dateFrom, dateTo, setDateFrom, setDateTo } = useAdminDashboard()
+  const openNativeDatePicker = (input: HTMLInputElement) => {
+    // Chromium supports showPicker(); fallback keeps normal date input behavior.
+    ;(input as HTMLInputElement & { showPicker?: () => void }).showPicker?.()
+  }
 
   return (
     <div className="flex items-center justify-between mb-6">
@@ -15,15 +18,29 @@ export default function AdminDashboardHeader() {
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="w-[140px] justify-start text-left font-normal" type="button">
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {formatDateVi(dateFrom)}
-          </Button>
+          <label className="relative">
+            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3366CC] pointer-events-none" />
+            <input
+              type="date"
+              value={toDateInputValue(dateFrom)}
+              onChange={(e) => setDateFrom(fromDateInputValue(e.target.value))}
+              onClick={(e) => openNativeDatePicker(e.currentTarget)}
+              onFocus={(e) => openNativeDatePicker(e.currentTarget)}
+              className="w-[140px] pl-9 pr-2 py-2 rounded-md border border-[#3366CC] text-[#3366CC] bg-white focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30"
+            />
+          </label>
           <span className="text-gray-500">-</span>
-          <Button variant="outline" className="w-[140px] justify-start text-left font-normal" type="button">
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {formatDateVi(dateTo)}
-          </Button>
+          <label className="relative">
+            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3366CC] pointer-events-none" />
+            <input
+              type="date"
+              value={toDateInputValue(dateTo)}
+              onChange={(e) => setDateTo(fromDateInputValue(e.target.value))}
+              onClick={(e) => openNativeDatePicker(e.currentTarget)}
+              onFocus={(e) => openNativeDatePicker(e.currentTarget)}
+              className="w-[140px] pl-9 pr-2 py-2 rounded-md border border-[#3366CC] text-[#3366CC] bg-white focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30"
+            />
+          </label>
         </div>
       </div>
     </div>
