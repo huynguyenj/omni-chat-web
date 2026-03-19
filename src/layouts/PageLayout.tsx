@@ -5,7 +5,7 @@ export default function PageLayout() {
   return (
     <div className='min-h-screen'>
       <MainNavbar/>
-      <div>
+      <div className="pt-20 relative z-10">
         <Outlet/>
       </div>
       <div></div>

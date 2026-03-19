@@ -5,7 +5,7 @@ import { RxExit } from 'react-icons/rx'
 
 export default function MainNavbar() {
   return (
-    <div className="sticky flex items-center justify-between top-0 w-full h-20 bg-primary px-5">
+     <div className="sticky top-0 z-20 flex items-center justify-between w-full h-20 bg-primary px-5">
       <img src={Logo} alt="Logo" loading='lazy' className='w-10 h-10' />
       <nav className="flex items-center gap-6">
         <a href="/" className="text-white hover:underline">Home</a>

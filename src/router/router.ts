@@ -24,7 +24,7 @@ export const router = createBrowserRouter([
           }
         ]
       },
-      //admin & manager path để ở đây
+      //admin path để ở đây
       {
         path: '/admin',
         lazy: {
