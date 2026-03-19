@@ -44,9 +44,19 @@ export const AdminDashboardContext = createContext<AdminDashboardContextValue | 
 
 export function AdminDashboardProvider({ children }: PropsWithChildren) {
   // Centralized UI state for Admin Dashboard tabs/components.
-  // This mirrors the pattern used by `SelectionMessageProvider` in chat feature.
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(new Date(2026, 0, 1))
-  const [dateTo, setDateTo] = useState<Date | undefined>(new Date(2026, 1, 1))
+  const today = new Date()
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(firstDay)
+  const [dateTo, setDateTo] = useState<Date | undefined>(today)
+  const setSafeDateFrom = (d: Date | undefined) => {
+    if (d && dateTo && d > dateTo) return
+    setDateFrom(d)
+  }
+  
+  const setSafeDateTo = (d: Date | undefined) => {
+    if (d && dateFrom && d < dateFrom) return
+    setDateTo(d)
+  }
   const [activeTab, setActiveTab] = useState<AdminDashboardTab>('overview')
   const [addStaffDialogOpen, setAddStaffDialogOpen] = useState(false)
   const [editStaffDialogOpen, setEditStaffDialogOpen] = useState(false)
@@ -68,8 +78,8 @@ export function AdminDashboardProvider({ children }: PropsWithChildren) {
     return {
       dateFrom,
       dateTo,
-      setDateFrom,
-      setDateTo,
+      setDateFrom: setSafeDateFrom,
+      setDateTo: setSafeDateTo,
       activeTab,
       setActiveTab,
       addStaffDialogOpen,
@@ -85,9 +95,9 @@ export function AdminDashboardProvider({ children }: PropsWithChildren) {
   }, [activeTab, addStaffDialogOpen, dateFrom, dateTo, editStaffDialogOpen, selectedStaff, sortBy, sortOrder])
 
   return (
-    <AdminDashboardContext value={value}>
+    <AdminDashboardContext.Provider value={value}>
       {children}
-    </AdminDashboardContext>
+    </AdminDashboardContext.Provider>
   )
 }
 

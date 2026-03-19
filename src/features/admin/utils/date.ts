@@ -13,7 +13,8 @@ export function toDateInputValue(date: Date | undefined) {
 
 export function fromDateInputValue(value: string) {
   if (!value) return undefined
-  const parsed = new Date(`${value}T00:00:00`)
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+
+  const [y, m, d] = value.split('-').map(Number)
+  return new Date(y, m - 1, d) 
 }
 

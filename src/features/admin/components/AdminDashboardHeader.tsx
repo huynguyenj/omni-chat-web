@@ -18,7 +18,7 @@ export default function AdminDashboardHeader() {
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <label className="relative">
+          <div className="relative">
             <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3366CC] pointer-events-none" />
             <input
               type="date"
@@ -26,11 +26,11 @@ export default function AdminDashboardHeader() {
               onChange={(e) => setDateFrom(fromDateInputValue(e.target.value))}
               onClick={(e) => openNativeDatePicker(e.currentTarget)}
               onFocus={(e) => openNativeDatePicker(e.currentTarget)}
-              className="w-[140px] pl-9 pr-2 py-2 rounded-md border border-[#3366CC] text-[#3366CC] bg-white focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30"
+              className="w-[155px] pl-9 pr-3 py-2 rounded-md border border-[#3366CC] text-[#3366CC] bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30 [&::-webkit-calendar-picker-indicator]:opacity-0"
             />
-          </label>
+          </div>
           <span className="text-gray-500">-</span>
-          <label className="relative">
+          <div className="relative">
             <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3366CC] pointer-events-none" />
             <input
               type="date"
@@ -38,9 +38,9 @@ export default function AdminDashboardHeader() {
               onChange={(e) => setDateTo(fromDateInputValue(e.target.value))}
               onClick={(e) => openNativeDatePicker(e.currentTarget)}
               onFocus={(e) => openNativeDatePicker(e.currentTarget)}
-              className="w-[140px] pl-9 pr-2 py-2 rounded-md border border-[#3366CC] text-[#3366CC] bg-white focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30"
+              className="w-[155px] pl-9 pr-3 py-2 rounded-md border border-[#3366CC] text-[#3366CC] bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30 [&::-webkit-calendar-picker-indicator]:opacity-0"
             />
-          </label>
+          </div>
         </div>
       </div>
     </div>
