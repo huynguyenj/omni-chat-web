@@ -31,7 +31,7 @@ function TabButton({
     <Button
       onClick={() => setActiveTab(value)}
       className={`px-3 py-1 text-sm-body-desktop rounded-2xl flex items-center gap-2 ${
-        active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-200'
+        active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100'
       }`}
     >
       <Icon className="h-4 w-4" />
@@ -42,7 +42,7 @@ function TabButton({
 
 export default function ManagerDashboardTabs() {
   return (
-    <Card className='flex py-2 px-3 gap-2 w-fit mb-5'>
+    <Card className='flex py-2 px-3 gap-2 w-fit '>
       {tabs.map(t => (
         <TabButton key={t.value} value={t.value} label={t.label} Icon={t.Icon} />
       ))}

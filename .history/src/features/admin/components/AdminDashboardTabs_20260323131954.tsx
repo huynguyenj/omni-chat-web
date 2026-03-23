@@ -2,25 +2,24 @@ import type { ReactNode } from 'react'
 import { DollarSign, Users } from 'lucide-react'
 import { useAdminDashboard } from '../hooks/useAdminDashboard'
 import type { AdminDashboardTab } from '../context/AdminDashboardProvider'
-import Card from '@/components/ui/card/Card'
-import Button from '@/components/ui/button/Button'
 
 function TabButton({ value, children }: { value: AdminDashboardTab; children: ReactNode }) {
   const { activeTab, setActiveTab } = useAdminDashboard()
   const active = activeTab === value
   return (
-    <Button
+    <button
+      type="button"
       onClick={() => setActiveTab(value)}
-      className={`px-3 py-2 text-sm-body-desktop rounded-2xl ${active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-200'}`}
+      className={`px-4 py-2 text-sm rounded-md ${active ? 'bg-[#3366CC] text-white' : 'text-gray-700 hover:bg-gray-100'}`}
     >
       {children}
-    </Button>
+    </button>
   )
 }
 
 export default function AdminDashboardTabs() {
   return (
-    <Card className="flex py-2 px-3 gap-2 w-fit mb-5">
+    <div className="flex gap-2 mb-6 bg-white p-1 border border-gray-200 rounded-lg">
       <TabButton value="overview">Tổng quan</TabButton>
       <TabButton value="revenue">
         <span className="inline-flex items-center">
@@ -34,7 +33,7 @@ export default function AdminDashboardTabs() {
           Quản lý Staff
         </span>
       </TabButton>
-    </Card>
+    </div>
   )
 }
 

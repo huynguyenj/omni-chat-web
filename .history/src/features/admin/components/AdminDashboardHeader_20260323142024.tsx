@@ -1,3 +1,4 @@
+import { Calendar as CalendarIcon } from 'lucide-react'
 import { useAdminDashboard } from '../hooks/useAdminDashboard'
 import { fromDateInputValue, toDateInputValue } from '../utils/date'
 import Input from '@/components/ui/input/Input'
@@ -32,7 +33,7 @@ export default function AdminDashboardHeader() {
           </div>
           <span className="text-gray-500">-</span>
           <div className="relative">
-            {/* <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3366CC] pointer-events-none" /> */}
+            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3366CC] pointer-events-none" />
             <Input
               variant='gray'
               type="date"
@@ -40,7 +41,7 @@ export default function AdminDashboardHeader() {
               onChange={(e) => setDateTo(fromDateInputValue(e.target.value))}
               onClick={(e) => openNativeDatePicker(e.currentTarget)}
               onFocus={(e) => openNativeDatePicker(e.currentTarget)}
-              className="bg-white border border-border-primary"
+              className="w-[155px] pl-9 pr-3 py-2 rounded-md border border-[#3366CC] text-[#3366CC] bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30 [&::-webkit-calendar-picker-indicator]:opacity-0"
             />
           </div>
         </div>

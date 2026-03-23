@@ -11,7 +11,7 @@ function TabButton({ value, children }: { value: AdminDashboardTab; children: Re
   return (
     <Button
       onClick={() => setActiveTab(value)}
-      className={`px-3 py-2 text-sm-body-desktop rounded-2xl ${active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-200'}`}
+      className={`px-4 py-2 text-sm rounded-2xl ${active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-200'}`}
     >
       {children}
     </Button>

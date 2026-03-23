@@ -11,7 +11,7 @@ function TabButton({ value, children }: { value: AdminDashboardTab; children: Re
   return (
     <Button
       onClick={() => setActiveTab(value)}
-      className={`px-3 py-2 text-sm-body-desktop rounded-2xl ${active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-200'}`}
+      className={`px-4 py-1 text-sm rounded-2xl ${active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100'}`}
     >
       {children}
     </Button>
@@ -20,7 +20,7 @@ function TabButton({ value, children }: { value: AdminDashboardTab; children: Re
 
 export default function AdminDashboardTabs() {
   return (
-    <Card className="flex py-2 px-3 gap-2 w-fit mb-5">
+    <Card className="flex py-2 px-3 gap-3">
       <TabButton value="overview">Tổng quan</TabButton>
       <TabButton value="revenue">
         <span className="inline-flex items-center">

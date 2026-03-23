@@ -1,3 +1,4 @@
+import { Calendar as CalendarIcon } from 'lucide-react'
 import { useAdminDashboard } from '../hooks/useAdminDashboard'
 import { fromDateInputValue, toDateInputValue } from '../utils/date'
 import Input from '@/components/ui/input/Input'
@@ -32,7 +33,7 @@ export default function AdminDashboardHeader() {
           </div>
           <span className="text-gray-500">-</span>
           <div className="relative">
-            {/* <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3366CC] pointer-events-none" /> */}
+            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3366CC] pointer-events-none" />
             <Input
               variant='gray'
               type="date"

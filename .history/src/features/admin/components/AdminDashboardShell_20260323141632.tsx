@@ -2,9 +2,9 @@ import type { PropsWithChildren } from 'react'
 
 export default function AdminDashboardShell({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-screen bg-[#F5F7FA] px-30 py-2">
+    <div className="min-h-screen max-h-[130vh] bg-[#F5F7FA]">
       <div className="p-6">
-        <div className="w-full mx-auto">
+        <div className="max-w-7xl mx-auto">
           {children}
         </div>
       </div>

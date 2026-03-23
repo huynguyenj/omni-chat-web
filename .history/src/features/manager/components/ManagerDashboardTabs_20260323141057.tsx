@@ -31,7 +31,7 @@ function TabButton({
     <Button
       onClick={() => setActiveTab(value)}
       className={`px-3 py-1 text-sm-body-desktop rounded-2xl flex items-center gap-2 ${
-        active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-200'
+        active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100'
       }`}
     >
       <Icon className="h-4 w-4" />

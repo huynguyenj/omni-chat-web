@@ -3,7 +3,6 @@ import { AlertTriangle, ClipboardCheck, Package, ShoppingCart, Tag, Truck, Users
 import { useManagerDashboard } from '../hooks/useManagerDashboard'
 import type { ManagerDashboardTab } from '../context/ManagerDashboardProvider'
 import Card from '@/components/ui/card/Card'
-import Button from '@/components/ui/button/Button'
 
 const tabs: Array<{ value: ManagerDashboardTab; label: string; Icon: ComponentType<{ className?: string }> }> = [
   { value: 'staff', label: 'Nhân viên', Icon: Users },
@@ -28,21 +27,22 @@ function TabButton({
   const { activeTab, setActiveTab } = useManagerDashboard()
   const active = activeTab === value
   return (
-    <Button
+    <button
+      type="button"
       onClick={() => setActiveTab(value)}
-      className={`px-3 py-1 text-sm-body-desktop rounded-2xl flex items-center gap-2 ${
-        active ? 'bg-[#3366CC] text-white' : 'bg-transparent text-gray-700 hover:bg-gray-200'
+      className={`px-4 py-2 text-sm rounded-md flex items-center gap-2 ${
+        active ? 'bg-[#3366CC] text-white' : 'text-gray-700 hover:bg-gray-100'
       }`}
     >
       <Icon className="h-4 w-4" />
       {label}
-    </Button>
+    </button>
   )
 }
 
 export default function ManagerDashboardTabs() {
   return (
-    <Card className='flex py-2 px-3 gap-2 w-fit mb-5'>
+    <Card className="flex gap-2 mb-6 bg-white p-1 border border-gray-200 rounded-lg overflow-x-auto">
       {tabs.map(t => (
         <TabButton key={t.value} value={t.value} label={t.label} Icon={t.Icon} />
       ))}
