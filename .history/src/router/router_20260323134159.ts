@@ -33,7 +33,7 @@ export const router = createBrowserRouter([
         }
       },
       {
-        path: PRIVATE_PATH.MANAGER,
+        path: '/manager',
         lazy: {
           Component: async () => (await import('@/pages/manager/ManagerDashboard')).default
         }

@@ -5,6 +5,8 @@ import ManagerDashboardShell from '@/features/manager/components/ManagerDashboar
 import ManagerDashboardTabs from '@/features/manager/components/ManagerDashboardTabs'
 import { ManagerDashboardProvider } from '@/features/manager/context/ManagerDashboardProvider'
 
+// Manager dashboard route component (thin page).
+// This file should stay mostly "compose" like `AdminDashboard` and `ChatPage`.
 export default function ManagerDashboard() {
   return (
     <ManagerDashboardProvider>

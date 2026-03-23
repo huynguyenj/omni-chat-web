@@ -6,5 +6,5 @@ export const PRIVATE_PATH = {
   TASK: '/task',
   CLAIM: '/claim',
   MANAGER: '/manager',
-  ADMIN: '/admin'
+  
 }

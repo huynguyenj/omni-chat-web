@@ -27,13 +27,13 @@ export const router = createBrowserRouter([
       },
       //admin path để ở đây
       {
-        path: PRIVATE_PATH.ADMIN,
+        path: '/admin',
         lazy: {
           Component: async () => (await import('@/pages/admin/AdminDashboard')).default
         }
       },
       {
-        path: PRIVATE_PATH.MANAGER,
+        path: '/manager',
         lazy: {
           Component: async () => (await import('@/pages/manager/ManagerDashboard')).default
         }
