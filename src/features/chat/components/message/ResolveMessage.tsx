@@ -1,9 +1,9 @@
 import { useContext, useMemo } from 'react'
-import SelectionMessageContext from '../context/SelectionMessageProvider'
-import useGetResolveMessage from '../hooks/useGetResolveMessage'
+import SelectionMessageContext from '../../context/SelectionMessageProvider'
+import useGetResolveMessage from '../../hooks/useGetResolveMessage'
 import { useAuthStore } from '@/features/auth/store/auth-store'
-import AwaitMessageBox from './ui/AwaitMessageBox'
-import { getTimeHelper } from '../utils/time-helper'
+import AwaitMessageBox from '../ui/AwaitMessageBox'
+import { getTimeHelper } from '../../utils/time-helper'
 
 export default function ResolveMessage() {
   const context = useContext(SelectionMessageContext)

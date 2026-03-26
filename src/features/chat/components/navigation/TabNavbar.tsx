@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { navbarItems } from '../const/chat-navbar-item'
+import { navbarItems } from '../../const/chat-navbar-item'
 
 export default function TabNavbar() {
   const [tabChoice, setTabChoice] = useState(navbarItems[0].name.toLocaleLowerCase())

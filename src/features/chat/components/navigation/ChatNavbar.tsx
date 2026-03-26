@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
-import { messageItem } from '../const/chat-navbar-item'
-import SelectionMessageContext from '../context/SelectionMessageProvider'
+import { messageItem } from '../../const/chat-navbar-item'
+import SelectionMessageContext from '../../context/SelectionMessageProvider'
 import Button from '@/components/ui/button/Button'
 import { GiHamburgerMenu } from 'react-icons/gi'
 import { BsListTask } from 'react-icons/bs'

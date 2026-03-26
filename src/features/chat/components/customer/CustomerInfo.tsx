@@ -1,5 +1,5 @@
 import { FiCheckCircle } from 'react-icons/fi'
-import type { ConversationDetail } from '../types/message-type'
+import type { ConversationDetail } from '../../types/message-type'
 import { CiSearch } from 'react-icons/ci'
 import Button from '@/components/ui/button/Button'
 import { useState } from 'react'
@@ -7,11 +7,11 @@ import PopupBasic from '@/components/ui/popup/PopupBasic'
 import Input from '@/components/ui/input/Input'
 import CustomerProfile from './CustomerProfile'
 import CustomerOrder from './CustomerOrder'
-import Ticket from './Ticket'
+import Ticket from '../ticket/Ticket'
 import { IoPerson } from 'react-icons/io5'
 import { FaShoppingBag, FaTicketAlt } from 'react-icons/fa'
 import { GoTasklist } from 'react-icons/go'
-import TaskList from './TaskList'
+import TaskList from '../task/TaskList'
 
 type CustomerInfoType = Omit<Partial<ConversationDetail>, 'messages'>
 
