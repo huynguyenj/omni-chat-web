@@ -7,7 +7,7 @@ type SelectionBoxType = {
 
 export default function SelectionBox({ className, isChosen, ...props }: SelectionBoxType) {
   return (
-    <div className={cn(`flex justify-center items-center py-3 px-8 border-2 border-border-primary rounded-xl ${isChosen && 'border-secondary font-bold text-secondary bg-[#EFF6FF]'}`, className)} {...props}>
+    <div className={cn(`flex justify-center items-center py-3 px-8 border-2 border-border-primary rounded-xl ${isChosen && 'border-3 border-secondary font-medium text-secondary bg-[#EFF6FF]'}`, className)} {...props}>
     </div>
   )
 }
