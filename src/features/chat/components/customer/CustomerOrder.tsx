@@ -107,7 +107,7 @@ function OrderCard({ data, openRefund }: { data: CustomerOrderType, openRefund?:
         <p className="text-sm-body-desktop text-green-accent">{data.total}</p>
       </div>
       { data.status === 'Đã giao' && openRefund &&
-              <Button variant='outline' className='border-orange-400 text-orange-600 hover:bg-orange-50 hover:text-black' onClick={openRefund}>
+              <Button variant='outline' className='w-full my-3 border-orange-400 text-orange-600 hover:bg-orange-50 hover:text-black' onClick={openRefund}>
                 <FiRotateCcw className='size-4'/>
                 Yêu cầu hoàn tiền
               </Button>
