@@ -24,10 +24,10 @@ export default function MessageSection() {
   const [messages, setMessages] = useState<MessageType[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const messageEndRef = useRef<HTMLDivElement>(null)
+  // const [isConnected, setIsConnected] = useState(false)
   const [isCustomerOpen, setIsCustomerOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement | null>(null)
   const toggleBtnRef = useRef<HTMLButtonElement | null>(null)
-  // const [isConnected, setIsConnected] = useState(false)
   const connectionRef = useRef<signalr.HubConnection | null>(null)
   // Initialize SignalR connection once
   useEffect(() => {
@@ -130,12 +130,9 @@ export default function MessageSection() {
       const target = e.target as Node | null
       if (!target) return
 
-      // if not have this line when use feature of CustomerInfo it will run and close CustomerInfo, causing bug
       const clickedPanel = panelRef.current?.contains(target)
-      // this line use for if we not using button to close CustomerInfo component
       const clickedButton = toggleBtnRef.current?.contains(target)
 
-      // check if both button and CustomerInfo component are not use mouse to click or use then will close CustomerInfo
       if (!clickedPanel && !clickedButton) {
         setIsCustomerOpen(false)
       }
@@ -161,7 +158,7 @@ export default function MessageSection() {
                   <p className='text-[0.95rem]'>Đang hoạt động</p>
                 </div>
               </div>
-              <Button onClick={handleCustomerInfoOpen} className={`${isCustomerOpen ? 'bg-secondary text-white' : 'bg-white text-black'} hover:text-white`}>
+              <Button ref={toggleBtnRef} onClick={handleCustomerInfoOpen} className={`${isCustomerOpen ? 'bg-secondary text-white' : 'bg-white text-black'} hover:text-white`}>
                 {isCustomerOpen ?
                   <TbLayoutSidebarLeftExpandFilled className='size-5'/>
                   :
