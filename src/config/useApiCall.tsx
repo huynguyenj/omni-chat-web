@@ -17,7 +17,7 @@ type UseApiCallType = {
 
 export default function useApiCall<T>() {
   const [loading, setLoading] = useState(false)
-  const apiMethodSelect = ({ apiUrl, method, type, body }: UseApiCallType): Promise<ApiResponseStructure<T>> => {
+  const apiMethodSelect = ({ apiUrl, method, type='public', body }: UseApiCallType): Promise<ApiResponseStructure<T>> => {
     switch (method) {
     case 'post':
       if (type === 'private') return apiPrivate.post(apiUrl, body)
@@ -48,7 +48,7 @@ export default function useApiCall<T>() {
     } catch (error) {
       console.log(error)
       data = null as unknown as T
-      errorResponse = ''
+      errorResponse = 'error'
     } finally {
       setLoading(false)
     }

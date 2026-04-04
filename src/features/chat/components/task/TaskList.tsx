@@ -20,6 +20,8 @@ const taskList: TaskType[] = [
 ]
 
 export default function TaskList() {
+  console.log(taskList.length === 0 ? "true" : "false");
+  
   return (
     <div>
       <p className='text-sm-body-desktop font-medium text-primary'>Task được giao</p>
@@ -47,19 +49,19 @@ export default function TaskList() {
       </div>
       <Alert variant={taskList.length === 0 ? 'success' : 'info'}>
         { taskList.length === 0 ?
-          <div>
-            <RiErrorWarningLine size={3} className='text-secondary'/>
-            <div className='flex items-center gap-3'>
-              <p className='text-sm-body-desktop font-medium'>Còn {taskList.length} tasks chưa hoàn thành</p>
-              <p className='text-[0.85rem] text-soft-gray'>Hoàn thành tất cả để đóng conversation</p>
+          <div className='flex items-center gap-3'>
+            <IoMdCheckmarkCircleOutline className='size-7'/>
+            <div>
+              <p className='text-sm-body-desktop font-medium'>Tất cả tasks đã hoàn thành</p>
+              <p className='text-[0.85rem] text-soft-gray'>Bạn có thể đóng conversation này</p>
             </div>
           </div>
           :
           <div className='flex items-center gap-3'>
-            <IoMdCheckmarkCircleOutline size={3}/>
+            <RiErrorWarningLine className='text-secondary size-7'/>
             <div>
-              <p className='text-sm-body-desktop font-medium'>Tất cả tasks đã hoàn thành</p>
-              <p className='text-[0.85rem] text-soft-gray'>Bạn có thể đóng conversation này</p>
+              <p className='text-sm-body-desktop font-medium'>Còn {taskList.length} tasks chưa hoàn thành</p>
+              <p className='text-[0.85rem] text-soft-gray'>Hoàn thành tất cả để đóng conversation</p>
             </div>
           </div>
         }

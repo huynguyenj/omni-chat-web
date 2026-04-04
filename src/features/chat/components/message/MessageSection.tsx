@@ -11,6 +11,12 @@ import Button from '@/components/ui/button/Button'
 import Input from '@/components/ui/input/Input'
 import { signalrConnection } from '../../config/signalr'
 import Logo from '@/assets/logo.jpg'
+import * as signalr from '@microsoft/signalr'
+import { toast } from 'react-toastify'
+import { TbLayoutSidebarRightExpandFilled } from 'react-icons/tb'
+import { TbLayoutSidebarLeftExpandFilled } from 'react-icons/tb'
+import { AnimatePresence, motion } from 'motion/react'
+
 export default function MessageSection() {
   const context = useContext(SelectionMessageContext)
   const staffId = useAuthStore((state) => state.staffId)
@@ -19,13 +25,22 @@ export default function MessageSection() {
   const inputRef = useRef<HTMLInputElement>(null)
   const messageEndRef = useRef<HTMLDivElement>(null)
   // const [isConnected, setIsConnected] = useState(false)
-  const connectionRef = useRef(signalrConnection('supportConversationHub'))
+  const [isCustomerOpen, setIsCustomerOpen] = useState(false)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const toggleBtnRef = useRef<HTMLButtonElement | null>(null)
+  const connectionRef = useRef<signalr.HubConnection | null>(null)
   // Initialize SignalR connection once
   useEffect(() => {
-    const connection = connectionRef.current
 
-    if (!context?.conversationId || !connection) return
-
+    if (!context?.conversationId) return
+    const prevConnection = connectionRef.current
+    if (prevConnection) {
+      prevConnection.off('CustomerReceiveMessage')
+      prevConnection.stop()
+      connectionRef.current = null
+    }
+    const connection = signalrConnection('supportConversationHub')
+    connectionRef.current = connection
     const startConnection = async () => {
       try {
         await connection.start()
@@ -51,6 +66,7 @@ export default function MessageSection() {
     return () => {
       connection.off('CustomerReceiveMessage')
       connection.stop()
+      connectionRef.current = null
       // setIsConnected(false)
     }
   }, [context?.conversationId])
@@ -77,6 +93,10 @@ export default function MessageSection() {
     const time = new Date().getTime()
     if (!staffId) return
     const connection = connectionRef.current
+    if (connection === null) {
+      toast.error('Lỗi kết nối hãy thử lại')
+      return
+    }
     if (value) {
       const newMessage: MessageType = {
         content: value,
@@ -103,21 +123,52 @@ export default function MessageSection() {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useEffect(() => {
+    if (!isCustomerOpen) return
+
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null
+      if (!target) return
+
+      const clickedPanel = panelRef.current?.contains(target)
+      const clickedButton = toggleBtnRef.current?.contains(target)
+
+      if (!clickedPanel && !clickedButton) {
+        setIsCustomerOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [isCustomerOpen])
+
+  const handleCustomerInfoOpen = () => {
+    setIsCustomerOpen((prev) => !prev)
+  }
   return (
-    <div className='h-full flex'>
+    <div className='h-full flex overflow-x-hidden'>
       {context?.conversationId ?
         <>
           <div className='flex-2 border-r border-gray-200'>
-            <div className='flex items-center gap-3 border-b border-gray-200 py-4 px-5'>
-              <img src={conversationDetail?.avartarUrl ?? Avatar} alt="avatar" className='w-12 h-12 rounded-full'/>
-              <div>
-                <p className='text-sm-body-desktop'>{conversationDetail?.customerName}</p>
-                <p className='text-[0.95rem]'>Đang hoạt động</p>
+            <div className='flex items-center justify-between gap-3 border-b border-gray-200 py-4 px-10'>
+              <div className='flex gap-2 items-center'>
+                <img src={conversationDetail?.avartarUrl ?? Avatar} alt="avatar" className='w-12 h-12 rounded-full'/>
+                <div>
+                  <p className='text-sm-body-desktop'>{conversationDetail?.customerName}</p>
+                  <p className='text-[0.95rem]'>Đang hoạt động</p>
+                </div>
               </div>
+              <Button ref={toggleBtnRef} onClick={handleCustomerInfoOpen} className={`${isCustomerOpen ? 'bg-secondary text-white' : 'bg-white text-black'} hover:text-white`}>
+                {isCustomerOpen ?
+                  <TbLayoutSidebarLeftExpandFilled className='size-5'/>
+                  :
+                  <TbLayoutSidebarRightExpandFilled className='size-5'/>
+                }
+              </Button>
             </div>
             <div className='bg-[#F5F7FA] overflow-y-auto h-[70%] py-7 px-5'>
               {messages.map((message) => (
-                <div className={`mt-5 flex ${message.senderType !== 'Customer' && 'justify-end'}`}>
+                <div key={message.timestamp} className={`mt-5 flex ${message.senderType !== 'Customer' && 'justify-end'}`}>
                   <ChatMessageBox
                     message={message.content}
                     sender={message.senderType.toLocaleLowerCase()}
@@ -136,13 +187,21 @@ export default function MessageSection() {
               </Button>
             </div>
           </div>
-          <div className='flex-1'>
-            <CustomerInfo
-              customerName={conversationDetail?.customerName}
-              activeCustomerId={conversationDetail?.activeStaffId}
-              avartarUrl={conversationDetail?.avartarUrl}
-            />
-          </div>
+          <AnimatePresence>
+            { isCustomerOpen &&
+            <motion.div
+              ref={panelRef}
+              initial={{ x:100 }}
+              animate={{ x:0 }}
+              className='md:flex-1 xl:flex-1.5 right-0 bg-white lg:block z-10'>
+              <CustomerInfo
+                customerName={conversationDetail?.customerName}
+                activeCustomerId={conversationDetail?.activeStaffId}
+                avartarUrl={conversationDetail?.avartarUrl}
+              />
+            </motion.div>
+            }
+          </AnimatePresence>
         </>
         :
         <div className='w-full flex flex-col items-center justify-center'>

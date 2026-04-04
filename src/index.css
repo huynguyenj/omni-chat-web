@@ -62,6 +62,7 @@
       --color-soft-gray: var(--soft-gray);
       --color-border-primary: var(--border-primary);
       --color-border-secondary: var(--border-secondary);
+      --color-graphite: var(--graphite);
       /**Desktop**/
       --text-xl-title-desktop: var(--text-xl-title-desktop);
       --text-m-title-desktop: var(--text-m-title-desktop);

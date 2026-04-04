@@ -5,7 +5,7 @@ import { SelectionMessageProvider } from '@/features/chat/context/SelectionMessa
 
 export default function ChatPage() {
   return (
-    <div>
+    <div className='overflow-x-hidden'>
       <SelectionMessageProvider>
         <ChatNavbar/>
         <div className='flex h-[calc(100vh-8.75rem)]'>

@@ -21,6 +21,8 @@ import Checkbox from '@/components/ui/input/Checkbox'
 import { ScrollArea } from '@/components/ui/scrollbar/ScrollArea'
 import OrderReview from '../order/OrderReview'
 import { IoMdCheckmarkCircleOutline } from 'react-icons/io'
+import { FiRotateCcw } from 'react-icons/fi'
+import Alert from '@/components/ui/alert/Alert'
 
 
 function ProductButton({ productData }: { productData: ProductType}) {
@@ -62,9 +64,14 @@ function ProductButton({ productData }: { productData: ProductType}) {
 }
 
 function OrderHistoryButton({ orderHistoryData }: { orderHistoryData: OrderType }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const handleOpen = () => {
-    setIsOpen((prev) => !prev)
+  const [isHistoryOrderOpen, setIsHistoryOrderOpen] = useState(false)
+  const [isRefundOrderOpen, setRefundOrderOpen] = useState(false)
+
+  const handleHistoryOrderOpen = () => {
+    setIsHistoryOrderOpen((prev) => !prev)
+  }
+  const handleRefundOrderOpen = () => {
+    setRefundOrderOpen((prev) => !prev)
   }
   const tag = (status: string) => {
     switch (status) {
@@ -75,13 +82,13 @@ function OrderHistoryButton({ orderHistoryData }: { orderHistoryData: OrderType 
   }
   return (
     <>
-      <Button variant='outline' className='rounded-2xl py-2 border border-border-secondary hover:bg-secondary hover:text-white hover:border-none gap-2' onClick={handleOpen}>
+      <Button variant='outline' className='rounded-2xl py-2 border border-border-secondary hover:bg-secondary hover:text-white hover:border-none gap-2' onClick={handleHistoryOrderOpen}>
         <MdHistory className='text-[1.25rem]'/>
         Lịch sử đơn hàng
       </Button>
       <AnimatePresence>
-        { isOpen &&
-            <PopupBasic title='Thông tin sản phẩm' onClose={handleOpen}>
+        { isHistoryOrderOpen &&
+            <PopupBasic title='Thông tin sản phẩm' onClose={handleHistoryOrderOpen}>
               <p className='text-gray-400'>Lịch sử mua hàng của khách hàng</p>
               <Card className='mt-3'>
                 <div className="flex items-center justify-between">
@@ -97,9 +104,48 @@ function OrderHistoryButton({ orderHistoryData }: { orderHistoryData: OrderType 
                   <p className="text-sm-body-desktop text-primary font-bold">{orderHistoryData.totalAmount.toLocaleString('vi-VN')}đ</p>
                 </div>
               </Card>
+              {orderHistoryData.orderStatus === 'Đã giao' &&
+              <Button variant='outline' className='text-sm-body-desktop border-orange-400 text-orange-600 hover:bg-orange-50 hover:text-black w-full' onClick={handleRefundOrderOpen}>
+                <FiRotateCcw className='size-4'/>
+                Yêu cầu hoàn tiền
+              </Button>
+              }
             </PopupBasic>
         }
       </AnimatePresence>
+      {isRefundOrderOpen &&
+            <AnimatePresence>
+              <PopupBasic title='Yêu cầu hoàn tiền' onClose={handleRefundOrderOpen}>
+                <p className='text-sm-body-desktop text-soft-gray mb-3'>Đơn hàng {orderHistoryData.orderId} - {orderHistoryData.totalAmount}</p>
+                <Card className='my-3 bg-[#F5F7FA] rounded-[10px]'>
+                  <div className="flex items-center justify-between my-2">
+                    <p className='text-sm-body-desktop text-primary font-bold'>{orderHistoryData.orderId}</p>
+                    {tag(orderHistoryData.orderStatus)}
+                  </div>
+                  <p className='text-sm-body-desktop text-soft-gray'>{orderHistoryData.orderName}</p>
+                  <p className='text-sm-body-desktop text-soft-gray'>Ngày đặt: {}</p>
+                  <p className='text-sm-body-desktop text-primary font-bold'>Tổng tiền: <span className='text-green-accent'>{orderHistoryData.totalAmount}</span></p>
+                </Card>
+                <label htmlFor="reason" className='text-sm-body-desktop text-soft-gray'>Lý do hoàn tiền <span className='text-red-500'>*</span></label>
+                <Input variant='gray' type='text' placeholder='Nhập lý do hoàn tiền' id='reason'/>
+                <label htmlFor="refundAmount" className='text-sm-body-desktop text-soft-gray'>Số tiền hoàn trả (VND)<span className='text-red-500'>*</span></label>
+                <Input variant='gray' type='number' placeholder={`$Tối đa: ${orderHistoryData.totalAmount}`} id='refundAmount'/>
+                <p className='text-[0.85rem] text-soft-gray'>Số tiền tối đa có thể hoàn: <span className='text-primary font-bold'>{orderHistoryData.totalAmount}</span></p>
+                <Alert variant='danger'>
+                  <p className='text-[0.9rem]'>Yêu cầu hoàn tiền sẽ được gửi cho quản lí để xem xét và phê duyệt. Vui lòng điền đầy đủ thông tin</p>
+                </Alert>
+                <div className='flex items-center gap-3 my-3'>
+                  <Button variant='outline'>
+                  Hủy
+                  </Button>
+                  <Button className='bg-orange-600 hover:bg-orange-700 text-white'>
+                    <FiRotateCcw className='size-4'/>
+                  Yêu cầu hoàn tiền
+                  </Button>
+                </div>
+              </PopupBasic>
+            </AnimatePresence>
+      }
     </>
   )
 }
