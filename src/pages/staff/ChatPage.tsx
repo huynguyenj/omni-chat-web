@@ -1,11 +1,11 @@
-import ChatNavbar from '@/features/chat/components/ChatNavbar'
-import MessageSection from '@/features/chat/components/MessageSection'
-import ResolveMessage from '@/features/chat/components/ResolveMessage'
+import ChatNavbar from '@/features/chat/components/navigation/ChatNavbar'
+import MessageSection from '@/features/chat/components/message/MessageSection'
+import ResolveMessage from '@/features/chat/components/message/ResolveMessage'
 import { SelectionMessageProvider } from '@/features/chat/context/SelectionMessageProvider'
 
 export default function ChatPage() {
   return (
-    <div>
+    <div className='overflow-x-hidden'>
       <SelectionMessageProvider>
         <ChatNavbar/>
         <div className='flex h-[calc(100vh-8.75rem)]'>

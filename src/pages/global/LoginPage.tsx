@@ -5,8 +5,8 @@ import useLogin from '@/features/auth/hooks/useLogin'
 export default function LoginPage() {
   const { errors, handleSubmit, onSubmit, register, loading } = useLogin()
   return (
-    <div className='w-screen h-screen flex items-center justify-center'>
-      <div className='w-100 md:w-[60] xl:w-120 min-w-90 px-10 py-12 shadow-[0px_5px_10px_1px_rgba(0,0,0,0.2)] rounded-2xl'>
+    <div className='w-screen h-screen flex items-center justify-center bg-graphite'>
+      <div className='w-100 md:w-[60] xl:w-120 min-w-90 px-10 py-12 border border-border-primary shadow-[0px_8px_10px_1px_rgba(0,0,0,0.1)] rounded-2xl bg-white'>
         <div className='flex flex-col items-center mb-12'>
           <img src={Logo} alt="Logo" className='w-15 h-15 mb-5'/>
           <p className='text-m-body-desktop font-semibold text-primary'>Đăng nhập vào OmniChat</p>

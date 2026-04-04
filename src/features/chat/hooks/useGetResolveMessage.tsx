@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import type { ResolveMessageType } from '../types/message-type'
 import { chatApi } from '../api/chat-api'
 import { signalrConnection } from '../config/signalr'
@@ -6,11 +6,14 @@ import SelectionMessageContext from '../context/SelectionMessageProvider'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router'
 import { PUBLIC_PATH } from '@/router/path'
+import * as signalr from '@microsoft/signalr'
+
 // import SelectionMessageContext from '../context/SelectionMessageProvider'
 
 export default function useGetResolveMessage(staffId: string | null) {
   const [resolveMessageTab, setResolveMessageTab] = useState<ResolveMessageType[]>([])
   const context = useContext(SelectionMessageContext)
+  const connectionRef = useRef<signalr.HubConnection | null>(null)
   const navigate = useNavigate()
   // const context = useContext(SelectionMessageContext)
   useEffect(() => {
@@ -33,7 +36,14 @@ export default function useGetResolveMessage(staffId: string | null) {
 
   //set up signalr
   useEffect(() => {
+    const prevConnection = connectionRef.current
+    if (prevConnection) {
+      prevConnection.off('SidebarUpdated')
+      prevConnection.stop()
+      connectionRef.current = null
+    }
     const newConnection = signalrConnection('supportConversationHub')
+    connectionRef.current = newConnection
     if (newConnection) {
       newConnection.start().then(() => {
         console.log('connected')
@@ -63,7 +73,9 @@ export default function useGetResolveMessage(staffId: string | null) {
         .catch(err => console.log('Signalr connected fail', err))
     }
     return () => {
-      if (newConnection) newConnection.stop()
+      newConnection.off('SidebarUpdated')
+      newConnection.stop()
+      connectionRef.current = null
     }
   }, [context?.providerName])
   return { resolveMessageTab }

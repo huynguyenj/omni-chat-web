@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../cn'
 
 const tagVariants = cva(
-  'rounded-[10px] flex items-center justify-center font-medium',
+  'text-sm-body-desktop rounded-[10px] flex items-center justify-center font-medium',
   {
     variants: {
       variant: {

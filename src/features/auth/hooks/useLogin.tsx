@@ -25,6 +25,8 @@ export default function useLogin() {
       type: 'public',
       body: formData
     })
+    const error = apiData.error
+    if (error) return
     const { accessToken, role, accountId, staffId } = apiData.data
     addAuthStore(accessToken, accountId, staffId, role)
     navigate(PRIVATE_PATH.CHAT)

@@ -3,7 +3,7 @@ import React from 'react'
 import { cn } from '../cn'
 
 const alertVariant = cva(
-  'rounded-2xl outline-none  border',
+  'rounded-2xl outline-none border',
   {
     variants: {
       variant: {

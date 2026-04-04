@@ -1,6 +1,6 @@
 import type { Recommendation } from '../../types/system-recommendation-type'
 import { getTimeHelper } from '../../utils/time-helper'
-import SystemRecommendation from '../SystemRecommendation'
+import SystemRecommendation from '../message/SystemRecommendation'
 
 type ChatMessageBoxType = {
   message: string
