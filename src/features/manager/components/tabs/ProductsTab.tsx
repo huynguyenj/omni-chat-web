@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CheckCircle, Package, Tag as TagIcon, Warehouse } from 'lucide-react'
+import { Package, Tag as TagIcon } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'

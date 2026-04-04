@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CheckCircle, Clock, Eye, Truck, Plus, MapPin, Phone, Package, Eye as EyeIcon } from 'lucide-react'
+import { CheckCircle, Clock, Truck, Plus, MapPin, Phone } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'

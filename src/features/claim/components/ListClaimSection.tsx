@@ -1,6 +1,5 @@
 import Card from '@/components/ui/card/Card'
 import Tag from '@/components/ui/tag/Tag'
-import React from 'react'
 import { IoDocumentTextOutline } from 'react-icons/io5'
 import { MdOutlineCalendarToday } from 'react-icons/md'
 

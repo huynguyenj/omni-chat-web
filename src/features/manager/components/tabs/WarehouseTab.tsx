@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle, Package, Warehouse as WarehouseIcon } from 'lucide-react'
+import { AlertTriangle, Package, Warehouse as WarehouseIcon } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
-import { ITEMS_PER_PAGE, PRODUCTS_WITH_BATCHES, type ManagerProduct, type ManagerBatch } from '../../data/manager-dashboard-data'
+import { ITEMS_PER_PAGE, PRODUCTS_WITH_BATCHES, type ManagerBatch } from '../../data/manager-dashboard-data'
 
 const batchStatusToVariant = (batch: ManagerBatch) => {
   if (batch.status === 'active') return 'success' as const
@@ -71,7 +71,7 @@ export default function WarehouseTab() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-[#003366] line-clamp-1">{product.name}</h3>
-                    <Tag variant="secondary" size="sm" className="text-[10px] h-4 px-2" />
+                    <Tag variant="primary" size="sm" className="text-[10px] h-4 px-2" />
                   </div>
 
                   <div className="flex items-center justify-between py-2 border-y border-gray-50">

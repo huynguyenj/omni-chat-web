@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Calendar, Package, Phone, ShoppingCart, Users } from 'lucide-react'
+import { Calendar, Phone, ShoppingCart } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
