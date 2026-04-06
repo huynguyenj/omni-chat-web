@@ -1,197 +1,183 @@
+import { useState } from 'react'
 import Card from '@/components/ui/card/Card'
-import { KEY_STATS, ISSUES_TRENDING_DATA, ORDER_STATUS_DATA, ORDERS_OVER_TIME, TOP_ISSUES, WAREHOUSE_BY_CATEGORY } from '@/components/admin/admin-dashboard-data'
-import { CheckCircle, Package, Tag as TagIcon, Clock, TrendingDown, TrendingUp, Warehouse } from 'lucide-react'
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import Select from '@/components/ui/select/Select'
+import { MILK_CHART_COLORS, MILK_QUANTITY_BY_MONTH, MONTH_OPTIONS, ORDER_STATS_BY_MONTH, SERVICE_STATS_BY_MONTH } from '@/components/admin/admin-dashboard-data'
+import { CheckCircle, Clock, Milk, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 export default function OverviewTab() {
-  // Overview tab: KPI cards + issue trends + order status distribution + warehouse + orders timeline.
+  const [selectedServiceMonth, setSelectedServiceMonth] = useState('2026-01')
+  const [selectedOrderMonth, setSelectedOrderMonth] = useState('2026-01')
+
+  const currentOrderStats = ORDER_STATS_BY_MONTH[selectedOrderMonth as keyof typeof ORDER_STATS_BY_MONTH]
+
+  const totalProducts = Object.values(MILK_QUANTITY_BY_MONTH).reduce((sum, months) => {
+    const latest = months[months.length - 1]
+    return sum + latest['Có đường'] + latest['Không đường'] + latest.Yogurt
+  }, 0)
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {KEY_STATS.map((stat, index) => {
-          const Icon =
-            stat.icon === 'Package'
-              ? Package
-              : stat.icon === 'CheckCircle'
-                ? CheckCircle
-                : stat.icon === 'Clock'
-                  ? Clock
-                  : TagIcon
-          return (
-            <Card
-              key={index}
-              className="p-5 hover:shadow-lg transition-shadow border-l-4"
-              style={{ borderLeftColor: stat.color }}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-3 rounded-lg" style={{ backgroundColor: stat.bgColor }}>
-                  <Icon className="h-6 w-6" style={{ color: stat.color }} />
-                </div>
-                {stat.trend === 'up' && <TrendingUp className="h-5 w-5 text-[#2ECC71]" />}
-                {stat.trend === 'down' && <TrendingDown className="h-5 w-5 text-red-500" />}
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">{stat.title}</h3>
-              <div className="flex items-baseline gap-2">
-                <p className="text-3xl font-bold" style={{ color: stat.color }}>
-                  {stat.value}
-                </p>
-                <span className="text-sm text-gray-500">{stat.subtitle}</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">{stat.change}</p>
-            </Card>
-          )
-        })}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <div className="mb-4">
-            <h3 className="text-[#003366] text-lg font-semibold">Vấn đề khách hàng đề cập</h3>
-            <p className="text-sm text-gray-500">Theo dõi các vấn đề phổ biến theo thời gian</p>
+        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#3366CC]">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 rounded-lg bg-[#EBF1FF]">
+              <Milk className="h-6 w-6 text-[#3366CC]" />
+            </div>
+            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={ISSUES_TRENDING_DATA}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" stroke="#666" fontSize={12} />
-              <YAxis stroke="#666" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px'
-                }}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="Sản phẩm" stroke="#3366CC" strokeWidth={2} dot={{ fill: '#3366CC' }} />
-              <Line type="monotone" dataKey="Đơn hàng" stroke="#2ECC71" strokeWidth={2} dot={{ fill: '#2ECC71' }} />
-              <Line type="monotone" dataKey="Giá" stroke="#FF9800" strokeWidth={2} dot={{ fill: '#FF9800' }} />
-              <Line type="monotone" dataKey="Đổi trả" stroke="#F44336" strokeWidth={2} dot={{ fill: '#F44336' }} />
-            </LineChart>
-          </ResponsiveContainer>
+          <h3 className="text-sm text-gray-600 mb-1">Tổng sản phẩm sữa</h3>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-bold text-[#3366CC]">{totalProducts}</p>
+            <span className="text-sm text-gray-500">sản phẩm</span>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">+15 tuần này</p>
         </Card>
 
-        <Card className="p-6">
-          <div className="mb-4">
-            <h3 className="text-[#003366] text-lg font-semibold">Phân bổ trạng thái đơn hàng</h3>
-            <p className="text-sm text-gray-500">Tổng quan các trạng thái đơn</p>
+        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#2ECC71]">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 rounded-lg bg-[#E8F8F0]">
+              <CheckCircle className="h-6 w-6 text-[#2ECC71]" />
+            </div>
+            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={ORDER_STATUS_DATA}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }: { name: string; percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {ORDER_STATUS_DATA.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <div className="mb-4">
-            <h3 className="text-[#003366] text-lg font-semibold">Vấn đề phổ biến nhất</h3>
-            <p className="text-sm text-gray-500">Top 5 vấn đề được đề cập nhiều</p>
+          <h3 className="text-sm text-gray-600 mb-1">Đơn hàng thành công</h3>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-bold text-[#2ECC71]">{currentOrderStats.successful}</p>
+            <span className="text-sm text-gray-500">đơn hàng</span>
           </div>
-          <div className="space-y-3">
-            {TOP_ISSUES.map((issue, index) => (
-              <div key={index} className="flex items-center gap-4 p-3 bg-[#F5F7FA] rounded-lg">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#3366CC] text-white font-semibold text-sm">
-                  {index + 1}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-semibold text-[#003366]">{issue.keyword}</h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[#2F3542]">{issue.count}</span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs text-white ${
-                          issue.trend === 'up' ? 'bg-[#2ECC71]' : issue.trend === 'down' ? 'bg-red-500' : 'bg-gray-400'
-                        }`}
-                      >
-                        {issue.change}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-[#3366CC] h-2 rounded-full transition-all" style={{ width: `${issue.percentage}%` }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className="text-xs text-gray-500 mt-2">Tháng {selectedOrderMonth}</p>
         </Card>
 
-        <Card className="p-6">
-          <div className="mb-4">
-            <h3 className="text-[#003366] text-lg font-semibold">Tồn kho theo danh mục</h3>
-            <p className="text-sm text-gray-500">Phân bổ sản phẩm trong kho</p>
+        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#FF9800]">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 rounded-lg bg-[#FFF3E0]">
+              <Clock className="h-6 w-6 text-[#FF9800]" />
+            </div>
           </div>
-          <div className="space-y-3">
-            {WAREHOUSE_BY_CATEGORY.map((category, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-[#F5F7FA] rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Warehouse className="h-8 w-8 text-[#3366CC]" />
-                  <div>
-                    <h4 className="font-semibold text-[#003366]">{category.category}</h4>
-                    <p className="text-sm text-gray-500">{category.quantity} sản phẩm</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-[#2ECC71]">{category.value}</p>
-                  {category.trend === 'up' && (
-                    <p className="text-xs text-[#2ECC71] flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      Tăng
-                    </p>
-                  )}
-                  {category.trend === 'down' && (
-                    <p className="text-xs text-red-500 flex items-center gap-1">
-                      <TrendingDown className="h-3 w-3" />
-                      Giảm
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
+          <h3 className="text-sm text-gray-600 mb-1">Chưa thanh toán</h3>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-bold text-[#FF9800]">{currentOrderStats.pending}</p>
+            <span className="text-sm text-gray-500">đơn hàng</span>
           </div>
+          <p className="text-xs text-gray-500 mt-2">Tháng {selectedOrderMonth}</p>
+        </Card>
+
+        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#F44336]">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 rounded-lg bg-[#FFEBEE]">
+              <XCircle className="h-6 w-6 text-[#F44336]" />
+            </div>
+            <TrendingDown className="h-5 w-5 text-[#F44336]" />
+          </div>
+          <h3 className="text-sm text-gray-600 mb-1">Đơn bị hủy</h3>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-bold text-[#F44336]">{currentOrderStats.cancelled}</p>
+            <span className="text-sm text-gray-500">đơn hàng</span>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Tháng {selectedOrderMonth}</p>
         </Card>
       </div>
 
       <Card className="p-6">
-        <div className="mb-4">
-          <h3 className="text-[#003366] text-lg font-semibold">Đơn hàng theo thời gian</h3>
-          <p className="text-sm text-gray-500">Biểu đồ đơn hàng trong tuần qua</p>
+        <div className="mb-6">
+          <h3 className="text-[#003366] text-lg font-semibold">Số lượng sữa theo loại và tháng</h3>
+          <p className="text-sm text-gray-500">Biểu đồ số lượng từng loại sữa theo từng dung tích</p>
         </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={ORDERS_OVER_TIME}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="date" stroke="#666" fontSize={12} />
-            <YAxis stroke="#666" fontSize={12} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'white',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px'
-              }}
-            />
-            <Legend />
-            <Bar dataKey="Thành công" fill="#2ECC71" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Chờ thanh toán" fill="#FF9800" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Đã hủy" fill="#F44336" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Object.entries(MILK_QUANTITY_BY_MONTH).map(([capacity, data]) => (
+            <Card key={capacity} className="p-4 border border-[#3366CC]/20 bg-gradient-to-br from-white to-blue-50">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-[#003366] rounded-lg">
+                  <Milk className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#003366]">Sữa {capacity}</h4>
+                  <p className="text-xs text-gray-500">Số lượng theo tháng (T01 - T06/2026)</p>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={data} barCategoryGap="25%" barGap={2}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" stroke="#666" fontSize={11} />
+                  <YAxis stroke="#666" fontSize={11} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Bar dataKey="Có đường" name="Có đường" fill={MILK_CHART_COLORS['Có đường']} radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Không đường" name="Không đường" fill={MILK_CHART_COLORS['Không đường']} radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Yogurt" name="Yogurt" fill={MILK_CHART_COLORS.Yogurt} radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          ))}
+        </div>
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-[#003366] text-lg font-semibold">Dịch vụ phổ biến</h3>
+              <p className="text-sm text-gray-500">Thống kê các loại dịch vụ theo tháng</p>
+            </div>
+            <Select value={selectedServiceMonth} onChange={(e) => setSelectedServiceMonth(e.target.value)} className="w-40 border border-gray-200 bg-white py-2">
+              {MONTH_OPTIONS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={SERVICE_STATS_BY_MONTH[selectedServiceMonth as keyof typeof SERVICE_STATS_BY_MONTH]}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="name" stroke="#666" fontSize={11} angle={-15} textAnchor="end" height={80} />
+              <YAxis stroke="#666" fontSize={12} />
+              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }} />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {SERVICE_STATS_BY_MONTH[selectedServiceMonth as keyof typeof SERVICE_STATS_BY_MONTH].map((entry, index) => (
+                  <Cell key={`service-cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-[#003366] text-lg font-semibold">Đơn hàng theo tháng</h3>
+              <p className="text-sm text-gray-500">Thống kê tích lũy đơn hàng trong tháng</p>
+            </div>
+            <Select value={selectedOrderMonth} onChange={(e) => setSelectedOrderMonth(e.target.value)} className="w-40 border border-gray-200 bg-white py-2">
+              {MONTH_OPTIONS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={currentOrderStats.chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="name" stroke="#666" fontSize={12} />
+              <YAxis stroke="#666" fontSize={12} />
+              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }} />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {currentOrderStats.chartData.map((entry, index) => (
+                  <Cell key={`order-cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      </div>
     </div>
   )
 }

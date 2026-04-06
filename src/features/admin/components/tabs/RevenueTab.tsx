@@ -1,17 +1,25 @@
+import { useState } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
-import { REVENUE_ORDERS, REVENUE_OVER_TIME } from '@/components/admin/admin-dashboard-data'
-import { CheckCircle, Clock, DollarSign, ShoppingCart, TrendingUp, Users, ArrowDown, ArrowUp } from 'lucide-react'
+import Select from '@/components/ui/select/Select'
+import { MONTH_OPTIONS, REVENUE_BY_MONTH, REVENUE_ORDERS } from '@/components/admin/admin-dashboard-data'
+import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, ArrowDown, ArrowUp, XCircle } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useAdminDashboard } from '../../hooks/useAdminDashboard'
 
 export default function RevenueTab() {
   const { sortBy, sortOrder, toggleSort } = useAdminDashboard()
+  const [selectedRevenueChartMonth, setSelectedRevenueChartMonth] = useState('2026-01')
+  const [selectedTotalRevenueMonth, setSelectedTotalRevenueMonth] = useState('2026-01')
+  const [selectedPendingRevenueMonth, setSelectedPendingRevenueMonth] = useState('2026-01')
+  const [selectedCancelledRevenueMonth, setSelectedCancelledRevenueMonth] = useState('2026-01')
+
+  const currentRevenueData = REVENUE_BY_MONTH[selectedTotalRevenueMonth as keyof typeof REVENUE_BY_MONTH]
+  const currentPendingRevenueData = REVENUE_BY_MONTH[selectedPendingRevenueMonth as keyof typeof REVENUE_BY_MONTH]
+  const currentCancelledRevenueData = REVENUE_BY_MONTH[selectedCancelledRevenueMonth as keyof typeof REVENUE_BY_MONTH]
+  const currentRevenueChartData = REVENUE_BY_MONTH[selectedRevenueChartMonth as keyof typeof REVENUE_BY_MONTH]
 
   // Revenue tab: KPI summary + revenue trend chart + sortable order cards list.
-  const totalRevenue = REVENUE_ORDERS.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.value, 0)
-  const pendingRevenue = REVENUE_ORDERS.filter(o => o.status === 'pending').reduce((sum, o) => sum + o.value, 0)
-  const avgOrderValue = totalRevenue / REVENUE_ORDERS.filter(o => o.status === 'completed').length
   const completedOrders = REVENUE_ORDERS.filter(o => o.status === 'completed').length
 
   const getSortedOrders = () => {
@@ -47,11 +55,20 @@ export default function RevenueTab() {
             <div className="p-3 rounded-lg bg-green-50">
               <DollarSign className="h-6 w-6 text-[#2ECC71]" />
             </div>
-            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
+            <Select value={selectedTotalRevenueMonth} onChange={(e) => setSelectedTotalRevenueMonth(e.target.value)} className="h-8 w-28 bg-white border border-gray-200 px-2 py-1 text-xs">
+              {MONTH_OPTIONS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.shortLabel}
+                </option>
+              ))}
+            </Select>
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Tổng doanh thu</h3>
-          <p className="text-3xl font-bold text-[#2ECC71]">{(totalRevenue / 1000000).toFixed(1)}M</p>
-          <p className="text-xs text-gray-500 mt-2">Từ {completedOrders} đơn hàng</p>
+          <div className="flex items-center gap-2">
+            <p className="text-3xl font-bold text-[#2ECC71]">{(currentRevenueData.totalRevenue / 1000000).toFixed(1)}M</p>
+            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Từ {currentRevenueData.completedOrders} đơn hàng</p>
         </Card>
 
         <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#FF9800]">
@@ -59,10 +76,38 @@ export default function RevenueTab() {
             <div className="p-3 rounded-lg bg-orange-50">
               <Clock className="h-6 w-6 text-[#FF9800]" />
             </div>
+            <Select value={selectedPendingRevenueMonth} onChange={(e) => setSelectedPendingRevenueMonth(e.target.value)} className="h-8 w-28 bg-white border border-gray-200 px-2 py-1 text-xs">
+              {MONTH_OPTIONS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.shortLabel}
+                </option>
+              ))}
+            </Select>
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Chờ thanh toán</h3>
-          <p className="text-3xl font-bold text-[#FF9800]">{(pendingRevenue / 1000000).toFixed(1)}M</p>
-          <p className="text-xs text-gray-500 mt-2">{REVENUE_ORDERS.filter(o => o.status === 'pending').length} đơn đang chờ</p>
+          <p className="text-3xl font-bold text-[#FF9800]">{(currentPendingRevenueData.pendingRevenue / 1000000).toFixed(1)}M</p>
+          <p className="text-xs text-gray-500 mt-2">{currentPendingRevenueData.pendingOrders} đơn đang chờ</p>
+        </Card>
+
+        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#F44336]">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 rounded-lg bg-red-50">
+              <XCircle className="h-6 w-6 text-[#F44336]" />
+            </div>
+            <Select value={selectedCancelledRevenueMonth} onChange={(e) => setSelectedCancelledRevenueMonth(e.target.value)} className="h-8 w-28 bg-white border border-gray-200 px-2 py-1 text-xs">
+              {MONTH_OPTIONS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.shortLabel}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <h3 className="text-sm text-gray-600 mb-1">Đơn hàng bị hủy</h3>
+          <div className="flex items-center gap-2">
+            <p className="text-3xl font-bold text-[#F44336]">{(currentCancelledRevenueData.cancelledRevenue / 1000000).toFixed(1)}M</p>
+            <TrendingDown className="h-5 w-5 text-[#F44336]" />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">{currentCancelledRevenueData.cancelledOrders} đơn bị hủy</p>
         </Card>
 
         <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#3366CC]">
@@ -74,28 +119,26 @@ export default function RevenueTab() {
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Đơn hoàn thành</h3>
           <p className="text-3xl font-bold text-[#3366CC]">{completedOrders}</p>
-          <p className="text-xs text-gray-500 mt-2">+18% so với tuần trước</p>
-        </Card>
-
-        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#003366]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-gray-50">
-              <ShoppingCart className="h-6 w-6 text-[#003366]" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Giá trị TB/đơn</h3>
-          <p className="text-3xl font-bold text-[#003366]">{(avgOrderValue / 1000).toFixed(0)}K</p>
-          <p className="text-xs text-gray-500 mt-2">Trung bình mỗi đơn</p>
+          <p className="text-xs text-gray-500 mt-2">Từ bảng đơn hàng</p>
         </Card>
       </div>
 
       <Card className="p-6">
-        <div className="mb-4">
-          <h3 className="text-[#003366] text-lg font-semibold">Doanh thu theo thời gian</h3>
-          <p className="text-sm text-gray-500">Biểu đồ doanh thu 7 ngày qua</p>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-[#003366] text-lg font-semibold">Doanh thu theo thời gian</h3>
+            <p className="text-sm text-gray-500">Biểu đồ doanh thu theo tháng</p>
+          </div>
+          <Select value={selectedRevenueChartMonth} onChange={(e) => setSelectedRevenueChartMonth(e.target.value)} className="w-40 border border-gray-200 bg-white py-2">
+            {MONTH_OPTIONS.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </Select>
         </div>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={REVENUE_OVER_TIME}>
+          <LineChart data={currentRevenueChartData.chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="date" stroke="#666" fontSize={12} />
             <YAxis stroke="#666" fontSize={12} />
