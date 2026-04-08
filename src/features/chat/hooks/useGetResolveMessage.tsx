@@ -59,7 +59,8 @@ export default function useGetResolveMessage(staffId: string | null) {
               updatedExistingMessages[existingIndex] = {
                 ...updatedExistingMessages[existingIndex],
                 lastMessage: data.lastMessage,
-                updateDate: data.updateDate
+                updateDate: data.updateDate,
+                unreadMessageCount: data.unreadMessageCount
               }
               // Get the updated object by splice method
               const [updatedItem] = updatedExistingMessages.splice(existingIndex, 1)

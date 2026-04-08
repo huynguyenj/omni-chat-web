@@ -271,7 +271,6 @@ function OrderButton() {
     setChecked((prev) => !prev)
     setBatchChosen(listBatches[0])
   }
-  console.log('checked newest batch', checked)
 
   const handleSelectBatch = (batch: BatchesType) => {
     if (batch.batchId != batchChosen.batchId) {
