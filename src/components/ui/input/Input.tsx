@@ -15,7 +15,7 @@ export default function Input({ variant, label, error, className, icon:Icon, ...
         { Icon && <Icon className='size-5 text-soft-gray'/> }
         <input {...rest} className='w-full py-2 focus:outline-none'/>
       </div>
-      {error && <p className='text-sm-body-desktop text-red-400'>{error}</p>}
+      {error && <p className='text-sm-body-desktop text-red-400 font-medium'>{error}</p>}
     </div>
   )
 }
