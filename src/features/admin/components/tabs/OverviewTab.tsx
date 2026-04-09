@@ -1,20 +1,39 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Card from '@/components/ui/card/Card'
 import Select from '@/components/ui/select/Select'
 import { MILK_CHART_COLORS, MILK_QUANTITY_BY_MONTH, MONTH_OPTIONS, ORDER_STATS_BY_MONTH, SERVICE_STATS_BY_MONTH } from '@/components/admin/admin-dashboard-data'
 import { CheckCircle, Clock, Milk, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { ProductApi } from '../../api/product-api'
 
 export default function OverviewTab() {
   const [selectedServiceMonth, setSelectedServiceMonth] = useState('2026-01')
   const [selectedOrderMonth, setSelectedOrderMonth] = useState('2026-01')
+  const [apiTotalQuantity, setApiTotalQuantity] = useState<number | null>(null)
+  const [apiTotalItems, setApiTotalItems] = useState<number | null>(null)
 
   const currentOrderStats = ORDER_STATS_BY_MONTH[selectedOrderMonth as keyof typeof ORDER_STATS_BY_MONTH]
 
-  const totalProducts = Object.values(MILK_QUANTITY_BY_MONTH).reduce((sum, months) => {
+  const fallbackTotalProducts = Object.values(MILK_QUANTITY_BY_MONTH).reduce((sum, months) => {
     const latest = months[months.length - 1]
     return sum + latest['Có đường'] + latest['Không đường'] + latest.Yogurt
   }, 0)
+  const totalProducts = apiTotalQuantity ?? fallbackTotalProducts
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // Large page size to quickly cover dashboard summary.
+        const response = await ProductApi.getAllProducts(1, 1000)
+        const totalQuantity = response.data.items.reduce((sum, product) => sum + product.quantity, 0)
+        setApiTotalQuantity(totalQuantity)
+        setApiTotalItems(response.data.meta.total_items)
+      } catch (error) {
+        console.log('Fetch products failed:', error)
+      }
+    }
+    fetchProducts()
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -26,12 +45,12 @@ export default function OverviewTab() {
             </div>
             <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Tổng sản phẩm sữa</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Tổng tồn kho sản phẩm</h3>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-bold text-[#3366CC]">{totalProducts}</p>
-            <span className="text-sm text-gray-500">sản phẩm</span>
+            <span className="text-sm text-gray-500">đơn vị</span>
           </div>
-          <p className="text-xs text-gray-500 mt-2">+15 tuần này</p>
+          <p className="text-xs text-gray-500 mt-2">{apiTotalItems !== null ? `${apiTotalItems} SKU` : '+15 tuần này'}</p>
         </Card>
 
         <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#2ECC71]">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
 import Select from '@/components/ui/select/Select'
@@ -6,6 +6,8 @@ import { MONTH_OPTIONS, REVENUE_BY_MONTH, REVENUE_ORDERS } from '@/components/ad
 import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, ArrowDown, ArrowUp, XCircle } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useAdminDashboard } from '../../hooks/useAdminDashboard'
+import { OrderApi } from '../../api/order-api'
+import type { AdminOrderItem } from '../../types/order-type'
 
 export default function RevenueTab() {
   const { sortBy, sortOrder, toggleSort } = useAdminDashboard()
@@ -13,6 +15,7 @@ export default function RevenueTab() {
   const [selectedTotalRevenueMonth, setSelectedTotalRevenueMonth] = useState('2026-01')
   const [selectedPendingRevenueMonth, setSelectedPendingRevenueMonth] = useState('2026-01')
   const [selectedCancelledRevenueMonth, setSelectedCancelledRevenueMonth] = useState('2026-01')
+  const [apiOrders, setApiOrders] = useState<AdminOrderItem[] | null>(null)
 
   const currentRevenueData = REVENUE_BY_MONTH[selectedTotalRevenueMonth as keyof typeof REVENUE_BY_MONTH]
   const currentPendingRevenueData = REVENUE_BY_MONTH[selectedPendingRevenueMonth as keyof typeof REVENUE_BY_MONTH]
@@ -41,6 +44,34 @@ export default function RevenueTab() {
 
     return sorted
   }
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await OrderApi.getOrders(1, 20)
+        setApiOrders(response.data.items)
+      } catch (error) {
+        console.log('Fetch orders failed:', error)
+      }
+    }
+    fetchOrders()
+  }, [])
+
+  const sortedApiOrders = useMemo(() => {
+    if (!apiOrders) return []
+    const sorted = [...apiOrders].sort((a, b) => {
+      let comparison = 0
+      if (sortBy === 'date') {
+        comparison = new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime()
+      } else if (sortBy === 'value') {
+        comparison = a.totalAmount - b.totalAmount
+      } else if (sortBy === 'customer') {
+        comparison = a.name.localeCompare(b.name)
+      }
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+    return sorted
+  }, [apiOrders, sortBy, sortOrder])
 
   const sortIndicator = (column: typeof sortBy) => {
     if (sortBy !== column) return null
@@ -156,7 +187,7 @@ export default function RevenueTab() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-[#003366] text-lg font-semibold">Chi tiết đơn hàng</h3>
-            <p className="text-sm text-gray-500">Danh sách {REVENUE_ORDERS.length} đơn hàng trong khoảng thời gian</p>
+            <p className="text-sm text-gray-500">Danh sách {apiOrders ? apiOrders.length : REVENUE_ORDERS.length} đơn hàng trong khoảng thời gian</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => toggleSort('date')} className={sortBy === 'date' ? 'bg-blue-50 border-[#3366CC]' : ''}>
@@ -175,44 +206,89 @@ export default function RevenueTab() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {getSortedOrders().map(order => (
-            <Card key={order.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#2ECC71] bg-white group">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-[#003366] text-lg">{order.id}</h3>
-                  <span className={`px-2 py-1 rounded text-[10px] text-white ${order.status === 'completed' ? 'bg-[#2ECC71]' : 'bg-[#FF9800]'}`}>
-                    {order.status === 'completed' ? 'Hoàn thành' : 'Chờ xử lý'}
-                  </span>
-                </div>
-                <div className="space-y-3 mb-4">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-[10px] text-gray-400 uppercase font-medium">Khách hàng</p>
-                    <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.customer}</p>
-                  </div>
-                  <div className="bg-[#F5F7FA] p-2 rounded-lg">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Sản phẩm</p>
-                    <div className="flex justify-between text-xs mb-1 last:mb-0">
-                      <span className="text-gray-700 line-clamp-1 flex-1">
-                        {order.product} <span className="text-gray-400">x{order.quantity}</span>
+          {apiOrders
+            ? sortedApiOrders.map((order) => {
+              const orderDate = new Date(order.orderDate)
+              const dateText = orderDate.toLocaleDateString('vi-VN')
+              const timeText = orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+              const badgeClass =
+                  order.deliveryStatus === 'Delivered'
+                    ? 'bg-[#1F9D55]'
+                    : order.deliveryStatus === 'Cancelled'
+                      ? 'bg-[#C62828]'
+                      : 'bg-[#EF6C00]'
+              const badgeText =
+                  order.deliveryStatus === 'Delivered'
+                    ? 'Đã giao'
+                    : order.deliveryStatus === 'Cancelled'
+                      ? 'Đã hủy'
+                      : 'Đang xử lý'
+
+              return (
+                <Card key={order.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#2ECC71] bg-white group">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold text-[#003366] text-lg">{order.code}</h3>
+                      <span className={`px-2 py-1 rounded text-[10px] text-white ${badgeClass}`}>
+                        {badgeText}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex flex-col gap-1 text-[10px] text-gray-500">
-                      <span className="flex items-center gap-1 font-mono text-gray-400">📅 {order.date} | ⏰ {order.time}</span>
-                      <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Staff: {order.staff}</span>
+                    <div className="space-y-3 mb-4">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-[10px] text-gray-400 uppercase font-medium">Tên đơn hàng</p>
+                        <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.name}</p>
+                      </div>
+                      <div className="bg-[#F5F7FA] p-2 rounded-lg">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Trạng thái đơn</p>
+                        <div className="flex justify-between text-xs mb-1 last:mb-0">
+                          <span className="text-gray-700 line-clamp-1 flex-1">{order.status}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="flex flex-col gap-1 text-[10px] text-gray-500">
+                          <span className="flex items-center gap-1 font-mono text-gray-400">📅 {dateText} | ⏰ {timeText}</span>
+                          <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Customer ID: {order.customerId}</span>
+                        </div>
+                        <p className="font-bold text-[#2ECC71] text-lg">{order.totalAmount.toLocaleString('vi-VN')}đ</p>
+                      </div>
                     </div>
-                    <p className="font-bold text-[#2ECC71] text-lg">{order.value.toLocaleString()}đ</p>
+                  </div>
+                </Card>
+              )
+            })
+            : getSortedOrders().map(order => (
+              <Card key={order.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#2ECC71] bg-white group">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-[#003366] text-lg">{order.id}</h3>
+                    <span className={`px-2 py-1 rounded text-[10px] text-white ${order.status === 'completed' ? 'bg-[#1F9D55]' : 'bg-[#EF6C00]'}`}>
+                      {order.status === 'completed' ? 'Hoàn thành' : 'Chờ xử lý'}
+                    </span>
+                  </div>
+                  <div className="space-y-3 mb-4">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[10px] text-gray-400 uppercase font-medium">Khách hàng</p>
+                      <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.customer}</p>
+                    </div>
+                    <div className="bg-[#F5F7FA] p-2 rounded-lg">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Sản phẩm</p>
+                      <div className="flex justify-between text-xs mb-1 last:mb-0">
+                        <span className="text-gray-700 line-clamp-1 flex-1">
+                          {order.product} <span className="text-gray-400">x{order.quantity}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex flex-col gap-1 text-[10px] text-gray-500">
+                        <span className="flex items-center gap-1 font-mono text-gray-400">📅 {order.date} | ⏰ {order.time}</span>
+                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Staff: {order.staff}</span>
+                      </div>
+                      <p className="font-bold text-[#2ECC71] text-lg">{order.value.toLocaleString()}đ</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="pt-3 border-t">
-                <Button variant="outline" size="sm" className="w-full text-[#3366CC] border-[#3366CC]/30 hover:bg-[#3366CC]/5 text-xs h-8">
-                  Xem chi tiết đơn hàng
-                </Button>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
         </div>
       </Card>
     </div>
