@@ -2,13 +2,13 @@ import Button from '@/components/ui/button/Button'
 import Input from '@/components/ui/input/Input'
 import PopupBasic from '@/components/ui/popup/PopupBasic'
 import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
-import useGetAllClaimType from '@/features/tasks/hooks/useGetAllClaimType'
+import useGetAllClaimType from '@/features/claim/hooks/useGetAllClaimType'
 import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import { BsPlusLg } from 'react-icons/bs'
 import { CLAIM_TYPE } from '../const/claim-type'
 import { Controller } from 'react-hook-form'
-import useCreateClaim from '@/features/tasks/hooks/useCreateClaim'
+import useCreateClaim from '@/features/claim/hooks/useCreateClaim'
 
 export default function ClaimInfoSection() {
   const [isOpen, setIsOpen] = useState(false)

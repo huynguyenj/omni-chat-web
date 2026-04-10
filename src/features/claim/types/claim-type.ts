@@ -9,3 +9,12 @@ export type ClaimCreation = {
       staffId: string
       claimTypeId: string
 }
+
+export type ClaimType = {
+      id: string
+      claimType: string
+      submitDate: string
+      status: 'Pending' | 'Approve' | 'Rejected'
+      description: string
+      reason: string
+    }
