@@ -4,12 +4,36 @@ export type DeliveryStatus = 'Pending' | 'Processing' | 'Delivered' | 'Cancelled
 export type AdminOrderItem = {
   id: string
   customerId: string
+  customerName?: string
   orderDate: string
   name: string
   status: OrderStatus | string
   totalAmount: number
   deliveryStatus: DeliveryStatus | string
   code: string
+}
+
+export type AdminOrderDetailItem = {
+  id: string
+  quantity: number
+  productName: string
+  itemsPrice: number | null
+}
+
+export type AdminOrderDetail = {
+  id: string
+  customerId: string
+  customerName?: string
+  customerPhone?: string
+  customerEmail?: string
+  customerAddress?: string
+  orderDate: string
+  name: string
+  status: OrderStatus | string
+  totalAmount: number
+  deliveryStatus: DeliveryStatus | string
+  code: string
+  orderItems: AdminOrderDetailItem[]
 }
 
 export type OrderPaginationMeta = {

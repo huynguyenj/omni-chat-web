@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
@@ -78,7 +79,50 @@ export default function StaffTab() {
       .filter(Boolean)
       .map((intentId) => ({ intentId }))
 
+  const normalizePhone = (p: string) => p.replace(/\s/g, '').trim()
+
+  const getDuplicateCreateMessage = (email: string, phone: string): string | null => {
+    const emailNorm = email.trim().toLowerCase()
+    const phoneNorm = normalizePhone(phone)
+    if (!apiStaffs?.length) return null
+    const emailTaken = apiStaffs.some((s) => s.email.trim().toLowerCase() === emailNorm)
+    const phoneTaken = phoneNorm.length > 0 && apiStaffs.some((s) => normalizePhone(s.phone ?? '') === phoneNorm)
+    if (emailTaken && phoneTaken) return 'Email và số điện thoại đã tồn tại trong hệ thống'
+    if (emailTaken) return 'Email đã được đăng ký cho tài khoản khác'
+    if (phoneTaken) return 'Số điện thoại đã được đăng ký cho tài khoản khác'
+    return null
+  }
+
+  const getApiErrorToastMessage = (error: unknown, fallback: string): string => {
+    if (!axios.isAxiosError(error)) return fallback
+    const data = error.response?.data as { message?: string; reason?: string } | undefined
+    const text = `${data?.message ?? ''} ${data?.reason ?? ''}`.toLowerCase()
+    if (
+      text.includes('email') &&
+      (text.includes('duplicate') || text.includes('exist') || text.includes('already') || text.includes('tồn tại') || text.includes('trùng'))
+    ) {
+      return 'Email đã được đăng ký cho tài khoản khác'
+    }
+    if (
+      text.includes('phone') &&
+      (text.includes('duplicate') || text.includes('exist') || text.includes('already') || text.includes('tồn tại') || text.includes('trùng'))
+    ) {
+      return 'Số điện thoại đã được đăng ký cho tài khoản khác'
+    }
+    if (text.includes('duplicate') || text.includes('already exists') || text.includes('trùng') || text.includes('tồn tại')) {
+      return 'Thông tin đăng ký bị trùng (email hoặc số điện thoại)'
+    }
+    if (data?.message) return data.message
+    if (data?.reason) return data.reason
+    return fallback
+  }
+
   const handleCreateStaff = async () => {
+    const duplicateMsg = getDuplicateCreateMessage(addForm.email, addForm.phone)
+    if (duplicateMsg) {
+      toast.error(duplicateMsg)
+      return
+    }
     try {
       await StaffApi.createStaff({
         name: addForm.name,
@@ -93,6 +137,7 @@ export default function StaffTab() {
       await fetchStaffs()
     } catch (error) {
       console.log('Create staff failed:', error)
+      toast.error(getApiErrorToastMessage(error, 'Không thể tạo tài khoản. Vui lòng thử lại.'))
     }
   }
 
