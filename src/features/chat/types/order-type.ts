@@ -1,9 +1,22 @@
+export type OrderItemType = {
+  id: string
+  quantity: number
+  productName: string
+  itemsPrice: number
+}
+
 export type OrderType = {
-  orderId: string
-  orderCode: string
+  id: string
+  customerId: string
+  customerName: string | null
+  customerPhoneNumber: string | null
+  customerEmail: string | null
+  customerAddress: string | null
+  orderDate: string
+  name: string
+  status: string
   totalAmount: number
-  orderName: string
-  orderStatus: string
   deliveryStatus: string
-  customerName: string
+  code: string
+  orderItems: OrderItemType[]
 }

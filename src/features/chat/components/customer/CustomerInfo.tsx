@@ -15,7 +15,7 @@ import TaskList from '../task/TaskList'
 
 type CustomerInfoType = Omit<Partial<ConversationDetail>, 'messages'>
 
-export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoType) {
+export default function CustomerInfo({ customerName, avartarUrl, activeCustomerId: customerId }: CustomerInfoType) {
   const [isOpen, setIsOpen] = useState(false)
   const [tab, setTab] = useState(1)
   const handleOpen = () => {
@@ -25,7 +25,7 @@ export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoT
     switch (tab) {
     case 1: return <TaskList/>
     case 2: return <CustomerProfile/>
-    case 3: return <CustomerOrder/>
+    case 3: return <CustomerOrder customerId={customerId}/>
     case 4: return <Ticket/>
     default: return <CustomerProfile/>
     }

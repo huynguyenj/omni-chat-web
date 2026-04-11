@@ -1,12 +1,12 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import type { ResolveMessageType } from '../types/message-type'
-import { chatApi } from '../api/chat-api'
 import { signalrConnection } from '../config/signalr'
 import SelectionMessageContext from '../context/SelectionMessageProvider'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router'
 import { PUBLIC_PATH } from '@/router/path'
 import * as signalr from '@microsoft/signalr'
+import useApiCall from '@/config/useApiCall'
 
 // import SelectionMessageContext from '../context/SelectionMessageProvider'
 
@@ -14,6 +14,7 @@ export default function useGetResolveMessage(staffId: string | null) {
   const [resolveMessageTab, setResolveMessageTab] = useState<ResolveMessageType[]>([])
   const context = useContext(SelectionMessageContext)
   const connectionRef = useRef<signalr.HubConnection | null>(null)
+  const { execute, loading } = useApiCall<ResolveMessageType[]>()
   const navigate = useNavigate()
   // const context = useContext(SelectionMessageContext)
   useEffect(() => {
@@ -23,13 +24,17 @@ export default function useGetResolveMessage(staffId: string | null) {
         navigate(PUBLIC_PATH.LOGIN)
         return
       }
-      try {
-        const apiData = await chatApi.getSidebarConversationList(staffId, context?.providerName)
-        console.log(apiData)
-        setResolveMessageTab(apiData.data)
-      } catch (error) {
-        console.log(error)
+      const apiData = await execute({
+        apiUrl: `/support-conversations/staff/${staffId}/pending?providerName=${context?.providerName}`,
+        method: 'get',
+        type: 'private'
+      })
+      const { data, error } = apiData
+      if (error) {
+        toast.error('Lấy tin nhắn chờ thất bại!')
+        return
       }
+      setResolveMessageTab(data)
     }
     fetchResolveMessage()
   }, [staffId, context?.providerName])
@@ -79,5 +84,5 @@ export default function useGetResolveMessage(staffId: string | null) {
       connectionRef.current = null
     }
   }, [context?.providerName])
-  return { resolveMessageTab }
+  return { resolveMessageTab, loading }
 }

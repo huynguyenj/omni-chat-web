@@ -9,6 +9,9 @@ import { LuCircleCheckBig } from 'react-icons/lu'
 import { RiErrorWarningLine } from 'react-icons/ri'
 import { LuClock } from 'react-icons/lu'
 import { ScrollArea } from '@/components/ui/scrollbar/ScrollArea'
+import useGetIntentType from '../hooks/useGetIntentType'
+import PaginationBar from '@/components/ui/pagination/PaginationBar'
+import { useState } from 'react'
 
 interface Task {
   id: string;
@@ -146,6 +149,8 @@ const MOCK_TASKS: Task[] = [
 ]
 
 export default function ListTasksSection() {
+  const { intentType } = useGetIntentType()
+  const [currentPage, setCurrentPage] = useState(1)
   const handleStatusIconColor = (status: string) => {
     switch (status) {
     case 'completed': return <TaskAnalysisBox variant='success' className='p-2'><LuCircleCheckBig className='size-5'/></TaskAnalysisBox>
@@ -154,22 +159,28 @@ export default function ListTasksSection() {
   }
   return (
     <div className='w-full flex flex-col gap-5'>
-      <Card className='flex gap-3 rounded-2xl  border-2 border-border-primary py-4'>
+      <Card className='grid grid-cols-1 xl:flex gap-3 rounded-2xl border-2 border-border-primary py-4'>
         <div className='flex-4'>
           <Input variant='gray' placeholder='Tìm kiếm task' icon={IoSearch}/>
         </div>
-        <div className='flex flex-2 items-center gap-3'>
+        <div className='flex flex-col sm:flex-row flex-2 items-center gap-3'>
           <AdvSelect>
             <SelectTrigger>
               <CiFilter className='size-5'/>
               <SelectValue placeholder="Loại công việc" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="lookup">Tra cứu</SelectItem>
-              <SelectItem value="create-order">Tạo đơn</SelectItem>
-              <SelectItem value="support">Hỗ trợ</SelectItem>
-              <SelectItem value="follow-up">Follow-up</SelectItem>
+              { intentType ?
+                <>
+                  <SelectItem value='all'>Tất cả</SelectItem>
+                  { intentType.map((i) => (
+                    <SelectItem key={i.id} value={i.id}>{i.typeName}</SelectItem>
+                  ))}
+                </>
+                :
+                <SelectItem value='not-thing'></SelectItem>
+              }
+
             </SelectContent>
           </AdvSelect>
           <AdvSelect>
@@ -219,6 +230,11 @@ export default function ListTasksSection() {
               </Card>
             )) }
           </div>
+          <PaginationBar
+            currentPage={currentPage}
+            setPage={setCurrentPage}
+            totalPage={10}
+          />
         </ScrollArea>
       </Card>
     </div>

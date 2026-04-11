@@ -8,7 +8,7 @@ type PopupProps = PropsWithChildren & {
 
 export default function PopupBasic({ onClose, title, children }: PopupProps) {
   return (
-    <div className="min-h-screen max-w-screen absolute inset-0 backdrop-blur-none bg-black/50 flex items-center justify-center z-50">
+    <div className="min-h-screen max-w-screen fixed inset-0 backdrop-blur-none bg-black/50 flex items-center justify-center z-60">
       <motion.div
         initial = {{ scale: 0, opacity: 0 }}
         animate = {{ scale: 1, opacity: 1 }}
