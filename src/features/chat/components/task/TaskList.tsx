@@ -8,9 +8,13 @@ import useGetConversationTask from '../../hooks/useGetConversationTask'
 import { TASK_STATUS } from '@/features/tasks/const/task-status'
 import { formatDate, formatTime } from '@/utils/date-resolver'
 import CardSkeleton from '@/components/ui/skeleton/CardSkeleton'
+import { useMemo } from 'react'
 
 export default function TaskList() {
-  const { conversationTasks, loading } = useGetConversationTask()
+  const { conversationTasks, loading, handleUpdateTask } = useGetConversationTask()
+  const totalTaskRemain = useMemo(() => {
+    return conversationTasks?.filter((task) => task.status !== 'Done').length
+  }, [conversationTasks])
   return (
     <div>
       <p className='text-sm-body-desktop font-medium text-primary'>Task được giao</p>
@@ -21,12 +25,12 @@ export default function TaskList() {
         <>
           <div className='flex flex-col gap-3 my-3'>
             <>
-              { conversationTasks?.map((task, i) => (
-                <Card key={i} variant={'primary'} size='sm' className='text-sm/7'>
+              { conversationTasks?.map((task) => (
+                <Card key={task.id} variant={task.status === 'Done' ? 'secondary' : 'primary'} size='sm' className='text-sm/7'>
                   <div className='flex justify-between items-center'>
                     <div className='flex items-center gap-2'>
-                      <Checkbox id='task'/>
-                      <label htmlFor="task" className='text-sm-body-desktop font-bold text-primary'>{task.intentTypeName}</label>
+                      <Checkbox id='task' checked={task.status === 'Done'} onCheckedChange={() => handleUpdateTask(task.id)}/>
+                      <label htmlFor="task" className={`text-sm-body-desktop font-bold text-primary ${task.status === 'Done' && 'line-through'}`}>{task.intentTypeName}</label>
                     </div>
                     <Tag variant={TASK_STATUS[task.status].tagVariant} className='py-1 px-2'>
                       {TASK_STATUS[task.status].name}
@@ -40,8 +44,8 @@ export default function TaskList() {
               )) }
             </>
           </div>
-          <Alert variant={conversationTasks?.length === 0 ? 'success' : 'info'}>
-            { conversationTasks?.length === 0 ?
+          <Alert variant={totalTaskRemain === 0 ? 'success' : 'info'}>
+            { totalTaskRemain === 0 ?
               <div className='flex items-center gap-3'>
                 <IoMdCheckmarkCircleOutline className='size-7'/>
                 <div>
@@ -53,7 +57,7 @@ export default function TaskList() {
               <div className='flex items-center gap-3'>
                 <RiErrorWarningLine className='text-secondary size-7'/>
                 <div>
-                  <p className='text-sm-body-desktop font-medium'>Còn {conversationTasks?.length} tasks chưa hoàn thành</p>
+                  <p className='text-sm-body-desktop font-medium'>Còn {totalTaskRemain} tasks chưa hoàn thành</p>
                   <p className='text-[0.85rem] text-soft-gray'>Hoàn thành tất cả để đóng conversation</p>
                 </div>
               </div>

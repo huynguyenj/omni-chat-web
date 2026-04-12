@@ -26,7 +26,7 @@ export default function CustomerInfo({ customerName, avartarUrl, activeCustomerI
     case 1: return <TaskList/>
     case 2: return <CustomerProfile/>
     case 3: return <CustomerOrder customerId={customerId}/>
-    case 4: return <Ticket/>
+    case 4: return <Ticket customerId={customerId}/>
     default: return <CustomerProfile/>
     }
   }

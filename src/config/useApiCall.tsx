@@ -40,19 +40,22 @@ export default function useApiCall<T>() {
   const execute = async ({ apiUrl, type, method, body }: UseApiCallType) => {
     let data
     let errorResponse
+    let success
     try {
       setLoading(true)
       const response = await apiMethodSelect({ apiUrl, type, method, body })
       data = response.data as T
+      success = true
       errorResponse = null
     } catch (error) {
       console.log(error)
       data = null as unknown as T
+      success = false
       errorResponse = 'error'
     } finally {
       setLoading(false)
     }
-    return { data, error: errorResponse }
+    return { data, error: errorResponse, success }
   }
   return { execute, loading }
 }

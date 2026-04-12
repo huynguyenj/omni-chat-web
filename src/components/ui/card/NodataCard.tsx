@@ -8,7 +8,7 @@ export default function NodataCard({ content= 'Chưa có dữ liệu' }: NodataC
   return (
     <div className='w-full h-full flex flex-col items-center justify-center gap-5'>
       <FaBoxOpen size={50} className='text-soft-gray'/>
-      <p className='text-m-body-desktop font-medium text-soft-gray'>{content}</p>
+      <p className='text-m-body-desktop font-medium text-soft-gray text-center'>{content}</p>
     </div>
   )
 }

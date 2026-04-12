@@ -20,3 +20,17 @@ export type OrderType = {
   code: string
   orderItems: OrderItemType[]
 }
+
+export type PostSaleItem = {
+  orderItemId: string
+  quantity: number
+}
+
+export type RefundOrderRequest = {
+  customerId: string
+  orderId: string
+  presentByStaffId: string
+  type: 'Refund' | 'Return' | 'Cancel' | 'Replacement'
+  reason: string
+  postSaleItems: PostSaleItem[]
+}
