@@ -11,9 +11,23 @@ export type IntentType = {
   description: string
 }
 
-export type TaskType = {
+export interface TaskType {
   id: string
   intentTypeName: string
   status: string
   createdAt: string
+}
+
+export type TaskListType = Omit<TaskType, 'createAt'> & {
+  completedAt: Date
+  customerName: string
+}
+
+export type SearchTaskType = {
+  taskName?: string | null
+  fromDate?: Date
+  toDate?: Date
+  intentTypeId?: string | null
+  page: number,
+  pageSize: number
 }

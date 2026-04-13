@@ -21,3 +21,9 @@ export function formatTime(value: string | number | Date): string {
 
   return `${String(hour).padStart(2, '0')}:${minute} ${period}`
 }
+
+export function startOfDay(date: Date) {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  return d
+}

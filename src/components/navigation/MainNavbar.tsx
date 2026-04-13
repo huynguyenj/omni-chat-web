@@ -5,7 +5,7 @@ import { RxExit } from 'react-icons/rx'
 
 export default function MainNavbar() {
   return (
-    <div className="sticky flex items-center justify-between top-0 w-full h-20 bg-primary px-5 z-40">
+    <div className="sticky flex items-center justify-between top-0 w-full h-20 bg-primary px-5 z-10">
       <img src={Logo} alt="Logo" loading='lazy' className='w-10 h-10' />
       <div className='flex items-center justify-between gap-8'>
         <FiBell className='w-6 h-6 text-white'/>
