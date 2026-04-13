@@ -48,3 +48,13 @@ export type OrderListResponse = {
   meta: OrderPaginationMeta
 }
 
+export type OrderDashboardStatusEntry = {
+  status: string
+  count: number
+}
+
+export type OrderDashboardMonthRow = {
+  month: string
+  status: OrderDashboardStatusEntry[]
+}
+
