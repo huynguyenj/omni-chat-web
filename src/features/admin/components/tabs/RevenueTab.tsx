@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
-import Select from '@/components/ui/select/Select'
-import { MONTH_OPTIONS, REVENUE_BY_MONTH, REVENUE_ORDERS } from '@/components/admin/admin-dashboard-data'
+import { REVENUE_ORDERS } from '@/components/admin/admin-dashboard-data'
 import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, ArrowDown, ArrowUp, XCircle } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'react-toastify'
@@ -81,9 +80,15 @@ function mapApiOrderDetail(raw: unknown): AdminOrderDetail {
 export default function RevenueTab() {
   const { sortBy, sortOrder, toggleSort } = useAdminDashboard()
   const [revenueChartInput, setRevenueChartInput] = useState('2026')
-  const [selectedTotalRevenueMonth, setSelectedTotalRevenueMonth] = useState('2026-01')
-  const [selectedPendingRevenueMonth, setSelectedPendingRevenueMonth] = useState('2026-01')
-  const [selectedCancelledRevenueMonth, setSelectedCancelledRevenueMonth] = useState('2026-01')
+  const [totalRevenueInput, setTotalRevenueInput] = useState('2026')
+  const [totalRevenueAmount, setTotalRevenueAmount] = useState(0)
+  const [totalRevenueLoading, setTotalRevenueLoading] = useState(false)
+  const [totalUnpaidInput, setTotalUnpaidInput] = useState('2026')
+  const [totalUnpaidAmount, setTotalUnpaidAmount] = useState(0)
+  const [totalUnpaidLoading, setTotalUnpaidLoading] = useState(false)
+  const [unpaidChartInput, setUnpaidChartInput] = useState('2026')
+  const [unpaidChartData, setUnpaidChartData] = useState<TotalRevenue[]>([])
+  const [unpaidChartLoading, setUnpaidChartLoading] = useState(false)
   const [apiOrders, setApiOrders] = useState<AdminOrderItem[] | null>(null)
   const [revenueChartData, setRevenueChartData] = useState<TotalRevenue[]>([])
   const [revenueChartLoading, setRevenueChartLoading] = useState(false)
@@ -91,11 +96,23 @@ export default function RevenueTab() {
   const [orderDetailLoading, setOrderDetailLoading] = useState(false)
   const [orderDetail, setOrderDetail] = useState<AdminOrderDetail | null>(null)
 
-  const currentRevenueData = REVENUE_BY_MONTH[selectedTotalRevenueMonth as keyof typeof REVENUE_BY_MONTH]
-  const currentPendingRevenueData = REVENUE_BY_MONTH[selectedPendingRevenueMonth as keyof typeof REVENUE_BY_MONTH]
-  const currentCancelledRevenueData = REVENUE_BY_MONTH[selectedCancelledRevenueMonth as keyof typeof REVENUE_BY_MONTH]
   // Revenue tab: KPI summary + revenue trend chart + sortable order cards list.
-  const completedOrders = REVENUE_ORDERS.filter(o => o.status === 'completed').length
+  const completedOrders = useMemo(() => {
+    if (!apiOrders) return 0
+    return apiOrders.filter((order) => {
+      const deliveryStatus = order.deliveryStatus.toLowerCase()
+      const status = order.status.toLowerCase()
+      return deliveryStatus === 'delivered' || status === 'completed'
+    }).length
+  }, [apiOrders])
+  const cancelledOrders = useMemo(() => {
+    if (!apiOrders) return 0
+    return apiOrders.filter((order) => {
+      const deliveryStatus = order.deliveryStatus.toLowerCase()
+      const status = order.status.toLowerCase()
+      return deliveryStatus === 'cancelled' || status === 'cancelled'
+    }).length
+  }, [apiOrders])
   const normalizeRevenueInput = (value: string): string | null => {
     const trimmed = value.trim()
     if (/^\d{4}$/.test(trimmed)) return trimmed
@@ -132,7 +149,7 @@ export default function RevenueTab() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await OrderApi.getOrders(1, 20)
+        const response = await OrderApi.getOrders(1, 1000)
         setApiOrders(response.data.items.map(mapApiOrderItem))
       } catch (error) {
         console.log('Fetch orders failed:', error)
@@ -173,6 +190,106 @@ export default function RevenueTab() {
   useEffect(() => {
     void fetchRevenueChartData('2026')
   }, [fetchRevenueChartData])
+
+  const fetchTotalRevenueData = useCallback(async (rawInput: string) => {
+    const normalizedInput = normalizeRevenueInput(rawInput)
+    if (!normalizedInput) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setTotalRevenueInput(normalizedInput)
+    setTotalRevenueLoading(true)
+
+    try {
+      const response = await InvoiceApi.getTotalRevenue(normalizedInput)
+      if (!response.is_success) {
+        setTotalRevenueAmount(0)
+        toast.info(response.message || 'Không có dữ liệu tổng doanh thu cho bộ lọc này.')
+        return
+      }
+      const total = (response.data ?? []).reduce((sum, item) => sum + Number(item.totalAmount ?? 0), 0)
+      setTotalRevenueAmount(total)
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+        setTotalRevenueAmount(0)
+        toast.info('Không có dữ liệu tổng doanh thu cho bộ lọc này.')
+        return
+      }
+      toast.error('Không tải được tổng doanh thu. Vui lòng thử lại.')
+    } finally {
+      setTotalRevenueLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchTotalRevenueData('2026')
+  }, [fetchTotalRevenueData])
+
+  const fetchTotalUnpaidData = useCallback(async (rawInput: string) => {
+    const normalizedInput = normalizeRevenueInput(rawInput)
+    if (!normalizedInput) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setTotalUnpaidInput(normalizedInput)
+    setTotalUnpaidLoading(true)
+
+    try {
+      const response = await InvoiceApi.getTotalUnpaid(normalizedInput)
+      if (!response.is_success) {
+        setTotalUnpaidAmount(0)
+        toast.info(response.message || 'Không có dữ liệu chưa thanh toán cho bộ lọc này.')
+        return
+      }
+      const total = (response.data ?? []).reduce((sum, item) => sum + Number(item.totalAmount ?? 0), 0)
+      setTotalUnpaidAmount(total)
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+        setTotalUnpaidAmount(0)
+        toast.info('Không có dữ liệu chưa thanh toán cho bộ lọc này.')
+        return
+      }
+      toast.error('Không tải được dữ liệu chưa thanh toán. Vui lòng thử lại.')
+    } finally {
+      setTotalUnpaidLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchTotalUnpaidData('2026')
+  }, [fetchTotalUnpaidData])
+
+  const fetchUnpaidChartData = useCallback(async (rawInput: string) => {
+    const normalizedInput = normalizeRevenueInput(rawInput)
+    if (!normalizedInput) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setUnpaidChartInput(normalizedInput)
+    setUnpaidChartLoading(true)
+    try {
+      const response = await InvoiceApi.getTotalUnpaid(normalizedInput)
+      if (!response.is_success) {
+        setUnpaidChartData([])
+        toast.info(response.message || 'Không có dữ liệu chờ thanh toán cho bộ lọc này.')
+        return
+      }
+      setUnpaidChartData(response.data ?? [])
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+        setUnpaidChartData([])
+        toast.info('Không có dữ liệu chờ thanh toán cho bộ lọc này.')
+        return
+      }
+      toast.error('Không tải được dữ liệu chờ thanh toán. Vui lòng thử lại.')
+    } finally {
+      setUnpaidChartLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchUnpaidChartData('2026')
+  }, [fetchUnpaidChartData])
 
   const sortedApiOrders = useMemo(() => {
     if (!apiOrders) return []
@@ -230,20 +347,31 @@ export default function RevenueTab() {
             <div className="p-3 rounded-lg bg-green-50">
               <DollarSign className="h-6 w-6 text-[#2ECC71]" />
             </div>
-            <Select value={selectedTotalRevenueMonth} onChange={(e) => setSelectedTotalRevenueMonth(e.target.value)} className="h-8 w-28 bg-white border border-gray-200 px-2 py-1 text-xs">
-              {MONTH_OPTIONS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.shortLabel}
-                </option>
-              ))}
-            </Select>
+            <div className="flex items-center gap-2">
+              <input
+                value={totalRevenueInput}
+                onChange={(e) => setTotalRevenueInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    void fetchTotalRevenueData(totalRevenueInput)
+                  }
+                }}
+                placeholder="yyyy hoặc mm/yyyy"
+                className="h-8 w-28 rounded-md border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#3366CC]"
+              />
+              <Button size="sm" onClick={() => { void fetchTotalRevenueData(totalRevenueInput) }}>
+                Lấy
+              </Button>
+            </div>
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Tổng doanh thu</h3>
           <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold text-[#2ECC71]">{(currentRevenueData.totalRevenue / 1000000).toFixed(1)}M</p>
+            <p className="text-3xl font-bold text-[#2ECC71]">{Math.round(totalRevenueAmount / 1000).toLocaleString('vi-VN')}K VND</p>
             <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
           </div>
-          <p className="text-xs text-gray-500 mt-2">Từ {currentRevenueData.completedOrders} đơn hàng</p>
+          <p className="text-xs text-gray-500 mt-2">
+            {totalRevenueLoading ? 'Đang tải...' : `Tổng từ dữ liệu ${totalRevenueInput}`}
+          </p>
         </Card>
 
         <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#FF9800]">
@@ -251,17 +379,28 @@ export default function RevenueTab() {
             <div className="p-3 rounded-lg bg-orange-50">
               <Clock className="h-6 w-6 text-[#FF9800]" />
             </div>
-            <Select value={selectedPendingRevenueMonth} onChange={(e) => setSelectedPendingRevenueMonth(e.target.value)} className="h-8 w-28 bg-white border border-gray-200 px-2 py-1 text-xs">
-              {MONTH_OPTIONS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.shortLabel}
-                </option>
-              ))}
-            </Select>
+            <div className="flex items-center gap-2">
+              <input
+                value={totalUnpaidInput}
+                onChange={(e) => setTotalUnpaidInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    void fetchTotalUnpaidData(totalUnpaidInput)
+                  }
+                }}
+                placeholder="yyyy hoặc mm/yyyy"
+                className="h-8 w-28 rounded-md border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#3366CC]"
+              />
+              <Button size="sm" onClick={() => { void fetchTotalUnpaidData(totalUnpaidInput) }}>
+                Lấy
+              </Button>
+            </div>
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Chờ thanh toán</h3>
-          <p className="text-3xl font-bold text-[#FF9800]">{(currentPendingRevenueData.pendingRevenue / 1000000).toFixed(1)}M</p>
-          <p className="text-xs text-gray-500 mt-2">{currentPendingRevenueData.pendingOrders} đơn đang chờ</p>
+          <p className="text-3xl font-bold text-[#FF9800]">{Math.round(totalUnpaidAmount / 1000).toLocaleString('vi-VN')}K VND</p>
+          <p className="text-xs text-gray-500 mt-2">
+            {totalUnpaidLoading ? 'Đang tải...' : `Tổng chưa thanh toán từ dữ liệu ${totalUnpaidInput}`}
+          </p>
         </Card>
 
         <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#F44336]">
@@ -269,20 +408,12 @@ export default function RevenueTab() {
             <div className="p-3 rounded-lg bg-red-50">
               <XCircle className="h-6 w-6 text-[#F44336]" />
             </div>
-            <Select value={selectedCancelledRevenueMonth} onChange={(e) => setSelectedCancelledRevenueMonth(e.target.value)} className="h-8 w-28 bg-white border border-gray-200 px-2 py-1 text-xs">
-              {MONTH_OPTIONS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.shortLabel}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Đơn hàng bị hủy</h3>
-          <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold text-[#F44336]">{(currentCancelledRevenueData.cancelledRevenue / 1000000).toFixed(1)}M</p>
             <TrendingDown className="h-5 w-5 text-[#F44336]" />
           </div>
-          <p className="text-xs text-gray-500 mt-2">{currentCancelledRevenueData.cancelledOrders} đơn bị hủy</p>
+          <h3 className="text-sm text-gray-600 mb-1">Tổng đơn hàng bị hủy</h3>
+          <div className="flex items-center gap-2">
+            <p className="text-3xl font-bold text-[#F44336]">{cancelledOrders.toLocaleString('vi-VN')}</p>
+          </div>
         </Card>
 
         <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#3366CC]">
@@ -292,9 +423,8 @@ export default function RevenueTab() {
             </div>
             <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Đơn hoàn thành</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Tổng đơn hàng hoàn thành</h3>
           <p className="text-3xl font-bold text-[#3366CC]">{completedOrders}</p>
-          <p className="text-xs text-gray-500 mt-2">Từ bảng đơn hàng</p>
         </Card>
       </div>
 
@@ -336,6 +466,48 @@ export default function RevenueTab() {
             />
             <Legend />
             <Line type="monotone" dataKey="totalAmount" stroke="#2ECC71" strokeWidth={3} dot={{ fill: '#2ECC71', r: 5 }} name="Doanh thu" />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card className="p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-[#003366] text-lg font-semibold">Chờ thanh toán theo thời gian</h3>
+            <p className="text-sm text-gray-500">Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              value={unpaidChartInput}
+              onChange={(e) => setUnpaidChartInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  void fetchUnpaidChartData(unpaidChartInput)
+                }
+              }}
+              placeholder="yyyy hoặc mm/yyyy"
+              className="h-10 w-40 rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-[#3366CC]"
+            />
+            <Button size="sm" onClick={() => { void fetchUnpaidChartData(unpaidChartInput) }}>
+              Lấy dữ liệu
+            </Button>
+          </div>
+        </div>
+        {unpaidChartLoading && <p className="mb-3 text-sm text-gray-500">Đang tải dữ liệu chờ thanh toán...</p>}
+        {!unpaidChartLoading && unpaidChartData.length === 0 && (
+          <p className="mb-3 text-sm text-gray-500">Không có dữ liệu chờ thanh toán cho bộ lọc hiện tại.</p>
+        )}
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={unpaidChartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey="month" stroke="#666" fontSize={12} />
+            <YAxis stroke="#666" fontSize={12} />
+            <Tooltip
+              contentStyle={{ backgroundColor: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+              formatter={(value) => `${Number(value ?? 0).toLocaleString('vi-VN')}đ`}
+            />
+            <Legend />
+            <Line type="monotone" dataKey="totalAmount" stroke="#FF9800" strokeWidth={3} dot={{ fill: '#FF9800', r: 5 }} name="Chờ thanh toán" />
           </LineChart>
         </ResponsiveContainer>
       </Card>
