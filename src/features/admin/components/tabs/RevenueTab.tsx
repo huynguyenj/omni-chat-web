@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
@@ -7,9 +7,12 @@ import { MONTH_OPTIONS, REVENUE_BY_MONTH, REVENUE_ORDERS } from '@/components/ad
 import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, ArrowDown, ArrowUp, XCircle } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'react-toastify'
+import { isAxiosError } from 'axios'
 import { useAdminDashboard } from '../../hooks/useAdminDashboard'
 import { OrderApi } from '../../api/order-api'
 import type { AdminOrderDetail, AdminOrderItem } from '../../types/order-type'
+import { InvoiceApi } from '../../api/invoice-api'
+import type { TotalRevenue } from '../../types/invoice-type'
 
 function ModalShell({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   return (
@@ -77,11 +80,13 @@ function mapApiOrderDetail(raw: unknown): AdminOrderDetail {
 
 export default function RevenueTab() {
   const { sortBy, sortOrder, toggleSort } = useAdminDashboard()
-  const [selectedRevenueChartMonth, setSelectedRevenueChartMonth] = useState('2026-01')
+  const [revenueChartInput, setRevenueChartInput] = useState('2026')
   const [selectedTotalRevenueMonth, setSelectedTotalRevenueMonth] = useState('2026-01')
   const [selectedPendingRevenueMonth, setSelectedPendingRevenueMonth] = useState('2026-01')
   const [selectedCancelledRevenueMonth, setSelectedCancelledRevenueMonth] = useState('2026-01')
   const [apiOrders, setApiOrders] = useState<AdminOrderItem[] | null>(null)
+  const [revenueChartData, setRevenueChartData] = useState<TotalRevenue[]>([])
+  const [revenueChartLoading, setRevenueChartLoading] = useState(false)
   const [orderDetailModalOpen, setOrderDetailModalOpen] = useState(false)
   const [orderDetailLoading, setOrderDetailLoading] = useState(false)
   const [orderDetail, setOrderDetail] = useState<AdminOrderDetail | null>(null)
@@ -89,10 +94,20 @@ export default function RevenueTab() {
   const currentRevenueData = REVENUE_BY_MONTH[selectedTotalRevenueMonth as keyof typeof REVENUE_BY_MONTH]
   const currentPendingRevenueData = REVENUE_BY_MONTH[selectedPendingRevenueMonth as keyof typeof REVENUE_BY_MONTH]
   const currentCancelledRevenueData = REVENUE_BY_MONTH[selectedCancelledRevenueMonth as keyof typeof REVENUE_BY_MONTH]
-  const currentRevenueChartData = REVENUE_BY_MONTH[selectedRevenueChartMonth as keyof typeof REVENUE_BY_MONTH]
-
   // Revenue tab: KPI summary + revenue trend chart + sortable order cards list.
   const completedOrders = REVENUE_ORDERS.filter(o => o.status === 'completed').length
+  const normalizeRevenueInput = (value: string): string | null => {
+    const trimmed = value.trim()
+    if (/^\d{4}$/.test(trimmed)) return trimmed
+
+    const monthYearMatch = /^(\d{1,2})\/(\d{4})$/.exec(trimmed)
+    if (!monthYearMatch) return null
+
+    const month = Number(monthYearMatch[1])
+    if (month < 1 || month > 12) return null
+
+    return `${String(month).padStart(2, '0')}/${monthYearMatch[2]}`
+  }
 
   const getSortedOrders = () => {
     const sorted = [...REVENUE_ORDERS].sort((a, b) => {
@@ -125,6 +140,39 @@ export default function RevenueTab() {
     }
     fetchOrders()
   }, [])
+
+  const fetchRevenueChartData = useCallback(async (rawInput: string) => {
+    const normalizedInput = normalizeRevenueInput(rawInput)
+    if (!normalizedInput) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setRevenueChartInput(normalizedInput)
+
+    setRevenueChartLoading(true)
+    try {
+      const response = await InvoiceApi.getTotalRevenue(normalizedInput)
+      if (!response.is_success) {
+        setRevenueChartData([])
+        toast.info(response.message || 'Không có dữ liệu doanh thu cho bộ lọc này.')
+        return
+      }
+      setRevenueChartData(response.data ?? [])
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+        setRevenueChartData([])
+        toast.info('Không có dữ liệu doanh thu cho bộ lọc này.')
+        return
+      }
+      toast.error('Không tải được dữ liệu doanh thu. Vui lòng thử lại.')
+    } finally {
+      setRevenueChartLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchRevenueChartData('2026')
+  }, [fetchRevenueChartData])
 
   const sortedApiOrders = useMemo(() => {
     if (!apiOrders) return []
@@ -254,27 +302,40 @@ export default function RevenueTab() {
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h3 className="text-[#003366] text-lg font-semibold">Doanh thu theo thời gian</h3>
-            <p className="text-sm text-gray-500">Biểu đồ doanh thu theo tháng</p>
+            <p className="text-sm text-gray-500">Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng</p>
           </div>
-          <Select value={selectedRevenueChartMonth} onChange={(e) => setSelectedRevenueChartMonth(e.target.value)} className="w-40 border border-gray-200 bg-white py-2">
-            {MONTH_OPTIONS.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </Select>
+          <div className="flex items-center gap-2">
+            <input
+              value={revenueChartInput}
+              onChange={(e) => setRevenueChartInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  void fetchRevenueChartData(revenueChartInput)
+                }
+              }}
+              placeholder="yyyy hoặc mm/yyyy"
+              className="h-10 w-40 rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-[#3366CC]"
+            />
+            <Button size="sm" onClick={() => { void fetchRevenueChartData(revenueChartInput) }}>
+              Lấy dữ liệu
+            </Button>
+          </div>
         </div>
+        {revenueChartLoading && <p className="mb-3 text-sm text-gray-500">Đang tải dữ liệu doanh thu...</p>}
+        {!revenueChartLoading && revenueChartData.length === 0 && (
+          <p className="mb-3 text-sm text-gray-500">Không có dữ liệu doanh thu cho bộ lọc hiện tại.</p>
+        )}
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={currentRevenueChartData.chartData}>
+          <LineChart data={revenueChartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="date" stroke="#666" fontSize={12} />
+            <XAxis dataKey="month" stroke="#666" fontSize={12} />
             <YAxis stroke="#666" fontSize={12} />
             <Tooltip
               contentStyle={{ backgroundColor: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }}
-              formatter={(value: any) => `${(value / 1000000).toFixed(2)}M VND`}
+              formatter={(value) => `${Number(value ?? 0).toLocaleString('vi-VN')}đ`}
             />
             <Legend />
-            <Line type="monotone" dataKey="revenue" stroke="#2ECC71" strokeWidth={3} dot={{ fill: '#2ECC71', r: 5 }} name="Doanh thu" />
+            <Line type="monotone" dataKey="totalAmount" stroke="#2ECC71" strokeWidth={3} dot={{ fill: '#2ECC71', r: 5 }} name="Doanh thu" />
           </LineChart>
         </ResponsiveContainer>
       </Card>
