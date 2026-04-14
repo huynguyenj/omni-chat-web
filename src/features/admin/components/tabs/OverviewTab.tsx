@@ -708,9 +708,9 @@ export default function OverviewTab() {
                       <td className="px-3 py-2 text-gray-600 whitespace-nowrap text-xs">
                         {row.createdAt
                           ? (() => {
-                              const d = new Date(row.createdAt)
-                              return Number.isNaN(d.getTime()) ? row.createdAt : d.toLocaleString('vi-VN')
-                            })()
+                            const d = new Date(row.createdAt)
+                            return Number.isNaN(d.getTime()) ? row.createdAt : d.toLocaleString('vi-VN')
+                          })()
                           : '—'}
                       </td>
                     </tr>
@@ -730,9 +730,9 @@ export default function OverviewTab() {
               <span className="text-xs text-gray-500">
                 {cancelReasonMeta.total_items > 0
                   ? `Hiển thị ${((cancelReasonPage - 1) * cancelReasonPageSize + 1).toLocaleString('vi-VN')}–${Math.min(
-                      cancelReasonPage * cancelReasonPageSize,
-                      cancelReasonMeta.total_items
-                    ).toLocaleString('vi-VN')} / ${cancelReasonMeta.total_items.toLocaleString('vi-VN')}`
+                    cancelReasonPage * cancelReasonPageSize,
+                    cancelReasonMeta.total_items
+                  ).toLocaleString('vi-VN')} / ${cancelReasonMeta.total_items.toLocaleString('vi-VN')}`
                   : 'Không có dữ liệu'}
               </span>
               <Button
