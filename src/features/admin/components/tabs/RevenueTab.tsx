@@ -77,6 +77,54 @@ function mapApiOrderDetail(raw: unknown): AdminOrderDetail {
   }
 }
 
+function extractOrderItemsFromResponse(response: unknown): unknown[] {
+  if (Array.isArray(response)) return response
+  const r = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+  if (Array.isArray(r.items)) return r.items
+  if (Array.isArray(r.data)) return r.data
+  const data = r.data && typeof r.data === 'object' ? (r.data as Record<string, unknown>) : {}
+  if (Array.isArray(data.items)) return data.items
+  if (Array.isArray(data.data)) return data.data
+  return []
+}
+
+function isApiSuccessLike(response: unknown): boolean {
+  const r = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+  if (typeof r.is_success === 'boolean') return r.is_success
+  if (typeof r.isSuccess === 'boolean') return r.isSuccess
+  return Number(r.status_code ?? r.statusCode ?? 0) === 200
+}
+
+function normalizeRevenueRows(raw: unknown): TotalRevenue[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((item) => {
+    const row = item && typeof item === 'object' ? (item as Record<string, unknown>) : {}
+    return {
+      month: String(row.month ?? row.Month ?? ''),
+      totalAmount: Number(row.totalAmount ?? row.total_amount ?? row.totalamount ?? 0)
+    }
+  })
+}
+
+function extractRevenueRowsFromResponse(response: unknown): TotalRevenue[] {
+  const fromRawArray = normalizeRevenueRows(response)
+  if (fromRawArray.length > 0) return fromRawArray
+
+  const r = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+  const direct = normalizeRevenueRows(r.data)
+  if (direct.length > 0) return direct
+
+  const fromItems = normalizeRevenueRows(r.items)
+  if (fromItems.length > 0) return fromItems
+
+  const nestedData = r.data && typeof r.data === 'object' ? (r.data as Record<string, unknown>) : {}
+  const nestedItems = normalizeRevenueRows(nestedData.items)
+  if (nestedItems.length > 0) return nestedItems
+  const nestedArray = normalizeRevenueRows(nestedData.data)
+  if (nestedArray.length > 0) return nestedArray
+  return []
+}
+
 export default function RevenueTab() {
   const ORDERS_PER_PAGE = 9
   const { sortBy, sortOrder, toggleSort } = useAdminDashboard()
@@ -152,7 +200,8 @@ export default function RevenueTab() {
     const fetchOrders = async () => {
       try {
         const response = await OrderApi.getOrders(1, 1000)
-        setApiOrders(response.data.items.map(mapApiOrderItem))
+        const items = extractOrderItemsFromResponse(response)
+        setApiOrders(items.map(mapApiOrderItem))
       } catch (error) {
         console.log('Fetch orders failed:', error)
       }
@@ -171,12 +220,13 @@ export default function RevenueTab() {
     setRevenueChartLoading(true)
     try {
       const response = await InvoiceApi.getTotalRevenue(normalizedInput)
-      if (!response.is_success) {
+      const rows = extractRevenueRowsFromResponse(response)
+      if (!isApiSuccessLike(response) && rows.length === 0) {
         setRevenueChartData([])
         toast.info(response.message || 'Không có dữ liệu doanh thu cho bộ lọc này.')
         return
       }
-      setRevenueChartData(response.data ?? [])
+      setRevenueChartData(rows)
     } catch (error) {
       if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
         setRevenueChartData([])
@@ -204,12 +254,13 @@ export default function RevenueTab() {
 
     try {
       const response = await InvoiceApi.getTotalRevenue(normalizedInput)
-      if (!response.is_success) {
+      const rows = extractRevenueRowsFromResponse(response)
+      if (!isApiSuccessLike(response) && rows.length === 0) {
         setTotalRevenueAmount(0)
         toast.info(response.message || 'Không có dữ liệu tổng doanh thu cho bộ lọc này.')
         return
       }
-      const total = (response.data ?? []).reduce((sum, item) => sum + Number(item.totalAmount ?? 0), 0)
+      const total = rows.reduce((sum, item) => sum + item.totalAmount, 0)
       setTotalRevenueAmount(total)
     } catch (error) {
       if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
@@ -238,12 +289,13 @@ export default function RevenueTab() {
 
     try {
       const response = await InvoiceApi.getTotalUnpaid(normalizedInput)
-      if (!response.is_success) {
+      const rows = extractRevenueRowsFromResponse(response)
+      if (!isApiSuccessLike(response) && rows.length === 0) {
         setTotalUnpaidAmount(0)
         toast.info(response.message || 'Không có dữ liệu chưa thanh toán cho bộ lọc này.')
         return
       }
-      const total = (response.data ?? []).reduce((sum, item) => sum + Number(item.totalAmount ?? 0), 0)
+      const total = rows.reduce((sum, item) => sum + item.totalAmount, 0)
       setTotalUnpaidAmount(total)
     } catch (error) {
       if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
@@ -271,12 +323,13 @@ export default function RevenueTab() {
     setUnpaidChartLoading(true)
     try {
       const response = await InvoiceApi.getTotalUnpaid(normalizedInput)
-      if (!response.is_success) {
+      const rows = extractRevenueRowsFromResponse(response)
+      if (!isApiSuccessLike(response) && rows.length === 0) {
         setUnpaidChartData([])
         toast.info(response.message || 'Không có dữ liệu chờ thanh toán cho bộ lọc này.')
         return
       }
-      setUnpaidChartData(response.data ?? [])
+      setUnpaidChartData(rows)
     } catch (error) {
       if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
         setUnpaidChartData([])

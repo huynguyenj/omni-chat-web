@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { DollarSign, Users } from 'lucide-react'
 import { useAdminDashboard } from '../hooks/useAdminDashboard'
-import type { AdminDashboardTab } from '../context/AdminDashboardProvider'
+import type { AdminDashboardTab } from '../context/AdminDashboardContext'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 

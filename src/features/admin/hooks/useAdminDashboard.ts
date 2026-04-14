@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { AdminDashboardContext } from '../context/AdminDashboardProvider'
+import { AdminDashboardContext } from '../context/AdminDashboardContext'
 
 export function useAdminDashboard() {
   const ctx = useContext(AdminDashboardContext)

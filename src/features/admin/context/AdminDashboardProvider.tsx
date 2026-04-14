@@ -1,47 +1,12 @@
-import { createContext, useMemo, useState, type PropsWithChildren } from 'react'
-
-export type AdminDashboardTab = 'overview' | 'revenue' | 'staff'
-export type RevenueSortBy = 'date' | 'value' | 'customer'
-export type SortOrder = 'asc' | 'desc'
-
-export type StaffAccount = {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  role: string
-  department: string
-  status: string
-  joinDate: string
-}
-
-export type AdminDashboardContextValue = {
-  // Date range (UI placeholders for now; hook up calendar later).
-  dateFrom: Date | undefined
-  dateTo: Date | undefined
-  setDateFrom: (d: Date | undefined) => void
-  setDateTo: (d: Date | undefined) => void
-
-  // Which dashboard tab is currently visible.
-  activeTab: AdminDashboardTab
-  setActiveTab: (t: AdminDashboardTab) => void
-
-  // Dialog state for staff management tab.
-  addStaffDialogOpen: boolean
-  setAddStaffDialogOpen: (open: boolean) => void
-
-  editStaffDialogOpen: boolean
-  setEditStaffDialogOpen: (open: boolean) => void
-  selectedStaff: StaffAccount | null
-  setSelectedStaff: (s: StaffAccount | null) => void
-
-  // Sorting state for revenue orders list.
-  sortBy: RevenueSortBy
-  sortOrder: SortOrder
-  toggleSort: (column: RevenueSortBy) => void
-}
-
-export const AdminDashboardContext = createContext<AdminDashboardContextValue | undefined>(undefined)
+import { useCallback, useMemo, useState, type PropsWithChildren } from 'react'
+import {
+  AdminDashboardContext,
+  type AdminDashboardContextValue,
+  type AdminDashboardTab,
+  type RevenueSortBy,
+  type SortOrder,
+  type StaffAccount
+} from './AdminDashboardContext'
 
 export function AdminDashboardProvider({ children }: PropsWithChildren) {
   // Centralized UI state for Admin Dashboard tabs/components.
@@ -49,15 +14,15 @@ export function AdminDashboardProvider({ children }: PropsWithChildren) {
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
   const [dateFrom, setDateFrom] = useState<Date | undefined>(firstDay)
   const [dateTo, setDateTo] = useState<Date | undefined>(today)
-  const setSafeDateFrom = (d: Date | undefined) => {
+  const setSafeDateFrom = useCallback((d: Date | undefined) => {
     if (d && dateTo && d > dateTo) return
     setDateFrom(d)
-  }
+  }, [dateTo])
   
-  const setSafeDateTo = (d: Date | undefined) => {
+  const setSafeDateTo = useCallback((d: Date | undefined) => {
     if (d && dateFrom && d < dateFrom) return
     setDateTo(d)
-  }
+  }, [dateFrom])
   const [activeTab, setActiveTab] = useState<AdminDashboardTab>('overview')
   const [addStaffDialogOpen, setAddStaffDialogOpen] = useState(false)
   const [editStaffDialogOpen, setEditStaffDialogOpen] = useState(false)
@@ -65,7 +30,7 @@ export function AdminDashboardProvider({ children }: PropsWithChildren) {
   const [sortBy, setSortBy] = useState<RevenueSortBy>('date')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
-  const toggleSort = (column: RevenueSortBy) => {
+  const toggleSort = useCallback((column: RevenueSortBy) => {
     // Clicking same column toggles asc/desc; clicking new column resets to desc.
     if (sortBy === column) {
       setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
@@ -73,7 +38,7 @@ export function AdminDashboardProvider({ children }: PropsWithChildren) {
     }
     setSortBy(column)
     setSortOrder('desc')
-  }
+  }, [sortBy])
 
   const value = useMemo<AdminDashboardContextValue>(() => {
     return {
@@ -93,7 +58,7 @@ export function AdminDashboardProvider({ children }: PropsWithChildren) {
       sortOrder,
       toggleSort
     }
-  }, [activeTab, addStaffDialogOpen, dateFrom, dateTo, editStaffDialogOpen, selectedStaff, sortBy, sortOrder])
+  }, [activeTab, addStaffDialogOpen, dateFrom, dateTo, editStaffDialogOpen, selectedStaff, sortBy, sortOrder, setSafeDateFrom, setSafeDateTo, toggleSort])
 
   return (
     <AdminDashboardContext.Provider value={value}>
