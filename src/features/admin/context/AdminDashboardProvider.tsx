@@ -18,7 +18,7 @@ export function AdminDashboardProvider({ children }: PropsWithChildren) {
     if (d && dateTo && d > dateTo) return
     setDateFrom(d)
   }, [dateTo])
-  
+
   const setSafeDateTo = useCallback((d: Date | undefined) => {
     if (d && dateFrom && d < dateFrom) return
     setDateTo(d)
