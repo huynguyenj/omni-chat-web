@@ -1,18 +1,132 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
-import { REVENUE_ORDERS, REVENUE_OVER_TIME } from '@/components/admin/admin-dashboard-data'
-import { CheckCircle, Clock, DollarSign, ShoppingCart, TrendingUp, Users, ArrowDown, ArrowUp } from 'lucide-react'
+import { REVENUE_ORDERS } from '@/components/admin/admin-dashboard-data'
+import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, ArrowDown, ArrowUp, XCircle } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { toast } from 'react-toastify'
+import { isAxiosError } from 'axios'
 import { useAdminDashboard } from '../../hooks/useAdminDashboard'
+import { OrderApi } from '../../api/order-api'
+import type { AdminOrderDetail, AdminOrderItem } from '../../types/order-type'
+import { InvoiceApi } from '../../api/invoice-api'
+import type { TotalRevenue } from '../../types/invoice-type'
+
+function ModalShell({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onMouseDown={onClose}>
+      <div className="bg-white rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto p-6" onMouseDown={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function mapApiOrderItem(raw: unknown): AdminOrderItem {
+  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  const customer = o.customer && typeof o.customer === 'object' ? (o.customer as Record<string, unknown>) : {}
+  return {
+    id: String(o.id ?? ''),
+    customerId: String(o.customerId ?? o.customer_id ?? ''),
+    customerName: readString(o, ['customerName', 'customer_name', 'nameCustomer', 'customerFullName']) ?? readString(customer, ['name', 'fullName']),
+    orderDate: String(o.orderDate ?? o.order_date ?? ''),
+    name: String(o.name ?? ''),
+    status: String(o.status ?? ''),
+    totalAmount: Number(o.totalAmount ?? o.total_amount ?? 0),
+    deliveryStatus: String(o.deliveryStatus ?? o.delivery_status ?? ''),
+    code: String(o.code ?? '')
+  }
+}
+
+function readString(source: Record<string, unknown>, keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = source[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return undefined
+}
+
+function mapApiOrderDetail(raw: unknown): AdminOrderDetail {
+  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  const customer = o.customer && typeof o.customer === 'object' ? (o.customer as Record<string, unknown>) : {}
+  const orderItemsRaw = Array.isArray(o.orderItems) ? o.orderItems : []
+
+  return {
+    id: String(o.id ?? ''),
+    customerId: String(o.customerId ?? o.customer_id ?? ''),
+    customerName: readString(o, ['customerName', 'customer_name', 'nameCustomer', 'customerFullName']) ?? readString(customer, ['name', 'fullName']),
+    customerPhone: readString(o, ['customerPhone', 'customer_phone', 'customerPhoneNumber', 'phone', 'phoneNumber']) ?? readString(customer, ['phone', 'phoneNumber', 'customerPhoneNumber']),
+    customerEmail: readString(o, ['customerEmail', 'customer_email', 'email']) ?? readString(customer, ['email']),
+    customerAddress: readString(o, ['customerAddress', 'customer_address', 'address', 'shippingAddress']) ?? readString(customer, ['address', 'shippingAddress']),
+    orderDate: String(o.orderDate ?? o.order_date ?? ''),
+    name: String(o.name ?? ''),
+    status: String(o.status ?? ''),
+    totalAmount: Number(o.totalAmount ?? o.total_amount ?? 0),
+    deliveryStatus: String(o.deliveryStatus ?? o.delivery_status ?? ''),
+    code: String(o.code ?? ''),
+    orderItems: orderItemsRaw.map((itemRaw) => {
+      const item = itemRaw && typeof itemRaw === 'object' ? (itemRaw as Record<string, unknown>) : {}
+      return {
+        id: String(item.id ?? ''),
+        quantity: Number(item.quantity ?? 0),
+        productName: String(item.productName ?? item.product_name ?? ''),
+        itemsPrice: typeof item.itemsPrice === 'number' ? item.itemsPrice : null
+      }
+    })
+  }
+}
 
 export default function RevenueTab() {
+  const ORDERS_PER_PAGE = 9
   const { sortBy, sortOrder, toggleSort } = useAdminDashboard()
+  const [revenueChartInput, setRevenueChartInput] = useState('2026')
+  const [totalRevenueInput, setTotalRevenueInput] = useState('2026')
+  const [totalRevenueAmount, setTotalRevenueAmount] = useState(0)
+  const [totalRevenueLoading, setTotalRevenueLoading] = useState(false)
+  const [totalUnpaidInput, setTotalUnpaidInput] = useState('2026')
+  const [totalUnpaidAmount, setTotalUnpaidAmount] = useState(0)
+  const [totalUnpaidLoading, setTotalUnpaidLoading] = useState(false)
+  const [unpaidChartInput, setUnpaidChartInput] = useState('2026')
+  const [unpaidChartData, setUnpaidChartData] = useState<TotalRevenue[]>([])
+  const [unpaidChartLoading, setUnpaidChartLoading] = useState(false)
+  const [apiOrders, setApiOrders] = useState<AdminOrderItem[] | null>(null)
+  const [revenueChartData, setRevenueChartData] = useState<TotalRevenue[]>([])
+  const [revenueChartLoading, setRevenueChartLoading] = useState(false)
+  const [orderDetailModalOpen, setOrderDetailModalOpen] = useState(false)
+  const [orderDetailLoading, setOrderDetailLoading] = useState(false)
+  const [orderDetail, setOrderDetail] = useState<AdminOrderDetail | null>(null)
+  const [ordersPage, setOrdersPage] = useState(1)
 
   // Revenue tab: KPI summary + revenue trend chart + sortable order cards list.
-  const totalRevenue = REVENUE_ORDERS.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.value, 0)
-  const pendingRevenue = REVENUE_ORDERS.filter(o => o.status === 'pending').reduce((sum, o) => sum + o.value, 0)
-  const avgOrderValue = totalRevenue / REVENUE_ORDERS.filter(o => o.status === 'completed').length
-  const completedOrders = REVENUE_ORDERS.filter(o => o.status === 'completed').length
+  const completedOrders = useMemo(() => {
+    if (!apiOrders) return 0
+    return apiOrders.filter((order) => {
+      const deliveryStatus = order.deliveryStatus.toLowerCase()
+      const status = order.status.toLowerCase()
+      return deliveryStatus === 'delivered' || status === 'completed'
+    }).length
+  }, [apiOrders])
+  const cancelledOrders = useMemo(() => {
+    if (!apiOrders) return 0
+    return apiOrders.filter((order) => {
+      const deliveryStatus = order.deliveryStatus.toLowerCase()
+      const status = order.status.toLowerCase()
+      return deliveryStatus === 'cancelled' || status === 'cancelled'
+    }).length
+  }, [apiOrders])
+  const normalizeRevenueInput = (value: string): string | null => {
+    const trimmed = value.trim()
+    if (/^\d{4}$/.test(trimmed)) return trimmed
+
+    const monthYearMatch = /^(\d{1,2})\/(\d{4})$/.exec(trimmed)
+    if (!monthYearMatch) return null
+
+    const month = Number(monthYearMatch[1])
+    if (month < 1 || month > 12) return null
+
+    return `${String(month).padStart(2, '0')}/${monthYearMatch[2]}`
+  }
 
   const getSortedOrders = () => {
     const sorted = [...REVENUE_ORDERS].sort((a, b) => {
@@ -34,9 +148,217 @@ export default function RevenueTab() {
     return sorted
   }
 
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await OrderApi.getOrders(1, 1000)
+        setApiOrders(response.data.items.map(mapApiOrderItem))
+      } catch (error) {
+        console.log('Fetch orders failed:', error)
+      }
+    }
+    fetchOrders()
+  }, [])
+
+  const fetchRevenueChartData = useCallback(async (rawInput: string) => {
+    const normalizedInput = normalizeRevenueInput(rawInput)
+    if (!normalizedInput) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setRevenueChartInput(normalizedInput)
+
+    setRevenueChartLoading(true)
+    try {
+      const response = await InvoiceApi.getTotalRevenue(normalizedInput)
+      if (!response.is_success) {
+        setRevenueChartData([])
+        toast.info(response.message || 'Không có dữ liệu doanh thu cho bộ lọc này.')
+        return
+      }
+      setRevenueChartData(response.data ?? [])
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+        setRevenueChartData([])
+        toast.info('Không có dữ liệu doanh thu cho bộ lọc này.')
+        return
+      }
+      toast.error('Không tải được dữ liệu doanh thu. Vui lòng thử lại.')
+    } finally {
+      setRevenueChartLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchRevenueChartData('2026')
+  }, [fetchRevenueChartData])
+
+  const fetchTotalRevenueData = useCallback(async (rawInput: string) => {
+    const normalizedInput = normalizeRevenueInput(rawInput)
+    if (!normalizedInput) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setTotalRevenueInput(normalizedInput)
+    setTotalRevenueLoading(true)
+
+    try {
+      const response = await InvoiceApi.getTotalRevenue(normalizedInput)
+      if (!response.is_success) {
+        setTotalRevenueAmount(0)
+        toast.info(response.message || 'Không có dữ liệu tổng doanh thu cho bộ lọc này.')
+        return
+      }
+      const total = (response.data ?? []).reduce((sum, item) => sum + Number(item.totalAmount ?? 0), 0)
+      setTotalRevenueAmount(total)
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+        setTotalRevenueAmount(0)
+        toast.info('Không có dữ liệu tổng doanh thu cho bộ lọc này.')
+        return
+      }
+      toast.error('Không tải được tổng doanh thu. Vui lòng thử lại.')
+    } finally {
+      setTotalRevenueLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchTotalRevenueData('2026')
+  }, [fetchTotalRevenueData])
+
+  const fetchTotalUnpaidData = useCallback(async (rawInput: string) => {
+    const normalizedInput = normalizeRevenueInput(rawInput)
+    if (!normalizedInput) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setTotalUnpaidInput(normalizedInput)
+    setTotalUnpaidLoading(true)
+
+    try {
+      const response = await InvoiceApi.getTotalUnpaid(normalizedInput)
+      if (!response.is_success) {
+        setTotalUnpaidAmount(0)
+        toast.info(response.message || 'Không có dữ liệu chưa thanh toán cho bộ lọc này.')
+        return
+      }
+      const total = (response.data ?? []).reduce((sum, item) => sum + Number(item.totalAmount ?? 0), 0)
+      setTotalUnpaidAmount(total)
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+        setTotalUnpaidAmount(0)
+        toast.info('Không có dữ liệu chưa thanh toán cho bộ lọc này.')
+        return
+      }
+      toast.error('Không tải được dữ liệu chưa thanh toán. Vui lòng thử lại.')
+    } finally {
+      setTotalUnpaidLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchTotalUnpaidData('2026')
+  }, [fetchTotalUnpaidData])
+
+  const fetchUnpaidChartData = useCallback(async (rawInput: string) => {
+    const normalizedInput = normalizeRevenueInput(rawInput)
+    if (!normalizedInput) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setUnpaidChartInput(normalizedInput)
+    setUnpaidChartLoading(true)
+    try {
+      const response = await InvoiceApi.getTotalUnpaid(normalizedInput)
+      if (!response.is_success) {
+        setUnpaidChartData([])
+        toast.info(response.message || 'Không có dữ liệu chờ thanh toán cho bộ lọc này.')
+        return
+      }
+      setUnpaidChartData(response.data ?? [])
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+        setUnpaidChartData([])
+        toast.info('Không có dữ liệu chờ thanh toán cho bộ lọc này.')
+        return
+      }
+      toast.error('Không tải được dữ liệu chờ thanh toán. Vui lòng thử lại.')
+    } finally {
+      setUnpaidChartLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchUnpaidChartData('2026')
+  }, [fetchUnpaidChartData])
+
+  const sortedApiOrders = useMemo(() => {
+    if (!apiOrders) return []
+    const sorted = [...apiOrders].sort((a, b) => {
+      let comparison = 0
+      if (sortBy === 'date') {
+        comparison = new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime()
+      } else if (sortBy === 'value') {
+        comparison = a.totalAmount - b.totalAmount
+      } else if (sortBy === 'customer') {
+        comparison = a.name.localeCompare(b.name)
+      }
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+    return sorted
+  }, [apiOrders, sortBy, sortOrder])
+  const sortedFallbackOrders = useMemo(() => getSortedOrders(), [sortBy, sortOrder])
+  const activeOrderCount = apiOrders ? sortedApiOrders.length : sortedFallbackOrders.length
+  const totalOrderPages = Math.max(1, Math.ceil(activeOrderCount / ORDERS_PER_PAGE))
+  const paginatedApiOrders = useMemo(() => {
+    if (!apiOrders) return []
+    const start = (ordersPage - 1) * ORDERS_PER_PAGE
+    return sortedApiOrders.slice(start, start + ORDERS_PER_PAGE)
+  }, [apiOrders, sortedApiOrders, ordersPage])
+  const paginatedFallbackOrders = useMemo(() => {
+    const start = (ordersPage - 1) * ORDERS_PER_PAGE
+    return sortedFallbackOrders.slice(start, start + ORDERS_PER_PAGE)
+  }, [sortedFallbackOrders, ordersPage])
+
+  useEffect(() => {
+    setOrdersPage(1)
+  }, [sortBy, sortOrder, apiOrders])
+
+  useEffect(() => {
+    if (ordersPage > totalOrderPages) setOrdersPage(totalOrderPages)
+  }, [ordersPage, totalOrderPages])
+
   const sortIndicator = (column: typeof sortBy) => {
     if (sortBy !== column) return null
     return sortOrder === 'desc' ? <ArrowDown className="h-3 w-3 ml-1" /> : <ArrowUp className="h-3 w-3 ml-1" />
+  }
+
+  const openOrderDetail = (order: AdminOrderItem) => {
+    if (!order.id) {
+      toast.error('Không tìm thấy ID đơn hàng để xem chi tiết.')
+      return
+    }
+    setOrderDetailModalOpen(true)
+    setOrderDetail(null)
+    setOrderDetailLoading(true)
+    OrderApi.getOrderById(order.id)
+      .then((res) => {
+        if (!res.is_success) {
+          toast.error(res.message || 'Không tải được chi tiết đơn hàng.')
+          return
+        }
+        setOrderDetail(mapApiOrderDetail(res.data))
+      })
+      .catch(() => {
+        toast.error('Không tải được chi tiết đơn hàng. Vui lòng thử lại.')
+      })
+      .finally(() => setOrderDetailLoading(false))
+  }
+
+  const closeOrderDetailModal = () => {
+    setOrderDetailModalOpen(false)
+    setOrderDetail(null)
   }
 
   return (
@@ -47,11 +369,31 @@ export default function RevenueTab() {
             <div className="p-3 rounded-lg bg-green-50">
               <DollarSign className="h-6 w-6 text-[#2ECC71]" />
             </div>
-            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
+            <div className="flex items-center gap-2">
+              <input
+                value={totalRevenueInput}
+                onChange={(e) => setTotalRevenueInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    void fetchTotalRevenueData(totalRevenueInput)
+                  }
+                }}
+                placeholder="yyyy hoặc mm/yyyy"
+                className="h-8 w-28 rounded-md border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#3366CC]"
+              />
+              <Button size="sm" onClick={() => { void fetchTotalRevenueData(totalRevenueInput) }}>
+                Lấy
+              </Button>
+            </div>
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Tổng doanh thu</h3>
-          <p className="text-3xl font-bold text-[#2ECC71]">{(totalRevenue / 1000000).toFixed(1)}M</p>
-          <p className="text-xs text-gray-500 mt-2">Từ {completedOrders} đơn hàng</p>
+          <div className="flex items-center gap-2">
+            <p className="text-3xl font-bold text-[#2ECC71]">{Math.round(totalRevenueAmount / 1000).toLocaleString('vi-VN')}K VND</p>
+            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {totalRevenueLoading ? 'Đang tải...' : `Tổng từ dữ liệu ${totalRevenueInput}`}
+          </p>
         </Card>
 
         <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#FF9800]">
@@ -59,10 +401,41 @@ export default function RevenueTab() {
             <div className="p-3 rounded-lg bg-orange-50">
               <Clock className="h-6 w-6 text-[#FF9800]" />
             </div>
+            <div className="flex items-center gap-2">
+              <input
+                value={totalUnpaidInput}
+                onChange={(e) => setTotalUnpaidInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    void fetchTotalUnpaidData(totalUnpaidInput)
+                  }
+                }}
+                placeholder="yyyy hoặc mm/yyyy"
+                className="h-8 w-28 rounded-md border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#3366CC]"
+              />
+              <Button size="sm" onClick={() => { void fetchTotalUnpaidData(totalUnpaidInput) }}>
+                Lấy
+              </Button>
+            </div>
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Chờ thanh toán</h3>
-          <p className="text-3xl font-bold text-[#FF9800]">{(pendingRevenue / 1000000).toFixed(1)}M</p>
-          <p className="text-xs text-gray-500 mt-2">{REVENUE_ORDERS.filter(o => o.status === 'pending').length} đơn đang chờ</p>
+          <p className="text-3xl font-bold text-[#FF9800]">{Math.round(totalUnpaidAmount / 1000).toLocaleString('vi-VN')}K VND</p>
+          <p className="text-xs text-gray-500 mt-2">
+            {totalUnpaidLoading ? 'Đang tải...' : `Tổng chưa thanh toán từ dữ liệu ${totalUnpaidInput}`}
+          </p>
+        </Card>
+
+        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#F44336]">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-3 rounded-lg bg-red-50">
+              <XCircle className="h-6 w-6 text-[#F44336]" />
+            </div>
+            <TrendingDown className="h-5 w-5 text-[#F44336]" />
+          </div>
+          <h3 className="text-sm text-gray-600 mb-1">Tổng đơn hàng bị hủy</h3>
+          <div className="flex items-center gap-2">
+            <p className="text-3xl font-bold text-[#F44336]">{cancelledOrders.toLocaleString('vi-VN')}</p>
+          </div>
         </Card>
 
         <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#3366CC]">
@@ -72,39 +445,91 @@ export default function RevenueTab() {
             </div>
             <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Đơn hoàn thành</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Tổng đơn hàng hoàn thành</h3>
           <p className="text-3xl font-bold text-[#3366CC]">{completedOrders}</p>
-          <p className="text-xs text-gray-500 mt-2">+18% so với tuần trước</p>
-        </Card>
-
-        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#003366]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-gray-50">
-              <ShoppingCart className="h-6 w-6 text-[#003366]" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Giá trị TB/đơn</h3>
-          <p className="text-3xl font-bold text-[#003366]">{(avgOrderValue / 1000).toFixed(0)}K</p>
-          <p className="text-xs text-gray-500 mt-2">Trung bình mỗi đơn</p>
         </Card>
       </div>
 
       <Card className="p-6">
-        <div className="mb-4">
-          <h3 className="text-[#003366] text-lg font-semibold">Doanh thu theo thời gian</h3>
-          <p className="text-sm text-gray-500">Biểu đồ doanh thu 7 ngày qua</p>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-[#003366] text-lg font-semibold">Doanh thu theo thời gian</h3>
+            <p className="text-sm text-gray-500">Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              value={revenueChartInput}
+              onChange={(e) => setRevenueChartInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  void fetchRevenueChartData(revenueChartInput)
+                }
+              }}
+              placeholder="yyyy hoặc mm/yyyy"
+              className="h-10 w-40 rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-[#3366CC]"
+            />
+            <Button size="sm" onClick={() => { void fetchRevenueChartData(revenueChartInput) }}>
+              Lấy dữ liệu
+            </Button>
+          </div>
         </div>
+        {revenueChartLoading && <p className="mb-3 text-sm text-gray-500">Đang tải dữ liệu doanh thu...</p>}
+        {!revenueChartLoading && revenueChartData.length === 0 && (
+          <p className="mb-3 text-sm text-gray-500">Không có dữ liệu doanh thu cho bộ lọc hiện tại.</p>
+        )}
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={REVENUE_OVER_TIME}>
+          <LineChart data={revenueChartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="date" stroke="#666" fontSize={12} />
+            <XAxis dataKey="month" stroke="#666" fontSize={12} />
             <YAxis stroke="#666" fontSize={12} />
             <Tooltip
               contentStyle={{ backgroundColor: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }}
-              formatter={(value: any) => `${(value / 1000000).toFixed(2)}M VND`}
+              formatter={(value) => `${Number(value ?? 0).toLocaleString('vi-VN')}đ`}
             />
             <Legend />
-            <Line type="monotone" dataKey="revenue" stroke="#2ECC71" strokeWidth={3} dot={{ fill: '#2ECC71', r: 5 }} name="Doanh thu" />
+            <Line type="monotone" dataKey="totalAmount" stroke="#2ECC71" strokeWidth={3} dot={{ fill: '#2ECC71', r: 5 }} name="Doanh thu" />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card className="p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-[#003366] text-lg font-semibold">Chờ thanh toán theo thời gian</h3>
+            <p className="text-sm text-gray-500">Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              value={unpaidChartInput}
+              onChange={(e) => setUnpaidChartInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  void fetchUnpaidChartData(unpaidChartInput)
+                }
+              }}
+              placeholder="yyyy hoặc mm/yyyy"
+              className="h-10 w-40 rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-[#3366CC]"
+            />
+            <Button size="sm" onClick={() => { void fetchUnpaidChartData(unpaidChartInput) }}>
+              Lấy dữ liệu
+            </Button>
+          </div>
+        </div>
+        {unpaidChartLoading && <p className="mb-3 text-sm text-gray-500">Đang tải dữ liệu chờ thanh toán...</p>}
+        {!unpaidChartLoading && unpaidChartData.length === 0 && (
+          <p className="mb-3 text-sm text-gray-500">Không có dữ liệu chờ thanh toán cho bộ lọc hiện tại.</p>
+        )}
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={unpaidChartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey="month" stroke="#666" fontSize={12} />
+            <YAxis stroke="#666" fontSize={12} />
+            <Tooltip
+              contentStyle={{ backgroundColor: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+              formatter={(value) => `${Number(value ?? 0).toLocaleString('vi-VN')}đ`}
+            />
+            <Legend />
+            <Line type="monotone" dataKey="totalAmount" stroke="#FF9800" strokeWidth={3} dot={{ fill: '#FF9800', r: 5 }} name="Chờ thanh toán" />
           </LineChart>
         </ResponsiveContainer>
       </Card>
@@ -113,7 +538,7 @@ export default function RevenueTab() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-[#003366] text-lg font-semibold">Chi tiết đơn hàng</h3>
-            <p className="text-sm text-gray-500">Danh sách {REVENUE_ORDERS.length} đơn hàng trong khoảng thời gian</p>
+            <p className="text-sm text-gray-500">Danh sách {apiOrders ? apiOrders.length : REVENUE_ORDERS.length} đơn hàng trong khoảng thời gian</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => toggleSort('date')} className={sortBy === 'date' ? 'bg-blue-50 border-[#3366CC]' : ''}>
@@ -132,46 +557,203 @@ export default function RevenueTab() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {getSortedOrders().map(order => (
-            <Card key={order.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#2ECC71] bg-white group">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-[#003366] text-lg">{order.id}</h3>
-                  <span className={`px-2 py-1 rounded text-[10px] text-white ${order.status === 'completed' ? 'bg-[#2ECC71]' : 'bg-[#FF9800]'}`}>
-                    {order.status === 'completed' ? 'Hoàn thành' : 'Chờ xử lý'}
-                  </span>
-                </div>
-                <div className="space-y-3 mb-4">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-[10px] text-gray-400 uppercase font-medium">Khách hàng</p>
-                    <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.customer}</p>
-                  </div>
-                  <div className="bg-[#F5F7FA] p-2 rounded-lg">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Sản phẩm</p>
-                    <div className="flex justify-between text-xs mb-1 last:mb-0">
-                      <span className="text-gray-700 line-clamp-1 flex-1">
-                        {order.product} <span className="text-gray-400">x{order.quantity}</span>
+          {apiOrders
+            ? paginatedApiOrders.map((order) => {
+              const orderDate = new Date(order.orderDate)
+              const dateText = orderDate.toLocaleDateString('vi-VN')
+              const timeText = orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+              const badgeClass =
+                  order.deliveryStatus === 'Delivered'
+                    ? 'bg-[#1F9D55]'
+                    : order.deliveryStatus === 'Cancelled'
+                      ? 'bg-[#C62828]'
+                      : 'bg-[#EF6C00]'
+              const badgeText =
+                  order.deliveryStatus === 'Delivered'
+                    ? 'Đã giao'
+                    : order.deliveryStatus === 'Cancelled'
+                      ? 'Đã hủy'
+                      : 'Đang xử lý'
+
+              return (
+                <Card key={order.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#2ECC71] bg-white group">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold text-[#003366] text-lg">{order.code}</h3>
+                      <span className={`px-2 py-1 rounded text-[10px] text-white ${badgeClass}`}>
+                        {badgeText}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex flex-col gap-1 text-[10px] text-gray-500">
-                      <span className="flex items-center gap-1 font-mono text-gray-400">📅 {order.date} | ⏰ {order.time}</span>
-                      <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Staff: {order.staff}</span>
+                    <div className="space-y-3 mb-4">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-[10px] text-gray-400 uppercase font-medium">Tên đơn hàng</p>
+                        <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.name}</p>
+                      </div>
+                      <div className="bg-[#F5F7FA] p-2 rounded-lg">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Trạng thái đơn</p>
+                        <div className="flex justify-between text-xs mb-1 last:mb-0">
+                          <span className="text-gray-700 line-clamp-1 flex-1">{order.status}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="flex flex-col gap-1 text-[10px] text-gray-500">
+                          <span className="flex items-center gap-1 font-mono text-gray-400">📅 {dateText} | ⏰ {timeText}</span>
+                          <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Khách hàng: {order.customerName || order.customerId}</span>
+                        </div>
+                        <p className="font-bold text-[#2ECC71] text-lg">{order.totalAmount.toLocaleString('vi-VN')}đ</p>
+                      </div>
                     </div>
-                    <p className="font-bold text-[#2ECC71] text-lg">{order.value.toLocaleString()}đ</p>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full mt-2 border-[#3366CC] text-[#3366CC]" onClick={() => openOrderDetail(order)}>
+                    Chi tiết đơn hàng
+                  </Button>
+                </Card>
+              )
+            })
+            : paginatedFallbackOrders.map(order => (
+              <Card key={order.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#2ECC71] bg-white group">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-[#003366] text-lg">{order.id}</h3>
+                    <span className={`px-2 py-1 rounded text-[10px] text-white ${order.status === 'completed' ? 'bg-[#1F9D55]' : 'bg-[#EF6C00]'}`}>
+                      {order.status === 'completed' ? 'Hoàn thành' : 'Chờ xử lý'}
+                    </span>
+                  </div>
+                  <div className="space-y-3 mb-4">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[10px] text-gray-400 uppercase font-medium">Khách hàng</p>
+                      <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.customer}</p>
+                    </div>
+                    <div className="bg-[#F5F7FA] p-2 rounded-lg">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Sản phẩm</p>
+                      <div className="flex justify-between text-xs mb-1 last:mb-0">
+                        <span className="text-gray-700 line-clamp-1 flex-1">
+                          {order.product} <span className="text-gray-400">x{order.quantity}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex flex-col gap-1 text-[10px] text-gray-500">
+                        <span className="flex items-center gap-1 font-mono text-gray-400">📅 {order.date} | ⏰ {order.time}</span>
+                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Staff: {order.staff}</span>
+                      </div>
+                      <p className="font-bold text-[#2ECC71] text-lg">{order.value.toLocaleString()}đ</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="pt-3 border-t">
-                <Button variant="outline" size="sm" className="w-full text-[#3366CC] border-[#3366CC]/30 hover:bg-[#3366CC]/5 text-xs h-8">
-                  Xem chi tiết đơn hàng
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2 border-[#3366CC] text-[#3366CC]"
+                  onClick={() => toast.info('Dữ liệu mẫu không có API chi tiết đơn hàng.')}
+                >
+                  Chi tiết đơn hàng
                 </Button>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
+        </div>
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-xs text-gray-500">
+            Trang {ordersPage}/{totalOrderPages} - Hiển thị {activeOrderCount === 0 ? 0 : (ordersPage - 1) * ORDERS_PER_PAGE + 1}
+            -
+            {Math.min(ordersPage * ORDERS_PER_PAGE, activeOrderCount)} / {activeOrderCount}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={ordersPage === 1} onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}>
+              Trước
+            </Button>
+            <Button variant="outline" size="sm" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage((p) => Math.min(totalOrderPages, p + 1))}>
+              Sau
+            </Button>
+          </div>
         </div>
       </Card>
+
+      {orderDetailModalOpen && (
+        <ModalShell onClose={closeOrderDetailModal}>
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-[#003366]">Chi tiết đơn hàng</h3>
+              <p className="text-sm text-gray-500">{orderDetail?.code ? `Đơn ${orderDetail.code}` : 'Đang tải thông tin đơn...'}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={closeOrderDetailModal}>
+              Đóng
+            </Button>
+          </div>
+          {orderDetailLoading && <p className="text-sm text-gray-600 py-6 text-center">Đang tải…</p>}
+          {!orderDetailLoading && orderDetail && (
+            <div className="space-y-4">
+              <dl className="grid grid-cols-1 gap-2 text-sm">
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Tên đơn</dt>
+                  <dd className="font-medium text-[#003366] text-right">{orderDetail.name}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Mã đơn</dt>
+                  <dd className="font-mono text-right">{orderDetail.code}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Tên khách hàng</dt>
+                  <dd className="text-right">{orderDetail.customerName || 'Chưa có tên'}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">ID khách hàng</dt>
+                  <dd className="text-right font-mono">{orderDetail.customerId}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Số điện thoại</dt>
+                  <dd className="text-right">{orderDetail.customerPhone || 'Chưa có số điện thoại'}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Email</dt>
+                  <dd className="text-right">{orderDetail.customerEmail || 'Chưa có email'}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Địa chỉ</dt>
+                  <dd className="text-right">{orderDetail.customerAddress || 'Chưa có địa chỉ'}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Ngày tạo</dt>
+                  <dd className="text-right">{new Date(orderDetail.orderDate).toLocaleString('vi-VN')}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Trạng thái đơn</dt>
+                  <dd className="text-right">{orderDetail.status}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Trạng thái giao</dt>
+                  <dd className="text-right">{orderDetail.deliveryStatus}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Tổng tiền</dt>
+                  <dd className="text-right font-semibold text-[#2ECC71]">{orderDetail.totalAmount.toLocaleString('vi-VN')}đ</dd>
+                </div>
+                <div className="pt-1">
+                  <dt className="text-gray-500 mb-2">Sản phẩm trong đơn</dt>
+                  {orderDetail.orderItems.length > 0 ? (
+                    <div className="space-y-2">
+                      {orderDetail.orderItems.map((item) => (
+                        <div key={item.id} className="rounded-md border border-gray-100 p-2">
+                          <p className="text-sm text-[#003366] font-medium">{item.productName}</p>
+                          <div className="text-xs text-gray-600 mt-1 flex items-center justify-between gap-2">
+                            <span>SL: {item.quantity}</span>
+                            <span>{item.itemsPrice == null ? 'Chưa có giá' : `${item.itemsPrice.toLocaleString('vi-VN')}đ`}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <dd className="text-gray-700">Đơn hàng chưa có sản phẩm.</dd>
+                  )}
+                </div>
+              </dl>
+            </div>
+          )}
+          {!orderDetailLoading && !orderDetail && (
+            <p className="text-sm text-gray-600 py-6 text-center">Không có dữ liệu đơn hàng.</p>
+          )}
+        </ModalShell>
+      )}
     </div>
   )
 }
