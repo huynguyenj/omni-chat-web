@@ -23,6 +23,7 @@ function ModalShell({ children, onClose }: { children: ReactNode; onClose: () =>
 }
 
 export default function StaffTab() {
+  const STAFFS_PER_PAGE = 9
   const {
     addStaffDialogOpen,
     setAddStaffDialogOpen,
@@ -45,6 +46,7 @@ export default function StaffTab() {
     phone: '',
     intentId: ''
   })
+  const [staffPage, setStaffPage] = useState(1)
 
   // Staff tab: list staff accounts and manage add/edit dialogs.
   const openEdit = (staff: StaffAccount) => {
@@ -182,6 +184,19 @@ export default function StaffTab() {
       joinDate: '-'
     }))
   }, [apiStaffs])
+  const totalStaffPages = Math.max(1, Math.ceil(uiStaffs.length / STAFFS_PER_PAGE))
+  const paginatedStaffs = useMemo(() => {
+    const start = (staffPage - 1) * STAFFS_PER_PAGE
+    return uiStaffs.slice(start, start + STAFFS_PER_PAGE)
+  }, [uiStaffs, staffPage])
+
+  useEffect(() => {
+    setStaffPage(1)
+  }, [apiStaffs])
+
+  useEffect(() => {
+    if (staffPage > totalStaffPages) setStaffPage(totalStaffPages)
+  }, [staffPage, totalStaffPages])
 
   return (
     <div className="space-y-4">
@@ -197,7 +212,7 @@ export default function StaffTab() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {uiStaffs.map((staff) => (
+        {paginatedStaffs.map((staff) => (
           <Card key={staff.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#3366CC] bg-white group">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -251,6 +266,21 @@ export default function StaffTab() {
             </div>
           </Card>
         ))}
+      </div>
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-xs text-gray-500">
+          Trang {staffPage}/{totalStaffPages} - Hiển thị {uiStaffs.length === 0 ? 0 : (staffPage - 1) * STAFFS_PER_PAGE + 1}
+          -
+          {Math.min(staffPage * STAFFS_PER_PAGE, uiStaffs.length)} / {uiStaffs.length}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" disabled={staffPage === 1} onClick={() => setStaffPage((p) => Math.max(1, p - 1))}>
+            Trước
+          </Button>
+          <Button variant="outline" size="sm" disabled={staffPage === totalStaffPages} onClick={() => setStaffPage((p) => Math.min(totalStaffPages, p + 1))}>
+            Sau
+          </Button>
+        </div>
       </div>
 
       {addStaffDialogOpen && (

@@ -78,6 +78,7 @@ function mapApiOrderDetail(raw: unknown): AdminOrderDetail {
 }
 
 export default function RevenueTab() {
+  const ORDERS_PER_PAGE = 9
   const { sortBy, sortOrder, toggleSort } = useAdminDashboard()
   const [revenueChartInput, setRevenueChartInput] = useState('2026')
   const [totalRevenueInput, setTotalRevenueInput] = useState('2026')
@@ -95,6 +96,7 @@ export default function RevenueTab() {
   const [orderDetailModalOpen, setOrderDetailModalOpen] = useState(false)
   const [orderDetailLoading, setOrderDetailLoading] = useState(false)
   const [orderDetail, setOrderDetail] = useState<AdminOrderDetail | null>(null)
+  const [ordersPage, setOrdersPage] = useState(1)
 
   // Revenue tab: KPI summary + revenue trend chart + sortable order cards list.
   const completedOrders = useMemo(() => {
@@ -306,6 +308,26 @@ export default function RevenueTab() {
     })
     return sorted
   }, [apiOrders, sortBy, sortOrder])
+  const sortedFallbackOrders = useMemo(() => getSortedOrders(), [sortBy, sortOrder])
+  const activeOrderCount = apiOrders ? sortedApiOrders.length : sortedFallbackOrders.length
+  const totalOrderPages = Math.max(1, Math.ceil(activeOrderCount / ORDERS_PER_PAGE))
+  const paginatedApiOrders = useMemo(() => {
+    if (!apiOrders) return []
+    const start = (ordersPage - 1) * ORDERS_PER_PAGE
+    return sortedApiOrders.slice(start, start + ORDERS_PER_PAGE)
+  }, [apiOrders, sortedApiOrders, ordersPage])
+  const paginatedFallbackOrders = useMemo(() => {
+    const start = (ordersPage - 1) * ORDERS_PER_PAGE
+    return sortedFallbackOrders.slice(start, start + ORDERS_PER_PAGE)
+  }, [sortedFallbackOrders, ordersPage])
+
+  useEffect(() => {
+    setOrdersPage(1)
+  }, [sortBy, sortOrder, apiOrders])
+
+  useEffect(() => {
+    if (ordersPage > totalOrderPages) setOrdersPage(totalOrderPages)
+  }, [ordersPage, totalOrderPages])
 
   const sortIndicator = (column: typeof sortBy) => {
     if (sortBy !== column) return null
@@ -536,7 +558,7 @@ export default function RevenueTab() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {apiOrders
-            ? sortedApiOrders.map((order) => {
+            ? paginatedApiOrders.map((order) => {
               const orderDate = new Date(order.orderDate)
               const dateText = orderDate.toLocaleDateString('vi-VN')
               const timeText = orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
@@ -588,7 +610,7 @@ export default function RevenueTab() {
                 </Card>
               )
             })
-            : getSortedOrders().map(order => (
+            : paginatedFallbackOrders.map(order => (
               <Card key={order.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#2ECC71] bg-white group">
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -629,6 +651,21 @@ export default function RevenueTab() {
                 </Button>
               </Card>
             ))}
+        </div>
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-xs text-gray-500">
+            Trang {ordersPage}/{totalOrderPages} - Hiển thị {activeOrderCount === 0 ? 0 : (ordersPage - 1) * ORDERS_PER_PAGE + 1}
+            -
+            {Math.min(ordersPage * ORDERS_PER_PAGE, activeOrderCount)} / {activeOrderCount}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={ordersPage === 1} onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}>
+              Trước
+            </Button>
+            <Button variant="outline" size="sm" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage((p) => Math.min(totalOrderPages, p + 1))}>
+              Sau
+            </Button>
+          </div>
         </div>
       </Card>
 
