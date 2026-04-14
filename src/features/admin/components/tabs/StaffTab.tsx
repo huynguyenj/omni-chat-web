@@ -8,7 +8,7 @@ import { CheckCircle, Edit2, Plus, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { toast } from 'react-toastify'
 import { useAdminDashboard } from '../../hooks/useAdminDashboard'
-import type { StaffAccount } from '../../context/AdminDashboardProvider'
+import type { StaffAccount } from '../../context/AdminDashboardContext'
 import { StaffApi } from '../../api/staff-api'
 import type { StaffItem } from '../../types/staff-type'
 
@@ -20,6 +20,17 @@ function ModalShell({ children, onClose }: { children: ReactNode; onClose: () =>
       </div>
     </div>
   )
+}
+
+function extractStaffItemsFromResponse(response: unknown): StaffItem[] {
+  if (Array.isArray(response)) return response as StaffItem[]
+  const r = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+  if (Array.isArray(r.items)) return r.items as StaffItem[]
+  if (Array.isArray(r.data)) return r.data as StaffItem[]
+  const data = r.data && typeof r.data === 'object' ? (r.data as Record<string, unknown>) : {}
+  if (Array.isArray(data.items)) return data.items as StaffItem[]
+  if (Array.isArray(data.data)) return data.data as StaffItem[]
+  return []
 }
 
 export default function StaffTab() {
@@ -64,7 +75,7 @@ export default function StaffTab() {
   const fetchStaffs = async () => {
     try {
       const response = await StaffApi.getStaffs(1, 50)
-      setApiStaffs(response.data.items)
+      setApiStaffs(extractStaffItemsFromResponse(response))
     } catch (error) {
       console.log('Fetch staffs failed:', error)
     }

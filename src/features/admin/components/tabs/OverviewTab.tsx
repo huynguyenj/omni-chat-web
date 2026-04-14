@@ -22,6 +22,13 @@ type CancelReasonRow = {
   createdAt: string
 }
 
+function isApiSuccessLike(response: unknown): boolean {
+  const r = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+  if (typeof r.is_success === 'boolean') return r.is_success
+  if (typeof r.isSuccess === 'boolean') return r.isSuccess
+  return Number(r.status_code ?? r.statusCode ?? 0) === 200
+}
+
 function mapCancelReasonRow(raw: unknown): CancelReasonRow {
   const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
   const title =
@@ -73,6 +80,17 @@ function normalizeCancelReasonMeta(raw: unknown): {
     current_page: Number(m.current_page ?? m.currentPage ?? 1),
     page_size: Number(m.page_size ?? m.pageSize ?? 10)
   }
+}
+
+function extractArrayFromResponse(response: unknown): unknown[] {
+  if (Array.isArray(response)) return response
+  const r = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+  if (Array.isArray(r.items)) return r.items
+  if (Array.isArray(r.data)) return r.data
+  const data = r.data && typeof r.data === 'object' ? (r.data as Record<string, unknown>) : {}
+  if (Array.isArray(data.items)) return data.items
+  if (Array.isArray(data.data)) return data.data
+  return []
 }
 
 const INTENT_COLOR_BY_NAME: Record<string, string> = {
@@ -233,9 +251,12 @@ export default function OverviewTab() {
       setInventoryDashboardLoading(true)
       try {
         const response = await InventoryApi.getDashboard()
-        if (response.is_success && response.data) {
-          const mapped = mapInventoryDashboardData(response.data)
+        const responseObj = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+        const mapped = mapInventoryDashboardData(responseObj.data ?? response)
+        if (mapped) {
           setInventoryDashboard(mapped)
+        } else if (isApiSuccessLike(response)) {
+          setInventoryDashboard({ totalProducts: 0, lowStockProducts: 0, totalBrands: 0 })
         } else {
           setInventoryDashboard(null)
         }
@@ -261,8 +282,9 @@ export default function OverviewTab() {
     setTaskDashboardLoading(true)
     try {
       const response = await SupportTaskApi.getTaskIntentDashboard(normalized)
-      if (response.is_success && Array.isArray(response.data)) {
-        setTaskDashboardRows(response.data)
+      const rows = extractArrayFromResponse(response) as TaskIntentMonthRow[]
+      if (rows.length > 0 || isApiSuccessLike(response)) {
+        setTaskDashboardRows(rows)
       } else {
         setTaskDashboardRows([])
         toast.info(response.message || 'Không có dữ liệu task cho kỳ này.')
@@ -296,8 +318,9 @@ export default function OverviewTab() {
     setOrderDashboardLoading(true)
     try {
       const response = await OrderApi.getOrderDashboard(normalized)
-      if (response.is_success && Array.isArray(response.data)) {
-        setOrderDashboardRows(response.data)
+      const rows = extractArrayFromResponse(response) as OrderDashboardMonthRow[]
+      if (rows.length > 0 || isApiSuccessLike(response)) {
+        setOrderDashboardRows(rows)
       } else {
         setOrderDashboardRows([])
         toast.info(response.message || 'Không có dữ liệu order dashboard cho kỳ này.')
@@ -325,10 +348,13 @@ export default function OverviewTab() {
       setCancelReasonLoading(true)
       try {
         const response = await TaskCancelReasonApi.getPaging(cancelReasonPage, cancelReasonPageSize)
-        if (response.is_success && response.data) {
-          const items = Array.isArray(response.data.items) ? response.data.items : []
+        const items = extractArrayFromResponse(response)
+        if (items.length > 0 || isApiSuccessLike(response)) {
           setCancelReasonRows(items.map(mapCancelReasonRow))
-          setCancelReasonMeta(normalizeCancelReasonMeta(response.data.meta))
+          const responseObj = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+          const dataObj = responseObj.data && typeof responseObj.data === 'object' ? (responseObj.data as Record<string, unknown>) : {}
+          const metaSource = dataObj.meta ?? dataObj.pagination ?? dataObj.pageInfo ?? responseObj.meta ?? responseObj.pagination ?? responseObj.pageInfo ?? null
+          setCancelReasonMeta(normalizeCancelReasonMeta(metaSource))
         } else {
           setCancelReasonRows([])
           setCancelReasonMeta((prev) => ({ ...prev, total_pages: 0, total_items: 0 }))
@@ -682,9 +708,9 @@ export default function OverviewTab() {
                       <td className="px-3 py-2 text-gray-600 whitespace-nowrap text-xs">
                         {row.createdAt
                           ? (() => {
-                              const d = new Date(row.createdAt)
-                              return Number.isNaN(d.getTime()) ? row.createdAt : d.toLocaleString('vi-VN')
-                            })()
+                            const d = new Date(row.createdAt)
+                            return Number.isNaN(d.getTime()) ? row.createdAt : d.toLocaleString('vi-VN')
+                          })()
                           : '—'}
                       </td>
                     </tr>
@@ -704,9 +730,9 @@ export default function OverviewTab() {
               <span className="text-xs text-gray-500">
                 {cancelReasonMeta.total_items > 0
                   ? `Hiển thị ${((cancelReasonPage - 1) * cancelReasonPageSize + 1).toLocaleString('vi-VN')}–${Math.min(
-                      cancelReasonPage * cancelReasonPageSize,
-                      cancelReasonMeta.total_items
-                    ).toLocaleString('vi-VN')} / ${cancelReasonMeta.total_items.toLocaleString('vi-VN')}`
+                    cancelReasonPage * cancelReasonPageSize,
+                    cancelReasonMeta.total_items
+                  ).toLocaleString('vi-VN')} / ${cancelReasonMeta.total_items.toLocaleString('vi-VN')}`
                   : 'Không có dữ liệu'}
               </span>
               <Button
