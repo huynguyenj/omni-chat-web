@@ -82,7 +82,21 @@ export default function StaffTab() {
   }
 
   useEffect(() => {
-    fetchStaffs()
+    let cancelled = false
+    const loadInitialStaffs = async () => {
+      try {
+        const response = await StaffApi.getStaffs(1, 50)
+        if (cancelled) return
+        setApiStaffs(extractStaffItemsFromResponse(response))
+      } catch (error) {
+        if (cancelled) return
+        console.log('Fetch staffs failed:', error)
+      }
+    }
+    void loadInitialStaffs()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const parseIntentIds = (raw: string) =>
@@ -196,18 +210,11 @@ export default function StaffTab() {
     }))
   }, [apiStaffs])
   const totalStaffPages = Math.max(1, Math.ceil(uiStaffs.length / STAFFS_PER_PAGE))
+  const effectiveStaffPage = Math.min(staffPage, totalStaffPages)
   const paginatedStaffs = useMemo(() => {
-    const start = (staffPage - 1) * STAFFS_PER_PAGE
+    const start = (effectiveStaffPage - 1) * STAFFS_PER_PAGE
     return uiStaffs.slice(start, start + STAFFS_PER_PAGE)
-  }, [uiStaffs, staffPage])
-
-  useEffect(() => {
-    setStaffPage(1)
-  }, [apiStaffs])
-
-  useEffect(() => {
-    if (staffPage > totalStaffPages) setStaffPage(totalStaffPages)
-  }, [staffPage, totalStaffPages])
+  }, [uiStaffs, effectiveStaffPage])
 
   return (
     <div className="space-y-4">
@@ -280,15 +287,15 @@ export default function StaffTab() {
       </div>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-xs text-gray-500">
-          Trang {staffPage}/{totalStaffPages} - Hiển thị {uiStaffs.length === 0 ? 0 : (staffPage - 1) * STAFFS_PER_PAGE + 1}
+          Trang {effectiveStaffPage}/{totalStaffPages} - Hiển thị {uiStaffs.length === 0 ? 0 : (effectiveStaffPage - 1) * STAFFS_PER_PAGE + 1}
           -
-          {Math.min(staffPage * STAFFS_PER_PAGE, uiStaffs.length)} / {uiStaffs.length}
+          {Math.min(effectiveStaffPage * STAFFS_PER_PAGE, uiStaffs.length)} / {uiStaffs.length}
         </p>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={staffPage === 1} onClick={() => setStaffPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" size="sm" disabled={effectiveStaffPage === 1} onClick={() => setStaffPage((p) => Math.max(1, p - 1))}>
             Trước
           </Button>
-          <Button variant="outline" size="sm" disabled={staffPage === totalStaffPages} onClick={() => setStaffPage((p) => Math.min(totalStaffPages, p + 1))}>
+          <Button variant="outline" size="sm" disabled={effectiveStaffPage === totalStaffPages} onClick={() => setStaffPage((p) => Math.min(totalStaffPages, p + 1))}>
             Sau
           </Button>
         </div>
