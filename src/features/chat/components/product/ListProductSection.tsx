@@ -14,6 +14,8 @@ import CardSkeleton from '@/components/ui/skeleton/CardSkeleton'
 import { useState } from 'react'
 import { motion } from 'motion/react'
 import { FiShoppingCart } from 'react-icons/fi'
+import type { ProductDetailType } from '../../types/product-type'
+import CreateOrderSearchSection from '../order/CreateOrderSearchSection'
 
 type ListProductSectionProps = {
   isOpen: boolean
@@ -23,6 +25,8 @@ type ListProductSectionProps = {
 export default function ListProductSection({ isOpen, handleOpen }: ListProductSectionProps) {
   const { currentPage, listProducts, loading, setCurrentPage, setSearchName } = useGetProductList()
   const [isDetailOpen, setIsDetailOpen] = useState({ id: '', state: false })
+  const [isCreateOrderOpen, setCreateOrderOpen] = useState(false)
+  const [productCreateOrderChose, setProductCreateOrderChose] = useState<ProductDetailType>()
   const handleSearch = (value: string) => {
     setCurrentPage(1)
     setSearchName(value)
@@ -47,6 +51,13 @@ export default function ListProductSection({ isOpen, handleOpen }: ListProductSe
         }
       }
     })
+  }
+  const handleOpenCreateOrderProduct = (product: ProductDetailType) => {
+    setCreateOrderOpen((prev) => !prev)
+    setProductCreateOrderChose(product)
+  }
+  const handleCloseCreateOrderProduct = () => {
+    setCreateOrderOpen(prevState => !prevState)
   }
   return (
     <div>
@@ -107,7 +118,7 @@ export default function ListProductSection({ isOpen, handleOpen }: ListProductSe
                     <p className='text-primary font-medium'>{item.lifeSpan} ngày</p>
                   </div> */}
                         </div>
-                        <Button className='w-full my-5'>
+                        <Button className='w-full my-5' onClick={() => handleOpenCreateOrderProduct(item)}>
                           <FiShoppingCart />
                           Tạo đơn
                         </Button>
@@ -130,6 +141,11 @@ export default function ListProductSection({ isOpen, handleOpen }: ListProductSe
           </>
         }
       </PopupBasic>
+      }
+      { isCreateOrderOpen && productCreateOrderChose &&
+        <CreateOrderSearchSection
+          product={productCreateOrderChose}
+          handleOpenCreate={handleCloseCreateOrderProduct}/>
       }
     </div>
   )

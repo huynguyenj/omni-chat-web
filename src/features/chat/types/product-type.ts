@@ -5,7 +5,7 @@ export type ProductType = {
   productImageUrl: string
 }
 
-export interface Product {
+export interface ProductDetailType {
   id: string;
   imageUrl: string;
   name: string;

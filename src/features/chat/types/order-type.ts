@@ -21,6 +21,17 @@ export type OrderType = {
   orderItems: OrderItemType[]
 }
 
+type OrderItems = {
+  productBatchId: string
+  quantity: number
+}
+
+export type OrderRequestType = {
+  customerId: string
+  name: string
+  orderItems: OrderItems[]
+}
+
 export type PostSaleItem = {
   orderItemId: string
   quantity: number

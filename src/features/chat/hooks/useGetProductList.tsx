@@ -1,13 +1,13 @@
 import useApiCall from '@/config/useApiCall'
 import { type PaginationStructure } from '@/types/api-response'
 import { useEffect, useState } from 'react'
-import { type Product } from '../types/product-type'
+import type { ProductDetailType } from '../types/product-type'
 
 export default function useGetProductList() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchName, setSearchName] = useState('')
-  const { execute, loading } = useApiCall<PaginationStructure<Product>>()
-  const [listProducts, setListProducts] = useState<PaginationStructure<Product>>()
+  const { execute, loading } = useApiCall<PaginationStructure<ProductDetailType>>()
+  const [listProducts, setListProducts] = useState<PaginationStructure<ProductDetailType>>()
   useEffect(() => {
     const fetchProduct = async () => {
       const apiData = await execute({

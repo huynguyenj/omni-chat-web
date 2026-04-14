@@ -69,6 +69,7 @@ export default function useConnectChat() {
         toast.error('Lấy dữ liệu tin nhắn thất bại!')
         return
       }
+      context.handleSaveCustomerId(data.activeCustomerId)
       setConversationDetail(data)
       setMessages(data.messages)
     }
