@@ -2,18 +2,21 @@ import useApiCall from '@/config/useApiCall'
 import type { TicketType } from '../types/ticket-type'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import useContextValid from '@/hooks/useContextValid'
+import SelectionMessageContext from '../context/SelectionMessageProvider'
 
-export default function useGetTicket({ customerId }: { customerId?: string }) {
+export default function useGetTicket() {
   const { execute, loading } = useApiCall<TicketType[]>()
   const [listTickets, setListTickets] = useState<TicketType[]>()
+  const context = useContextValid(SelectionMessageContext)
   useEffect(() => {
-    if (!customerId) {
+    if (!context.customerId) {
       toast.error('Xảy ra lỗi không có customer id!')
       return
     }
     const fetchTicket = async () => {
       const apiData = await execute({
-        apiUrl: `/support-conversations/customer/${customerId}/complete-history`,
+        apiUrl: `/support-conversations/customer/${context.customerId}/complete-history`,
         method: 'get',
         type: 'private'
       })
@@ -25,6 +28,6 @@ export default function useGetTicket({ customerId }: { customerId?: string }) {
       setListTickets(data)
     }
     fetchTicket()
-  }, [customerId])
+  }, [context.customerId])
   return { loading, listTickets }
 }

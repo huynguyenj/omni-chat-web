@@ -3,7 +3,6 @@ import SelectionMessageContext from '../../context/SelectionMessageProvider'
 import useGetResolveMessage from '../../hooks/useGetResolveMessage'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import AwaitMessageBox from '../ui/AwaitMessageBox'
-import { getTimeHelper } from '../../utils/time-helper'
 import AwaitedChatSkeleton from '@/components/ui/skeleton/AwaitedChatSkeleton'
 
 export default function ResolveMessage() {
@@ -33,7 +32,7 @@ export default function ResolveMessage() {
                   customerName={data.customerName}
                   message={data.lastMessage}
                   avatar={data.avartarUrl}
-                  time={getTimeHelper(data.updateDate)}
+                  time={data.updateDate}
                   platform={platform}
                   totalAwaitMessage={data.unreadMessageCount}
                 />

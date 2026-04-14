@@ -5,9 +5,7 @@ import TutorialBox from '../ui/TutorialBox'
 import Card from '@/components/ui/card/Card'
 import Tag from '@/components/ui/tag/Tag'
 import Checkbox from '@/components/ui/input/Checkbox'
-import SelectionBox from '../ui/SelectionBox'
-import { IoIosArrowForward, IoMdCheckmarkCircleOutline } from 'react-icons/io'
-import Input from '@/components/ui/input/Input'
+import { IoIosArrowForward } from 'react-icons/io'
 import Button from '@/components/ui/button/Button'
 import OrderReview from './OrderReview'
 import { LuCircleCheckBig } from 'react-icons/lu'
@@ -23,11 +21,14 @@ import useCreateOrder from '../../hooks/useCreateOrder'
 import { toast } from 'react-toastify'
 import type { OrderRequestType } from '../../types/order-type'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
+import { PRODUCT_TYPE } from '../../const/product-type'
+import BatchItem from './BatchItem'
 
 type CreateOrderSearchSectionProps = {
   handleOpenCreate: () => void
   product: ProductDetailType
 }
+
 
 export default function CreateOrderSearchSection({ handleOpenCreate, product }: CreateOrderSearchSectionProps) {
   const [index, setIndex] = useState(1)
@@ -82,6 +83,7 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
     }
     handleOrder(fullOrderBody)
   }
+
   return (
     <PopupBasic title='Đặt hàng' onClose={handleOpenCreate}>
       { index == 1 &&
@@ -92,10 +94,10 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                         <p className='text-sm-body-desktop text-soft-gray'>Sản phẩm đã chọn</p>
                         <p className='text-sm-body-desktop text-primary font-medium text-sm/7'>{product.name}</p>
                         <div className='flex items-center gap-3 my-2'>
-                          {/* <Tag className={`bg-transparent rounded-2xl px-2 py-0.5 border-2 ${PRODUCT_TYPE[product.type].style}`}>
-                            {PRODUCT_TYPE[product.type].name}
-                          </Tag> */}
-                          <Tag className='bg-transparent border-2 rounded-2xl px-2 py-0.5 text-secondary font-medium border-secondary'>
+                          <Tag className={`bg-transparent rounded-2xl px-2 py-0.5 border ${PRODUCT_TYPE[product.productKind].style}`}>
+                            {PRODUCT_TYPE[product.productKind].name}
+                          </Tag>
+                          <Tag className='bg-transparent border rounded-2xl px-2 py-0.5 text-secondary font-medium border-secondary'>
                             {product.volumeMl}ml
                           </Tag>
                           <p className='text-sm-body-desktop text-soft-gray'>Tồn kho: <span className='font-medium text-primary'>{product.quantity}</span></p>
@@ -114,66 +116,28 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                         <>
                           {listBatch && listBatch.items.length > 0 ?
                             <div>
-                              { checked ?
-                                <SelectionBox
-                                  id={batchChosen?.id}
-                                  className='flex flex-col px-4 py-3 my-2'
-                                  isChosen={batchChosen?.id ? true : false }>
-                                  <div className='w-full flex flex-col mb-3'>
-                                    <div className='w-full flex gap-3'>
-                                      <IoMdCheckmarkCircleOutline className='size-6'/>
-                                      <div className='flex justify-between items-start w-full'>
-                                        <div className='flex items-start gap-2'>
-                                          <div>
-                                            <p className='text-sm-body-desktop font-medium text-primary'>Lô: {batchChosen?.code}</p>
-                                            <p className='text-sm-body-desktop text-soft-gray font-normal'>HSD: {batchChosen ? formatDate(batchChosen.expiryDate) : ''}</p>
-                                          </div>
-                                          <Tag variant='primary' className='py-0.5 px-3 text-[0.85rem]'>Mới nhất</Tag>
-                                        </div>
-                                        <Tag variant='success' className='py-0.5 px-3 flex items-center'>
-                                          <p className='text-[0.85rem] text-center font-medium'>Tồn: {batchChosen?.quantity}</p>
-                                        </Tag>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <hr className='border-2 border-border-primary my-2 w-full'/>
-                                  <Input label='Số lượng muốn mua' variant='gray' placeholder='1' type='number' onChange={(e) => setTotalBatch(Number(e.target.value))} className='w-[20%] text-center text-black shadow-[0px_2px_1px_1px_rgba(0,0,0,0.1)]'/>
-                                </SelectionBox>
+                              { checked && batchChosen ?
+                                <BatchItem
+                                  batch={batchChosen}
+                                  isSelected={batchChosen != undefined}
+                                  onChangeQuantity={setTotalBatch}
+                                  onSelect={() => handleSelectBatch(batchChosen)}
+                                  quantity={totalBatch}
+                                  showQuantity={batchChosen != undefined}
+                                />
                                 :
                                 <>
                                   <p className='text-sm-body-desktop text-primary font-medium mt-2'>Chọn lô hàng theo HSD</p>
                                   { listBatch?.items.map((batch) => (
-                                    <SelectionBox
-                                      id={batch.id}
-                                      className='flex items-start gap-3 px-4 py-3 my-2'
-                                      isChosen={batch.id == batchChosen?.id ? true : false }
-                                      onClick={() => handleSelectBatch(batch)}>
-                                      { batchChosen?.id === batch.id && <IoMdCheckmarkCircleOutline className='size-6'/>}
-                                      <div className='flex flex-col w-full'>
-                                        <div className='w-full flex flex-col mb-3'>
-                                          <div className='w-full flex gap-3'>
-                                            <div className='flex justify-between items-start w-full'>
-                                              <div className='flex items-start gap-2'>
-                                                <div>
-                                                  <p className='text-sm-body-desktop font-medium text-primary'>Lô: {batch.code}</p>
-                                                  <p className='text-sm-body-desktop text-soft-gray font-normal'>HSD: {formatDate(batch.expiryDate)}</p>
-                                                </div>
-                                                <Tag variant='primary' className='py-0.5 px-3 text-[0.85rem]'>Mới nhất</Tag>
-                                              </div>
-                                              <Tag variant='success' className='py-0.5 px-3 flex items-center'>
-                                                <p className='text-[0.85rem] text-center font-medium'>Tồn: {batch.quantity}</p>
-                                              </Tag>
-                                            </div>
-                                          </div>
-                                        </div>
-                                        { batchChosen?.id === batch.id &&
-                                  <>
-                                    <hr className='border-2 border-border-primary my-2 w-full'/>
-                                    <Input label='Số lượng muốn mua' variant='gray' placeholder='1' type='number' onChange={(e) => setTotalBatch(Number(e.target.value))} className='w-[20%] text-center text-black shadow-[0px_2px_1px_1px_rgba(0,0,0,0.1)]'/>
-                                  </>
-                                        }
-                                      </div>
-                                    </SelectionBox>
+                                    <BatchItem
+                                      key={batch.id}
+                                      batch={batch}
+                                      isSelected={batchChosen?.id == batch.id}
+                                      onChangeQuantity={setTotalBatch}
+                                      onSelect={() => handleSelectBatch(batch)}
+                                      quantity={totalBatch}
+                                      showQuantity={batchChosen?.id === batch.id}
+                                    />
                                   )) }
                                 </>
                               }
@@ -188,8 +152,6 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                           }
                         </>
                       }
-
-                      {/* <Input label='Ngày giao hàng' type='date' variant='gray' onChange={(e) => setDateOfShipment(e.target.value)}/> */}
                     </div>
                     <div className='flex gap-2 mt-3'>
                       <Button variant='outline' className='w-full font-bold border-2 border-border-primary text-black hover:bg-gray-100' onClick={handlePrev}>
@@ -206,17 +168,19 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                     <div id='index#3'>
                       <div className='mt-7'>
                         <TutorialBox step='Bước 2: Xác nhận đơn hàng' description='Kiểm tra lại thông tin khi tạo đơn'/>
+                        { batchChosen &&
                         <OrderReview
                           batchCode={batchChosen?.code}
                           batchDate={batchChosen? formatDate(batchChosen.expiryDate) : 'Chưa có hạn sử dụng'}
                           capacityProduct={product.volumeMl}
                           productName={product.name}
-                          // shipDate={dateOfShipment}
                           totalPrice={product.price}
-                          // totalProduct={numberOfProduct}
+                          totalProduct={1}
                           totalBatch={totalBatch}
-                        //   typeProduct={product.type}
+                          typeProduct={product.productKind}
+                          brand={product.brand}
                         />
+                        }
                       </div>
                       { orderLoading ?
                         <div className='flex justify-center items-center w-full'>

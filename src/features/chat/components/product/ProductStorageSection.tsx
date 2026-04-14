@@ -1,12 +1,21 @@
 import { useState } from 'react'
-import type { ProductType } from '../../types/product-type'
 import Button from '@/components/ui/button/Button'
 import { LuPackage } from 'react-icons/lu'
 import { AnimatePresence } from 'motion/react'
 import PopupBasic from '@/components/ui/popup/PopupBasic'
+import useGetAllBrand from '../../hooks/useGetAllBrand'
+import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
+import useGetProductStorageByBrandId from '../../hooks/useGetProductStorageByBrandId'
+import Card from '@/components/ui/card/Card'
+import CardSkeleton from '@/components/ui/skeleton/CardSkeleton'
+import NodataCard from '@/components/ui/card/NodataCard'
+import { PRODUCT_TYPE } from '../../const/product-type'
+import Tag from '@/components/ui/tag/Tag'
 
-export default function ProductStorageSection({ productData }: { productData: ProductType}) {
+export default function ProductStorageSection() {
   const [isOpen, setIsOpen] = useState(false)
+  const { listBrand } = useGetAllBrand()
+  const { loading, productStorage, setBrandId } = useGetProductStorageByBrandId()
   const handleOpen = () => {
     setIsOpen((prev) => !prev)
   }
@@ -20,22 +29,54 @@ export default function ProductStorageSection({ productData }: { productData: Pr
 
         { isOpen &&
             <PopupBasic title='Thông tin sản phẩm' onClose={handleOpen}>
-              <p className='text-gray-400 text-sm-body-desktop'>Thông tin sản phẩm</p>
-              <div className='flex gap-15 items-center mt-3'>
-                <div>
-                  <p className='text-sm-body-desktop text-gray-400'>Tên sản phẩm</p>
-                  <p className='text-sm-body-desktop font-bold text-primary'>{productData.productName}</p>
-                </div>
-                <div>
-                  <p className='text-sm-body-desktop text-gray-400'>Mã sản phẩm</p>
-                  <p className='text-sm-body-desktop font-bold text-primary'>{productData.productCode}</p>
-                </div>
+              <div className='my-5'>
+                <label htmlFor="list-brand" className='text-primary text-sm-body-desktop font-medium'>Danh sách hãng sữa</label>
+                <AdvSelect
+                  onValueChange={setBrandId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn hãng"/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    { listBrand.length > 0 &&
+                    listBrand.map((brand) => (
+                      <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+                    ))
+                    }
+                  </SelectContent>
+                </AdvSelect>
               </div>
-              <hr className='border border-gray-100 my-5'/>
-              <div className='flex flex-col gap-5'>
-                <p className='text-gray-400 text-sm-body-desktop'>Ảnh sản phẩm</p>
-                <img src={productData.productImageUrl} alt="product image" className='w-50 h-40' />
-              </div>
+              { loading ?
+                <CardSkeleton/>
+                :
+                <>
+                  { productStorage?
+                    <>
+                      <Card variant='default' className='rounded-xl bg-border-primary border-none'>
+                        <p className='text-sm-body-desktop text-soft-gray'>Tổng tồn kho</p>
+                        <p className='text-m-title-desktop text-primary font-bold'>{productStorage.totalProduct} sản phẩm</p>
+                      </Card>
+                      <hr className='border-1 border-border-primary my-5'/>
+                      { productStorage.productKinds.map((kind) => (
+                        <div key={kind.kindName} className='text-m-body-desktop'>
+                          <p className='font-medium text-primary'>{PRODUCT_TYPE[kind.kindName].name}</p>
+                          { kind.volumes.map((volume) => (
+                            <Card key={volume.volume} className='my-3 rounded-sm bg-border-primary border-none'>
+                              <div className='flex justify-between items-center'>
+                                <p>{volume.volume}ml</p>
+                                <Tag variant='success' className=''>{volume.quantity}sp</Tag>
+                              </div>
+                            </Card>
+                          )) }
+                        </div>
+                      )) }
+                    </>
+                    :
+                    <NodataCard content='Không có dữ liệu tồn kho'/>
+                  }
+                </>
+              }
+
             </PopupBasic>
         }
       </AnimatePresence>

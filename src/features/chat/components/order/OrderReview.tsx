@@ -1,5 +1,6 @@
 import Card from '@/components/ui/card/Card'
 import { BsFillBoxSeamFill } from 'react-icons/bs'
+import { PRODUCT_TYPE } from '../../const/product-type'
 
 type OrderReviewType = {
    productName: string
@@ -7,20 +8,20 @@ type OrderReviewType = {
    typeProduct: string
    totalProduct: number
    batchCode: string
-   batchDate?: string
+   batchDate: string
    totalPrice: number
-   company: number
+   brand: string
    totalBatch: number
 }
 
-export default function OrderReview({ batchCode, batchDate, capacityProduct, productName, totalPrice, totalBatch, typeProduct, company }: Partial<OrderReviewType>) {
+export default function OrderReview({ batchCode, batchDate, capacityProduct, productName, totalPrice, totalBatch, typeProduct, brand }: OrderReviewType) {
   return (
     <Card variant='default' className='py-4 px-5 my-5 border-2 border-border-primary text-sm-body-desktop'>
       <p className='text-primary font-medium'>Thông tin đơn hàng</p>
       <div className='mt-8'>
         <div className='flex justify-between mt-3'>
           <p className='text-soft-gray'>Hãng: </p>
-          <p className='font-medium'>{company}</p>
+          <p className='font-medium'>{brand}</p>
         </div>
         <div className='flex justify-between mt-3'>
           <p className='text-soft-gray'>Sản phẩm: </p>
@@ -29,9 +30,7 @@ export default function OrderReview({ batchCode, batchDate, capacityProduct, pro
         <div className='flex justify-between mt-3'>
           <p className='text-soft-gray'>Loại: </p>
           <p className='font-medium'>
-            {typeProduct === 'sour' ? 'Sữa chua'
-              : typeProduct === 'have' ? 'Có đường'
-                : 'Không đường'}</p>
+            {PRODUCT_TYPE[typeProduct].name}</p>
         </div>
         <div className='flex justify-between mt-3'>
           <p className='text-soft-gray'>Dung tích: </p>

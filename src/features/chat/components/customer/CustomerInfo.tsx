@@ -14,7 +14,7 @@ import ListProductSection from '../product/ListProductSection'
 
 type CustomerInfoType = Omit<Partial<ConversationDetail>, 'messages'>
 
-export default function CustomerInfo({ customerName, avartarUrl, activeCustomerId: customerId }: CustomerInfoType) {
+export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoType) {
   const [isOpen, setIsOpen] = useState(false)
   const [tab, setTab] = useState(1)
   const handleOpen = () => {
@@ -24,8 +24,8 @@ export default function CustomerInfo({ customerName, avartarUrl, activeCustomerI
     switch (tab) {
     case 1: return <TaskList/>
     case 2: return <CustomerProfile/>
-    case 3: return <CustomerOrder customerId={customerId}/>
-    case 4: return <Ticket customerId={customerId}/>
+    case 3: return <CustomerOrder/>
+    case 4: return <Ticket/>
     default: return <CustomerProfile/>
     }
   }
