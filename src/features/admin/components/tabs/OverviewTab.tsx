@@ -2,17 +2,22 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
 import Select from '@/components/ui/select/Select'
-import { MILK_CHART_COLORS, MILK_QUANTITY_BY_MONTH, MONTH_OPTIONS, ORDER_STATS_BY_MONTH, SERVICE_STATS_BY_MONTH } from '@/components/admin/admin-dashboard-data'
+import {
+  MILK_CHART_COLORS,
+  MILK_QUANTITY_BY_MONTH,
+  MONTH_OPTIONS,
+  SERVICE_STATS_BY_MONTH
+} from '@/components/admin/admin-dashboard-data'
 import { isAxiosError } from 'axios'
-import { CheckCircle, Clock, FileX2, Milk, ShoppingCart, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
+import { CheckCircle, Clock, FileX2, Milk, ShoppingCart, TrendingUp } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'react-toastify'
-import { InventoryApi } from '../../api/inventory-api'
 import { OrderApi } from '../../api/order-api'
+import { ProductApi } from '../../api/product-api'
 import { SupportTaskApi } from '../../api/support-task-api'
 import { TaskCancelReasonApi } from '../../api/task-cancel-reason-api'
-import type { InventoryDashboardData } from '../../types/inventory-type'
 import type { OrderDashboardMonthRow } from '../../types/order-type'
+import type { ProductType } from '../../types/product-type'
 import type { TaskIntentMonthRow } from '../../types/support-task-type'
 
 type CancelReasonRow = {
@@ -20,6 +25,11 @@ type CancelReasonRow = {
   title: string
   description: string
   createdAt: string
+}
+
+type InventorySummary = {
+  totalProducts: number
+  totalItems: number
 }
 
 function isApiSuccessLike(response: unknown): boolean {
@@ -53,17 +63,12 @@ function mapCancelReasonRow(raw: unknown): CancelReasonRow {
   }
 }
 
-function mapInventoryDashboardData(raw: unknown): InventoryDashboardData | null {
-  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null
-  if (!o) return null
-  const num = (v: unknown) => {
-    const x = Number(v)
-    return Number.isFinite(x) ? x : 0
-  }
+function summarizeInventoryFromProducts(products: ProductType[], totalItems: number): InventorySummary {
+  const totalProducts = products.reduce((sum, item) => sum + Number(item.quantity ?? 0), 0)
+
   return {
-    totalProducts: num(o.totalProducts ?? o.total_products),
-    lowStockProducts: num(o.lowStockProducts ?? o.low_stock_products),
-    totalBrands: num(o.totalBrands ?? o.total_brands)
+    totalProducts,
+    totalItems
   }
 }
 
@@ -93,6 +98,65 @@ function extractArrayFromResponse(response: unknown): unknown[] {
   return []
 }
 
+function extractProductItems(response: unknown): ProductType[] {
+  const items = extractArrayFromResponse(response)
+  return items as ProductType[]
+}
+
+function extractProductTotalPages(response: unknown): number {
+  const r = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+  const data = r.data && typeof r.data === 'object' ? (r.data as Record<string, unknown>) : {}
+  const nestedData = data.data && typeof data.data === 'object' ? (data.data as Record<string, unknown>) : {}
+  const metaCandidates = [
+    data.meta,
+    data.pagination,
+    data.pageInfo,
+    nestedData.meta,
+    nestedData.pagination,
+    nestedData.pageInfo,
+    r.meta,
+    r.pagination,
+    r.pageInfo
+  ]
+
+  for (const meta of metaCandidates) {
+    if (meta && typeof meta === 'object') {
+      const m = meta as Record<string, unknown>
+      const total = Number(m.total_pages ?? m.totalPages ?? 1)
+      if (Number.isFinite(total) && total > 0) return total
+    }
+  }
+
+  return 1
+}
+
+function extractProductTotalItems(response: unknown): number {
+  const r = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
+  const data = r.data && typeof r.data === 'object' ? (r.data as Record<string, unknown>) : {}
+  const nestedData = data.data && typeof data.data === 'object' ? (data.data as Record<string, unknown>) : {}
+  const metaCandidates = [
+    data.meta,
+    data.pagination,
+    data.pageInfo,
+    nestedData.meta,
+    nestedData.pagination,
+    nestedData.pageInfo,
+    r.meta,
+    r.pagination,
+    r.pageInfo
+  ]
+
+  for (const meta of metaCandidates) {
+    if (meta && typeof meta === 'object') {
+      const m = meta as Record<string, unknown>
+      const total = Number(m.total_items ?? m.totalItems ?? 0)
+      if (Number.isFinite(total) && total >= 0) return total
+    }
+  }
+
+  return 0
+}
+
 const INTENT_COLOR_BY_NAME: Record<string, string> = {
   PRE_SALE: '#3366CC',
   ORDER_CREATION: '#2ECC71',
@@ -100,6 +164,14 @@ const INTENT_COLOR_BY_NAME: Record<string, string> = {
   PAYMENT: '#F44336',
   POST_SALE_CHANGE: '#9C27B0'
 }
+
+const OVERVIEW_INTENT_CARD_CONFIG = [
+  { key: 'PRE_SALE', title: 'PRE_SALE', iconBg: 'bg-[#EBF1FF]', iconColor: 'text-[#3366CC]', borderColor: 'border-l-[#3366CC]', valueColor: 'text-[#3366CC]', Icon: ShoppingCart },
+  { key: 'ORDER_CREATION', title: 'ORDER_CREATION', iconBg: 'bg-[#E8F8F0]', iconColor: 'text-[#2ECC71]', borderColor: 'border-l-[#2ECC71]', valueColor: 'text-[#2ECC71]', Icon: CheckCircle },
+  { key: 'ORDER_STATUS', title: 'ORDER_STATUS', iconBg: 'bg-[#FFF3E0]', iconColor: 'text-[#FF9800]', borderColor: 'border-l-[#FF9800]', valueColor: 'text-[#FF9800]', Icon: Clock },
+  { key: 'PAYMENT', title: 'PAYMENT', iconBg: 'bg-[#FFEBEE]', iconColor: 'text-[#F44336]', borderColor: 'border-l-[#F44336]', valueColor: 'text-[#F44336]', Icon: FileX2 },
+  { key: 'POST_SALE_CHANGE', title: 'POST_SALE_CHANGE', iconBg: 'bg-[#F3E8FF]', iconColor: 'text-[#9C27B0]', borderColor: 'border-l-[#9C27B0]', valueColor: 'text-[#9C27B0]', Icon: TrendingUp }
+] as const
 
 function collectIntentNames(rows: TaskIntentMonthRow[]): string[] {
   const set = new Set<string>()
@@ -143,6 +215,13 @@ function buildTaskDashboardChartRows(rows: TaskIntentMonthRow[], intentNames: st
     chartRow.total = total
     return chartRow
   })
+}
+
+function sumTaskIntentByName(rows: TaskIntentMonthRow[], intentName: string): number {
+  return rows.reduce((sum, row) => {
+    const byIntent = new Map((row.intents ?? []).map((item) => [item.intentName, Number(item.taskCount ?? 0)]))
+    return sum + Number(byIntent.get(intentName) ?? 0)
+  }, 0)
 }
 
 const ORDER_DASHBOARD_STATUS_COLORS: Record<string, string> = {
@@ -191,7 +270,18 @@ function buildOrderDashboardChartRows(rows: OrderDashboardMonthRow[], statusName
 export default function OverviewTab() {
   const [selectedServiceMonth, setSelectedServiceMonth] = useState('2026-01')
   const [selectedOrderMonth, setSelectedOrderMonth] = useState('2026-01')
-  const [inventoryDashboard, setInventoryDashboard] = useState<InventoryDashboardData | null>(null)
+  const [intentSummaryPeriodInput, setIntentSummaryPeriodInput] = useState('2026')
+  const [intentSummaryAppliedPeriod, setIntentSummaryAppliedPeriod] = useState('2026')
+  const [intentCardAppliedByName, setIntentCardAppliedByName] = useState<Record<string, string>>(
+    Object.fromEntries(OVERVIEW_INTENT_CARD_CONFIG.map((item) => [item.key, '2026']))
+  )
+  const [intentCardValueByName, setIntentCardValueByName] = useState<Record<string, number>>(
+    Object.fromEntries(OVERVIEW_INTENT_CARD_CONFIG.map((item) => [item.key, 0]))
+  )
+  const [intentCardLoadingByName, setIntentCardLoadingByName] = useState<Record<string, boolean>>(
+    Object.fromEntries(OVERVIEW_INTENT_CARD_CONFIG.map((item) => [item.key, false]))
+  )
+  const [inventoryDashboard, setInventoryDashboard] = useState<InventorySummary | null>(null)
   const [inventoryDashboardLoading, setInventoryDashboardLoading] = useState(false)
   const [taskDashboardRows, setTaskDashboardRows] = useState<TaskIntentMonthRow[]>([])
   const [taskDashboardLoading, setTaskDashboardLoading] = useState(false)
@@ -211,9 +301,6 @@ export default function OverviewTab() {
     page_size: cancelReasonPageSize
   })
   const [cancelReasonLoading, setCancelReasonLoading] = useState(false)
-
-  const currentOrderStats = ORDER_STATS_BY_MONTH[selectedOrderMonth as keyof typeof ORDER_STATS_BY_MONTH]
-
   const taskIntentNames = useMemo(() => collectIntentNames(taskDashboardRows), [taskDashboardRows])
   const taskChartData = useMemo(
     () => buildTaskDashboardChartRows(taskDashboardRows, taskIntentNames),
@@ -246,24 +333,63 @@ export default function OverviewTab() {
     return totals
   }, [orderChartData, orderDashboardStatusNames])
 
+  const getOrderStatsByPeriod = useCallback((input: string) => {
+    const normalized = normalizeTaskPeriodInput(input)
+    if (!normalized) return { successful: 0, pending: 0, cancelled: 0 }
+
+    const rows = orderDashboardRows.filter((item) => {
+      const month = item.month.trim()
+      if (/^\d{4}$/.test(normalized)) return month.endsWith(`/${normalized}`)
+      return month === normalized
+    })
+
+    return rows.reduce(
+      (acc, row) => {
+        const byStatus = new Map((row.status ?? []).map((item) => [item.status, Number(item.count ?? 0)]))
+        acc.successful += byStatus.get('Completed') ?? 0
+        acc.pending += byStatus.get('Returned') ?? 0
+        acc.cancelled += byStatus.get('Cancelled') ?? 0
+        return acc
+      },
+      { successful: 0, pending: 0, cancelled: 0 }
+    )
+  }, [orderDashboardRows])
+
+  const currentOrderStats = useMemo(() => {
+    const stats = getOrderStatsByPeriod(selectedOrderMonth)
+    return {
+      ...stats,
+      chartData: [
+        { name: 'Đơn hoàn thành', value: stats.successful, color: '#2ECC71' },
+        { name: 'Đơn trả về', value: stats.pending, color: '#FF9800' },
+        { name: 'Đơn đã hủy', value: stats.cancelled, color: '#F44336' }
+      ]
+    }
+  }, [getOrderStatsByPeriod, selectedOrderMonth])
+
   useEffect(() => {
     const fetchInventoryDashboard = async () => {
       setInventoryDashboardLoading(true)
       try {
-        const response = await InventoryApi.getDashboard()
-        const responseObj = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
-        const mapped = mapInventoryDashboardData(responseObj.data ?? response)
-        if (mapped) {
-          setInventoryDashboard(mapped)
-        } else if (isApiSuccessLike(response)) {
-          setInventoryDashboard({ totalProducts: 0, lowStockProducts: 0, totalBrands: 0 })
-        } else {
-          setInventoryDashboard(null)
+        const pageSize = 100
+        let page = 1
+        let totalPages = 1
+        let totalItems = 0
+        const allProducts: ProductType[] = []
+
+        while (page <= totalPages) {
+          const response = await ProductApi.getAllProducts(page, pageSize)
+          const items = extractProductItems(response)
+          allProducts.push(...items)
+          totalPages = extractProductTotalPages(response)
+          if (page === 1) totalItems = extractProductTotalItems(response)
+          page += 1
         }
-      } catch (error) {
-        console.log('Fetch inventory dashboard failed:', error)
+
+        setInventoryDashboard(summarizeInventoryFromProducts(allProducts, totalItems))
+      } catch {
         setInventoryDashboard(null)
-        toast.error('Không tải được tổng quan kho.')
+        toast.error('Không tải được dữ liệu tồn kho.')
       } finally {
         setInventoryDashboardLoading(false)
       }
@@ -295,7 +421,6 @@ export default function OverviewTab() {
         toast.info('Không có dữ liệu task cho kỳ này.')
         return
       }
-      console.log('Fetch task intent dashboard failed:', error)
       setTaskDashboardRows([])
       toast.error('Không tải được task dashboard. Vui lòng thử lại.')
     } finally {
@@ -306,6 +431,55 @@ export default function OverviewTab() {
   useEffect(() => {
     void fetchTaskDashboard('2026')
   }, [fetchTaskDashboard])
+
+  const fetchIntentCardValue = useCallback(async (intentName: string, rawInput: string) => {
+    const normalized = normalizeTaskPeriodInput(rawInput)
+    if (!normalized) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setIntentCardAppliedByName((prev) => ({ ...prev, [intentName]: normalized }))
+    setIntentCardLoadingByName((prev) => ({ ...prev, [intentName]: true }))
+    try {
+      const response = await SupportTaskApi.getTaskIntentDashboard(normalized)
+      const rows = extractArrayFromResponse(response) as TaskIntentMonthRow[]
+      if (rows.length > 0 || isApiSuccessLike(response)) {
+        setIntentCardValueByName((prev) => ({ ...prev, [intentName]: sumTaskIntentByName(rows, intentName) }))
+      } else {
+        setIntentCardValueByName((prev) => ({ ...prev, [intentName]: 0 }))
+        toast.info(response.message || `Không có dữ liệu ${intentName} cho kỳ này.`)
+      }
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+        setIntentCardValueByName((prev) => ({ ...prev, [intentName]: 0 }))
+        toast.info(`Không có dữ liệu ${intentName} cho kỳ này.`)
+        return
+      }
+      setIntentCardValueByName((prev) => ({ ...prev, [intentName]: 0 }))
+      toast.error(`Không tải được dữ liệu ${intentName}. Vui lòng thử lại.`)
+    } finally {
+      setIntentCardLoadingByName((prev) => ({ ...prev, [intentName]: false }))
+    }
+  }, [])
+
+  useEffect(() => {
+    OVERVIEW_INTENT_CARD_CONFIG.forEach((item) => {
+      void fetchIntentCardValue(item.key, '2026')
+    })
+  }, [fetchIntentCardValue])
+
+  const applyIntentSummaryPeriod = useCallback((rawInput: string) => {
+    const normalized = normalizeTaskPeriodInput(rawInput)
+    if (!normalized) {
+      toast.error('Định dạng không hợp lệ. Nhập yyyy hoặc mm/yyyy.')
+      return
+    }
+    setIntentSummaryPeriodInput(normalized)
+    setIntentSummaryAppliedPeriod(normalized)
+    OVERVIEW_INTENT_CARD_CONFIG.forEach((item) => {
+      void fetchIntentCardValue(item.key, normalized)
+    })
+  }, [fetchIntentCardValue])
 
   const fetchOrderDashboard = useCallback(async (rawInput: string) => {
     const normalized = normalizeTaskPeriodInput(rawInput)
@@ -331,7 +505,6 @@ export default function OverviewTab() {
         toast.info('Không có dữ liệu order dashboard cho kỳ này.')
         return
       }
-      console.log('Fetch order dashboard failed:', error)
       setOrderDashboardRows([])
       toast.error('Không tải được order dashboard. Vui lòng thử lại.')
     } finally {
@@ -359,8 +532,7 @@ export default function OverviewTab() {
           setCancelReasonRows([])
           setCancelReasonMeta((prev) => ({ ...prev, total_pages: 0, total_items: 0 }))
         }
-      } catch (error) {
-        console.log('Fetch task cancel reasons failed:', error)
+      } catch {
         setCancelReasonRows([])
         toast.error('Không tải được danh sách lý do hủy task.')
       } finally {
@@ -376,8 +548,30 @@ export default function OverviewTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#3366CC]">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+        <div className="md:col-span-2 xl:col-span-6 flex justify-end">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <p className="text-xs text-gray-500">
+              Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng (UTC). Đang xem:{' '}
+              <span className="font-medium text-[#003366]">{intentSummaryAppliedPeriod}</span>
+            </p>
+            <input
+              value={intentSummaryPeriodInput}
+              onChange={(e) => setIntentSummaryPeriodInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  applyIntentSummaryPeriod(intentSummaryPeriodInput)
+                }
+              }}
+              placeholder="yyyy hoặc mm/yyyy"
+              className="h-9 w-40 rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-[#3366CC]"
+            />
+            <Button size="sm" onClick={() => applyIntentSummaryPeriod(intentSummaryPeriodInput)}>
+              Lấy
+            </Button>
+          </div>
+        </div>
+        <Card className="p-5 xl:col-span-2 hover:shadow-lg transition-shadow border-l-4 border-l-[#3366CC]">
           <div className="flex items-start justify-between mb-3">
             <div className="p-3 rounded-lg bg-[#EBF1FF]">
               <Milk className="h-6 w-6 text-[#3366CC]" />
@@ -388,7 +582,7 @@ export default function OverviewTab() {
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-bold text-[#3366CC]">
               {inventoryDashboardLoading
-                ? '…'
+                ? '...'
                 : inventoryDashboard != null
                   ? inventoryDashboard.totalProducts.toLocaleString('vi-VN')
                   : '—'}
@@ -399,54 +593,34 @@ export default function OverviewTab() {
             {inventoryDashboardLoading
               ? 'Đang tải...'
               : inventoryDashboard
-                ? `Sắp hết hàng: ${inventoryDashboard.lowStockProducts.toLocaleString('vi-VN')} · Thương hiệu: ${inventoryDashboard.totalBrands.toLocaleString('vi-VN')}`
+                ? `Loại sản phẩm: ${inventoryDashboard.totalItems.toLocaleString('vi-VN')}`
                 : 'Chưa có dữ liệu kho'}
           </p>
         </Card>
 
-        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#2ECC71]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-[#E8F8F0]">
-              <CheckCircle className="h-6 w-6 text-[#2ECC71]" />
-            </div>
-            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Đơn hàng thành công</h3>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-[#2ECC71]">{currentOrderStats.successful}</p>
-            <span className="text-sm text-gray-500">đơn hàng</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">Tháng {selectedOrderMonth}</p>
-        </Card>
-
-        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#FF9800]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-[#FFF3E0]">
-              <Clock className="h-6 w-6 text-[#FF9800]" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Chưa thanh toán</h3>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-[#FF9800]">{currentOrderStats.pending}</p>
-            <span className="text-sm text-gray-500">đơn hàng</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">Tháng {selectedOrderMonth}</p>
-        </Card>
-
-        <Card className="p-5 hover:shadow-lg transition-shadow border-l-4 border-l-[#F44336]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-[#FFEBEE]">
-              <XCircle className="h-6 w-6 text-[#F44336]" />
-            </div>
-            <TrendingDown className="h-5 w-5 text-[#F44336]" />
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Đơn bị hủy</h3>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-[#F44336]">{currentOrderStats.cancelled}</p>
-            <span className="text-sm text-gray-500">đơn hàng</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">Tháng {selectedOrderMonth}</p>
-        </Card>
+        {OVERVIEW_INTENT_CARD_CONFIG.map((item) => {
+          const CardIcon = item.Icon
+          const currentApplied = intentCardAppliedByName[item.key] ?? '2026'
+          const currentValue = intentCardValueByName[item.key] ?? 0
+          const currentLoading = intentCardLoadingByName[item.key] ?? false
+          return (
+            <Card key={item.key} className={`p-5 xl:col-span-2 hover:shadow-lg transition-shadow border-l-4 ${item.borderColor}`}>
+              <div className="flex items-start justify-between mb-3">
+                <div className={`p-3 rounded-lg ${item.iconBg}`}>
+                  <CardIcon className={`h-6 w-6 ${item.iconColor}`} />
+                </div>
+              </div>
+              <h3 className="text-sm text-gray-600 mb-1">{item.title}</h3>
+              <div className="flex items-baseline gap-2">
+                <p className={`text-3xl font-bold ${item.valueColor}`}>
+                  {currentLoading ? '...' : currentValue.toLocaleString('vi-VN')}
+                </p>
+                <span className="text-sm text-gray-500">tasks</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Kỳ lọc: {currentApplied || intentSummaryAppliedPeriod}</p>
+            </Card>
+          )
+        })}
       </div>
 
       <Card className="p-6">
