@@ -3,8 +3,6 @@ import type { ConversationDetail } from '../../types/message-type'
 import { CiSearch } from 'react-icons/ci'
 import Button from '@/components/ui/button/Button'
 import { useState } from 'react'
-import PopupBasic from '@/components/ui/popup/PopupBasic'
-import Input from '@/components/ui/input/Input'
 import CustomerProfile from './CustomerProfile'
 import CustomerOrder from './CustomerOrder'
 import Ticket from '../ticket/Ticket'
@@ -12,10 +10,11 @@ import { IoPerson } from 'react-icons/io5'
 import { FaShoppingBag, FaTicketAlt } from 'react-icons/fa'
 import { GoTasklist } from 'react-icons/go'
 import TaskList from '../task/TaskList'
+import ListProductSection from '../product/ListProductSection'
 
 type CustomerInfoType = Omit<Partial<ConversationDetail>, 'messages'>
 
-export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoType) {
+export default function CustomerInfo({ customerName, avartarUrl, activeCustomerId: customerId }: CustomerInfoType) {
   const [isOpen, setIsOpen] = useState(false)
   const [tab, setTab] = useState(1)
   const handleOpen = () => {
@@ -25,8 +24,8 @@ export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoT
     switch (tab) {
     case 1: return <TaskList/>
     case 2: return <CustomerProfile/>
-    case 3: return <CustomerOrder/>
-    case 4: return <Ticket/>
+    case 3: return <CustomerOrder customerId={customerId}/>
+    case 4: return <Ticket customerId={customerId}/>
     default: return <CustomerProfile/>
     }
   }
@@ -80,16 +79,10 @@ export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoT
       <div className='flex-1 py-5 overflow-y-auto px-3'>
         {Tab()}
       </div>
-      {isOpen &&
-      <PopupBasic onClose={handleOpen} title='Tìm kiếm sản phẩm'>
-        <p className='text-gray-400 mb-2'>Nhập tên hoặc mã sản phẩm để tra cứu thông tin nhanh</p>
-        <Input icon={CiSearch} type='text' variant='gray' placeholder='Tìm kiếm theo tên hoặc mã sản phẩm'/>
-        <div className='flex flex-col items-center justify-center py-10'>
-          <CiSearch size={50} className='font-bold text-gray-400'/>
-          <p className='text-gray-400'>Nhập từ khóa sản phẩm</p>
-        </div>
-      </PopupBasic>
-      }
+      <ListProductSection
+        handleOpen={handleOpen}
+        isOpen={isOpen}
+      />
     </div>
   )
 }

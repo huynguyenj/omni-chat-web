@@ -6,14 +6,14 @@ type OrderReviewType = {
    capacityProduct: number
    typeProduct: string
    totalProduct: number
-   batch: string
-   batchDate: string
+   batchCode: string
+   batchDate?: string
    totalPrice: number
    company: number
    totalBatch: number
 }
 
-export default function OrderReview({ batch, batchDate, capacityProduct, productName, totalPrice, totalBatch, typeProduct, company }: Partial<OrderReviewType>) {
+export default function OrderReview({ batchCode, batchDate, capacityProduct, productName, totalPrice, totalBatch, typeProduct, company }: Partial<OrderReviewType>) {
   return (
     <Card variant='default' className='py-4 px-5 my-5 border-2 border-border-primary text-sm-body-desktop'>
       <p className='text-primary font-medium'>Thông tin đơn hàng</p>
@@ -41,7 +41,7 @@ export default function OrderReview({ batch, batchDate, capacityProduct, product
         <p className='text-soft-gray mb-2'>Chi tiết lô hàng</p>
         <div className='flex items-center gap-2 py-3 px-5 bg-[#EFF6FF] rounded-xl'>
           <BsFillBoxSeamFill className='size-4 text-secondary'/>
-          <p className='text-primary font-medium'>{batch}</p>
+          <p className='text-primary font-medium'>{batchCode}</p>
           <p className='text-soft-gray'>HSD: {batchDate}</p>
         </div>
         <hr className='border border-border-primary w-full my-3'/>
@@ -51,7 +51,7 @@ export default function OrderReview({ batch, batchDate, capacityProduct, product
         </div>
         <div className='flex justify-between font-medium mt-3'>
           <p className='text-primary font-medium'>Tổng tiền</p>
-          <p className='text-green-accent font-bold'>{totalPrice ? totalPrice.toLocaleString('vi-VN') : 0}đ</p>
+          <p className='text-green-accent font-bold'>{totalPrice && totalBatch ? (totalBatch * totalPrice).toLocaleString('vi-VN') : 0}đ</p>
         </div>
       </div>
     </Card>

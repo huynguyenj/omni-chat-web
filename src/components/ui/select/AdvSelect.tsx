@@ -91,7 +91,7 @@ function SelectContent({
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         data-slot='select-content'
-        className={cn('bg-white mt-1 text-[oklch(0.145 0 0)]  overflow-y-auto rounded-md overflow-x-hidden shadow-[0px_2px_5px_2px_rgba(0,0,0,0.1)]', className)}
+        className={cn('z-60 bg-white mt-1 text-[oklch(0.145 0 0)]  overflow-y-auto rounded-md overflow-x-hidden shadow-[0px_2px_5px_2px_rgba(0,0,0,0.1)]', className)}
         position={position}
         {...props}
       >

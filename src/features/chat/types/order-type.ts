@@ -1,9 +1,47 @@
+export type OrderItemType = {
+  id: string
+  quantity: number
+  productName: string
+  itemsPrice: number
+}
+
 export type OrderType = {
-  orderId: string
-  orderCode: string
+  id: string
+  customerId: string
+  customerName: string | null
+  customerPhoneNumber: string | null
+  customerEmail: string | null
+  customerAddress: string | null
+  orderDate: string
+  name: string
+  status: string
   totalAmount: number
-  orderName: string
-  orderStatus: string
   deliveryStatus: string
-  customerName: string
+  code: string
+  orderItems: OrderItemType[]
+}
+
+type OrderItems = {
+  productBatchId: string
+  quantity: number
+}
+
+export type OrderRequestType = {
+  customerId: string
+  name: string
+  orderItems: OrderItems[]
+}
+
+export type PostSaleItem = {
+  orderItemId: string
+  quantity: number
+}
+
+export type RefundOrderRequest = {
+  customerId: string
+  orderId: string
+  presentByStaffId: string
+  type: 'Refund' | 'Return' | 'Cancel' | 'Replacement'
+  reason: string
+  postSaleItems: PostSaleItem[]
 }

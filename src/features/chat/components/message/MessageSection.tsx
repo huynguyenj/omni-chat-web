@@ -1,91 +1,30 @@
-import { useContext, useEffect, useRef, useState } from 'react'
-import SelectionMessageContext from '../../context/SelectionMessageProvider'
+import { useEffect, useRef, useState } from 'react'
 import Avatar from '@/assets/avatar-sample.jpg'
 import ChatMessageBox from '../ui/ChatMessageBox'
 import { FiSend } from 'react-icons/fi'
-import type { ConversationDetail, MessageType, SenderMessage } from '../../types/message-type'
+import type { MessageType, SenderMessage } from '../../types/message-type'
 import { useAuthStore } from '@/features/auth/store/auth-store'
-import { chatApi } from '../../api/chat-api'
 import CustomerInfo from '../customer/CustomerInfo'
 import Button from '@/components/ui/button/Button'
 import Input from '@/components/ui/input/Input'
-import { signalrConnection } from '../../config/signalr'
 import Logo from '@/assets/logo.jpg'
-import * as signalr from '@microsoft/signalr'
 import { toast } from 'react-toastify'
 import { TbLayoutSidebarRightExpandFilled } from 'react-icons/tb'
 import { TbLayoutSidebarLeftExpandFilled } from 'react-icons/tb'
 import { AnimatePresence, motion } from 'motion/react'
+import useConnectChat from '../../hooks/useConnectChat'
+import ChatContentSkeleton from '@/components/ui/skeleton/ChatContentSkeleton'
 
 export default function MessageSection() {
-  const context = useContext(SelectionMessageContext)
+  const { connectionRef, conversationDetail, messages, setMessages, context, loading } = useConnectChat()
   const staffId = useAuthStore((state) => state.staffId)
-  const [conversationDetail, setConversationDetail] = useState<ConversationDetail>()
-  const [messages, setMessages] = useState<MessageType[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const messageEndRef = useRef<HTMLDivElement>(null)
   // const [isConnected, setIsConnected] = useState(false)
   const [isCustomerOpen, setIsCustomerOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement | null>(null)
   const toggleBtnRef = useRef<HTMLButtonElement | null>(null)
-  const connectionRef = useRef<signalr.HubConnection | null>(null)
-  // Initialize SignalR connection once
-  useEffect(() => {
 
-    if (!context?.conversationId) return
-    const prevConnection = connectionRef.current
-    if (prevConnection) {
-      prevConnection.off('CustomerReceiveMessage')
-      prevConnection.stop()
-      connectionRef.current = null
-    }
-    const connection = signalrConnection('supportConversationHub')
-    connectionRef.current = connection
-    const startConnection = async () => {
-      try {
-        await connection.start()
-        // setIsConnected(true)
-
-        // Join the conversation group
-        await connection.invoke('JoinConversationGroup', context.conversationId)
-        console.log(`Joined group: conversation:${context.conversationId}`)
-        // Listen for incoming messages
-        connection.on('CustomerReceiveMessage', (message: MessageType) => {
-          console.log('Received message:', message)
-          setMessages((prev) => [...prev, message])
-        })
-      } catch (err) {
-        console.error('SignalR Connection Error:', err)
-        // setIsConnected(false)
-      }
-    }
-
-    startConnection()
-
-    // Cleanup on unmount
-    return () => {
-      connection.off('CustomerReceiveMessage')
-      connection.stop()
-      connectionRef.current = null
-      // setIsConnected(false)
-    }
-  }, [context?.conversationId])
-
-  useEffect(() => {
-    const fetchConversation = async () => {
-      setConversationDetail(undefined)
-      setMessages([])
-      try {
-        if (!context?.conversationId) return
-        const conversationData = await chatApi.getConversationDetail(context.conversationId)
-        setConversationDetail(conversationData.data)
-        setMessages(conversationData.data.messages)
-      } catch (error) {
-        console.log(error)
-      }
-    }
-    fetchConversation()
-  }, [context?.conversationId])
 
   const handleSend = async () => {
     if (!inputRef.current) return
@@ -145,6 +84,7 @@ export default function MessageSection() {
   const handleCustomerInfoOpen = () => {
     setIsCustomerOpen((prev) => !prev)
   }
+
   return (
     <div className='h-full flex overflow-x-hidden'>
       {context?.conversationId ?
@@ -167,17 +107,24 @@ export default function MessageSection() {
               </Button>
             </div>
             <div className='bg-[#F5F7FA] overflow-y-auto h-[70%] py-7 px-5'>
-              {messages.map((message) => (
-                <div key={message.timestamp} className={`mt-5 flex ${message.senderType !== 'Customer' && 'justify-end'}`}>
-                  <ChatMessageBox
-                    message={message.content}
-                    sender={message.senderType.toLocaleLowerCase()}
-                    time={message.timestamp}
-                    highlightWords={message.extractKeywordsResponses?.highlights}
-                    recommends={message.extractKeywordsResponses?.recommends}
-                  />
-                </div>
-              ))}
+              { loading ?
+                <ChatContentSkeleton count={3}/>
+                :
+                <>
+                  {messages.map((message) => (
+                    <div key={message.timestamp} className={`mt-5 flex ${message.senderType !== 'Customer' && 'justify-end'}`}>
+                      <ChatMessageBox
+                        message={message.content}
+                        sender={message.senderType.toLocaleLowerCase()}
+                        time={message.timestamp}
+                        highlightWords={message.extractKeywordsResponses?.highlights}
+                        recommends={message.extractKeywordsResponses?.recommends}
+                      />
+                    </div>
+                  ))}
+
+                </>
+              }
               <div ref={messageEndRef}></div>
             </div>
             <div className='mt-5 px-5 flex gap-3'>
@@ -196,7 +143,7 @@ export default function MessageSection() {
               className='md:flex-1 xl:flex-1.5 right-0 bg-white lg:block z-10'>
               <CustomerInfo
                 customerName={conversationDetail?.customerName}
-                activeCustomerId={conversationDetail?.activeStaffId}
+                activeCustomerId={conversationDetail?.activeCustomerId}
                 avartarUrl={conversationDetail?.avartarUrl}
               />
             </motion.div>
