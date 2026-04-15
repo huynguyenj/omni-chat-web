@@ -120,7 +120,7 @@ export default function CustomerProfile() {
               <LoadingSpinner size='lg'/>
               :
               <>
-                <Button className='border border-gray-200 bg-white text-black flex-1' onClick={handleOpen}>
+                <Button className='border border-gray-200 bg-white text-black flex-1 hover:bg-gray-300' onClick={handleOpen}>
                   <p>Hủy</p>
                 </Button>
                 <Button className='flex-1' onClick={() => handleSubmit(onSubmit)}>

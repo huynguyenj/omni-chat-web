@@ -71,7 +71,7 @@ export default function OrderCard({ data }: { data: OrderType }) {
       <div className="flex flex-col gap-5 bg-gray-100 py-5 px-3 rounded-[5px] my-10">
         <p className="text-sm-body-desktop text-gray-600">Tổng số sản phẩm: {data.orderItems.length}</p>
         <p className="text-sm-body-desktop text-gray-600">Danh sách sản phẩm: {data.orderItems.map((item) => item.productName).join(', ')}</p>
-        <Button>Xem chi tiết</Button>
+        {/* <Button>Xem chi tiết</Button> */}
       </div>
       <hr className="text-gray-200 mb-3"/>
       <div className="flex justify-between items-center">
@@ -148,7 +148,7 @@ export default function OrderCard({ data }: { data: OrderType }) {
                       :
                       <>
                         <div className='flex w-full items-center gap-3 my-3'>
-                          <Button variant='outline' className='basis-[50%] border-3 border-border-primary text-black hover:bg-gray-200'>
+                          <Button variant='outline' className='basis-[50%] border-3 border-border-primary text-black hover:bg-gray-200' onClick={handleOpen}>
                               Hủy
                           </Button>
                           <Button className={`bg-orange-600 hover:bg-orange-700 text-white basis-[50%] ${!handleCheckInputValid() && 'opacity-50'}`} disabled={!handleCheckInputValid()} onClick={() => handleRefundOrder(orderItemCheck, reasonValue, data.customerId)}>

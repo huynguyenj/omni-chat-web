@@ -1,4 +1,5 @@
 import AvatarSample from '@/assets/avatar-sample.jpg'
+import { formatTime } from '@/utils/date-resolver'
 import { truncateText } from '@/utils/text-resolver'
 type AwaitMessageBoxType = {
   customerName: string
@@ -16,7 +17,7 @@ export default function AwaitMessageBox({ customerName, message, time, platform,
       <div className='w-full'>
         <div className='flex justify-between items-center'>
           <p className='text-sm-body-desktop'>{customerName}</p>
-          <p className='text-[0.95rem] text-gray-500'>{time}</p>
+          <p className='text-[0.95rem] text-soft-gray'>{formatTime(time)}</p>
         </div>
         <p className='text-[0.95rem] text-gray-400 mt-1'>{truncateText(message, 30)}</p>
         <div className='flex items-center gap-2'>

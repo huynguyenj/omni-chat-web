@@ -1,4 +1,4 @@
-import Button from '@/components/ui/button/Button'
+  import Button from '@/components/ui/button/Button'
 import Input from '@/components/ui/input/Input'
 import PopupBasic from '@/components/ui/popup/PopupBasic'
 import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
@@ -43,7 +43,7 @@ export default function ClaimInfoSection() {
                               <SelectContent>
                                 { claimCategories ?
                                   claimCategories.map((category) => (
-                                    <SelectItem value={category.id}>{CLAIM_TYPE[category.typeName]}</SelectItem>
+                                    <SelectItem key={category.id} value={category.id}>{CLAIM_TYPE[category.typeName]}</SelectItem>
                                   ))
                                   :
                                   <SelectItem value=''></SelectItem>

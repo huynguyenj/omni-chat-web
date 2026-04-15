@@ -27,8 +27,8 @@ function TicketCard({ data }: { data: TicketType}) {
     </Card>
   )
 }
-export default function Ticket({ customerId }: { customerId?: string }) {
-  const { listTickets, loading } = useGetTicket({ customerId: customerId })
+export default function Ticket() {
+  const { listTickets, loading } = useGetTicket()
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between mb-5">

@@ -7,12 +7,12 @@ import NodataCard from '@/components/ui/card/NodataCard'
 import OrderCard from '../order/OrderCard'
 
 
-export default function CustomerOrder({ customerId }: { customerId?: string }) {
+export default function CustomerOrder() {
   const [currentPage, setCurrentPage] = useState(1)
-  const { listOrders, loading } = useGetListOrderCustomer({ customerId: customerId, currentPage:  currentPage })
+  const { listOrders, loading } = useGetListOrderCustomer({ currentPage:  currentPage })
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       { loading ?
         <CardSkeleton count={3}/>
         :

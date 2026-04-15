@@ -1,5 +1,5 @@
+import { formatTime } from '@/utils/date-resolver'
 import type { Recommendation } from '../../types/system-recommendation-type'
-import { getTimeHelper } from '../../utils/time-helper'
 import SystemRecommendation from '../message/SystemRecommendation'
 
 type ChatMessageBoxType = {
@@ -8,17 +8,18 @@ type ChatMessageBoxType = {
   sender: string
   recommends?: Recommendation[]
   highlightWords?: string[]
+  index?: boolean
 }
 
-export default function ChatMessageBox({ message, time, sender, recommends }: ChatMessageBoxType) {
+export default function ChatMessageBox({ message, time, sender, index }: ChatMessageBoxType) {
   return (
     <div className='flex flex-col'>
-      { sender === 'customer' &&
-        <SystemRecommendation recommends={recommends}/>
+      { sender === 'customer' && index &&
+        <SystemRecommendation/>
       }
       <div className={`px-5 py-2 ${sender !== 'customer' ? 'bg-secondary' : 'bg-white'} w-fit rounded-[10px] border border-gray-300`}>
         <p className={`text-sm-body-desktop ${sender !== 'customer' && 'text-white'}`}>{message}</p>
-        <p className={`text-[0.85rem] ${sender ? 'text-gray-300' :'text-gray-500'}`}>{getTimeHelper(time)}</p>
+        <p className={`text-[0.85rem] ${sender !== 'customer' ? 'text-gray-300' :'text-soft-gray'}`}>{formatTime(time)}</p>
       </div>
     </div>
   )

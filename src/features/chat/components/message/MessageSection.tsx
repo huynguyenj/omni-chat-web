@@ -111,7 +111,7 @@ export default function MessageSection() {
                 <ChatContentSkeleton count={3}/>
                 :
                 <>
-                  {messages.map((message) => (
+                  {messages.map((message, i) => (
                     <div key={message.timestamp} className={`mt-5 flex ${message.senderType !== 'Customer' && 'justify-end'}`}>
                       <ChatMessageBox
                         message={message.content}
@@ -119,6 +119,7 @@ export default function MessageSection() {
                         time={message.timestamp}
                         highlightWords={message.extractKeywordsResponses?.highlights}
                         recommends={message.extractKeywordsResponses?.recommends}
+                        index={i === messages.length - 1}
                       />
                     </div>
                   ))}
