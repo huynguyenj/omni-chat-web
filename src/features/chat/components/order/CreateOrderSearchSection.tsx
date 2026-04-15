@@ -11,7 +11,6 @@ import OrderReview from './OrderReview'
 import { LuCircleCheckBig } from 'react-icons/lu'
 import useGetListBatchByProductId from '../../hooks/useGetListBatchByProductId'
 import type { BatchType } from '../../types/batch-type'
-import { formatDate } from '@/utils/date-resolver'
 import NodataCard from '@/components/ui/card/NodataCard'
 import CardSkeleton from '@/components/ui/skeleton/CardSkeleton'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
@@ -19,10 +18,11 @@ import useContextValid from '@/hooks/useContextValid'
 import SelectionMessageContext from '../../context/SelectionMessageProvider'
 import useCreateOrder from '../../hooks/useCreateOrder'
 import { toast } from 'react-toastify'
-import type { OrderRequestType } from '../../types/order-type'
+import { type OrderItems, type OrderRequestType, type OrderReviewType } from '../../types/order-type'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 import { PRODUCT_TYPE } from '../../const/product-type'
 import BatchItem from './BatchItem'
+import { ScrollArea } from '@/components/ui/scrollbar/ScrollArea'
 
 type CreateOrderSearchSectionProps = {
   handleOpenCreate: () => void
@@ -32,14 +32,30 @@ type CreateOrderSearchSectionProps = {
 
 export default function CreateOrderSearchSection({ handleOpenCreate, product }: CreateOrderSearchSectionProps) {
   const [index, setIndex] = useState(1)
-  const [checked, setChecked] = useState(true)
-  const { listBatch, loading, setCurrentPage, currentPage } = useGetListBatchByProductId({ productId: product.id })
-  const [batchChosen, setBatchChosen] = useState<BatchType>()
-  const [totalBatch, setTotalBatch] = useState(1)
+  const [checked, setChecked] = useState(false)
+  const { listBatch, loading, setCurrentPage, currentPage, setNewFilter } = useGetListBatchByProductId({ productId: product.id })
+  const [newestBatchChosen, setNewestBatchChosen] = useState<BatchType>()
+  const [listOrderItems, setListOrderItems] = useState<Map<string, OrderItems>>(new Map())
+  const [listBatchChosen, setListBatchChosen] = useState<Map<string, BatchType>>(new Map())
   const context = useContextValid(SelectionMessageContext)
+  const [listProducts, setListProducts] = useState<Map<string, OrderReviewType>>(new Map())
   const { handleOrder, loading: orderLoading } = useCreateOrder()
   const handleChecked = () => {
     setChecked((prev) => !prev)
+    if (!listBatch || listBatch.items.length == 0) return
+    const newestBatchItem = listBatch.items[0]
+    if (newestBatchChosen) {
+      setNewFilter(false)
+      setNewestBatchChosen(undefined)
+      listBatchChosen.delete(newestBatchItem.id)
+      listOrderItems.delete(newestBatchItem.id)
+      return
+    }
+    setNewFilter(true)
+    const updateListBatchItem = new Map()
+    updateListBatchItem.set(newestBatchItem.id, newestBatchItem)
+    setNewestBatchChosen(newestBatchItem)
+    setListOrderItems(updateListBatchItem)
   }
   const handlePrev = () => {
     if (index == 1) return
@@ -49,40 +65,46 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
     if (index == 4) return
     setIndex((page) => page + 1)
   }
-  const handleSelectBatch = (batch: BatchType) => {
-    if (batch.id != batchChosen?.id) {
-      setTotalBatch(0)
-    }
-    setBatchChosen(batch)
-  }
-
-  useEffect(() => {
-    const handleNewestChecked = () => {
-      if (checked) {
-        setBatchChosen(listBatch?.items[0])
-      }
-    }
-    handleNewestChecked()
-  }, [listBatch, checked])
 
   const handleOrderProduct = () => {
     if (!context.customerId) {
       toast.error('Không nhận đưa id khách hàng')
       return
     }
-    if (!batchChosen) {
-      toast.error('Lô sản phẩm chưa được chọn')
-      return
-    }
     const fullOrderBody: OrderRequestType = {
       customerId: context.customerId,
       name: product.name,
       orderItems: [
-        { productBatchId: batchChosen.id, quantity: totalBatch }
+        ...Array.from(listOrderItems.values())
       ]
     }
     handleOrder(fullOrderBody)
   }
+
+  const handleOrderItemSelected = (batch: BatchType) => {
+    const newListItems = new Map(listOrderItems)
+    const newListBatchChosen = new Map(listBatchChosen)
+    if (newListItems.has(batch.id)) {
+      newListItems.delete(batch.id)
+      newListBatchChosen.delete(batch.id)
+      setListOrderItems(newListItems)
+      setListBatchChosen(newListBatchChosen)
+      return
+    }
+    newListItems.set(batch.id, { productBatchId: batch.id, quantity: 1 })
+    newListBatchChosen.set(batch.id, batch)
+    setListOrderItems(newListItems)
+    setListBatchChosen(newListBatchChosen)
+  }
+
+  useEffect(() => {
+    const handleSetOrderReview = () => {
+      const newProductList = new Map(listProducts)
+      newProductList.set(product.id, { ...product, listBatch: Array.from(listBatchChosen.values()), orderItems: Array.from(listOrderItems.values()) })
+      setListProducts(newProductList)
+    }
+    handleSetOrderReview()
+  }, [listBatchChosen, listOrderItems, product])
 
   return (
     <PopupBasic title='Đặt hàng' onClose={handleOpenCreate}>
@@ -116,29 +138,34 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                         <>
                           {listBatch && listBatch.items.length > 0 ?
                             <div>
-                              { checked && batchChosen ?
+                              { checked && listOrderItems && newestBatchChosen ?
                                 <BatchItem
-                                  batch={batchChosen}
-                                  isSelected={batchChosen != undefined}
-                                  onChangeQuantity={setTotalBatch}
-                                  onSelect={() => handleSelectBatch(batchChosen)}
-                                  quantity={totalBatch}
-                                  showQuantity={batchChosen != undefined}
+                                  batch={newestBatchChosen}
+                                  isSelected={newestBatchChosen != undefined}
+                                  setListOrderItems={setListOrderItems}
+                                  onSelect={() => handleOrderItemSelected(newestBatchChosen)}
+                                  showQuantity={newestBatchChosen != undefined ? true : false}
+                                  listOrderItems={listOrderItems}
                                 />
                                 :
                                 <>
                                   <p className='text-sm-body-desktop text-primary font-medium mt-2'>Chọn lô hàng theo HSD</p>
-                                  { listBatch?.items.map((batch) => (
-                                    <BatchItem
-                                      key={batch.id}
-                                      batch={batch}
-                                      isSelected={batchChosen?.id == batch.id}
-                                      onChangeQuantity={setTotalBatch}
-                                      onSelect={() => handleSelectBatch(batch)}
-                                      quantity={totalBatch}
-                                      showQuantity={batchChosen?.id === batch.id}
-                                    />
-                                  )) }
+                                  { listBatch.items.length > 0 &&
+                                    <ScrollArea className='h-50'>
+                                      { listBatch?.items.map((batch) => (
+                                        <BatchItem
+                                          key={batch.id}
+                                          batch={batch}
+                                          isSelected={listBatchChosen.has(batch.id)}
+                                          setListOrderItems={setListOrderItems}
+                                          onSelect={() => handleOrderItemSelected(batch)}
+                                          showQuantity={listOrderItems.has(batch.id)}
+                                          listOrderItems={listOrderItems}
+                                        />
+                                      )) }
+                                    </ScrollArea>
+                                  }
+
                                 </>
                               }
                               <PaginationBar
@@ -154,10 +181,7 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                       }
                     </div>
                     <div className='flex gap-2 mt-3'>
-                      <Button variant='outline' className='w-full font-bold border-2 border-border-primary text-black hover:bg-gray-100' onClick={handlePrev}>
-                        Quay lại
-                      </Button>
-                      <Button className={`w-full font-bold ${!batchChosen && 'opacity-50'}`} onClick={handleNext} disabled={batchChosen ? false : true}>
+                      <Button className={`w-full font-bold ${listOrderItems.size == 0 && 'opacity-50'}`} onClick={handleNext} disabled={listOrderItems.size > 0 ? false : true}>
                         Tiếp theo
                         <IoIosArrowForward/>
                       </Button>
@@ -168,18 +192,14 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                     <div id='index#3'>
                       <div className='mt-7'>
                         <TutorialBox step='Bước 2: Xác nhận đơn hàng' description='Kiểm tra lại thông tin khi tạo đơn'/>
-                        { batchChosen &&
-                        <OrderReview
-                          batchCode={batchChosen?.code}
-                          batchDate={batchChosen? formatDate(batchChosen.expiryDate) : 'Chưa có hạn sử dụng'}
-                          capacityProduct={product.volumeMl}
-                          productName={product.name}
-                          totalPrice={product.price}
-                          totalProduct={1}
-                          totalBatch={totalBatch}
-                          typeProduct={product.productKind}
-                          brand={product.brand}
-                        />
+                        { listOrderItems.size > 0 && listProducts &&
+                          Array.from(listProducts.values()).map((product) => (
+                            <OrderReview
+                              listBatch={product.listBatch}
+                              listOrderItems={product.orderItems}
+                              product={product}
+                            />
+                          ))
                         }
                       </div>
                       { orderLoading ?

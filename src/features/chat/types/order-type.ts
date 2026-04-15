@@ -1,3 +1,6 @@
+import type { BatchType } from './batch-type'
+import type { ProductDetailType } from './product-type'
+
 export type OrderItemType = {
   id: string
   quantity: number
@@ -21,7 +24,7 @@ export type OrderType = {
   orderItems: OrderItemType[]
 }
 
-type OrderItems = {
+export type OrderItems = {
   productBatchId: string
   quantity: number
 }
@@ -44,4 +47,9 @@ export type RefundOrderRequest = {
   type: 'Refund' | 'Return' | 'Cancel' | 'Replacement'
   reason: string
   postSaleItems: PostSaleItem[]
+}
+
+export interface OrderReviewType extends ProductDetailType {
+   listBatch: BatchType[]
+   orderItems: OrderItems[]
 }

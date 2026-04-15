@@ -1,92 +1,22 @@
 import Button from '@/components/ui/button/Button'
 import PopupBasic from '@/components/ui/popup/PopupBasic'
 import { AnimatePresence } from 'motion/react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { MdOutlineShoppingCart } from 'react-icons/md'
-import TutorialBox from '../ui/TutorialBox'
-import Select from '@/components/ui/select/Select'
-import SelectionBox from '../ui/SelectionBox'
-import { ScrollArea } from '@/components/ui/scrollbar/ScrollArea'
-import Card from '@/components/ui/card/Card'
-import Tag from '@/components/ui/tag/Tag'
-import { IoIosArrowForward, IoMdCheckmarkCircleOutline } from 'react-icons/io'
-import Checkbox from '@/components/ui/input/Checkbox'
-import Input from '@/components/ui/input/Input'
-import OrderReview from './OrderReview'
-import { LuCircleCheckBig } from 'react-icons/lu'
-type ProductListType = {
-  name: string
-  storage: number
-  productId: string
-  price: number
-  category: 'sour' | 'have' | 'not'
-  capacity: number[]
-  company: string
-}
-const listProducts: ProductListType[] = [
-  // Vinamilk (3)
-  { name: 'Vinamilk', capacity: [180, 490, 880, 1760], category: 'not', price: 32000, productId: 'VNM-N-01', storage: 286, company: 'Vinamilk' },
-  { name: 'Vinamilk', capacity: [180, 490, 880], category: 'have', price: 33000, productId: 'VNM-H-02', storage: 220, company: 'Vinamilk' },
-  { name: 'Vinamilk', capacity: [180, 490], category: 'sour', price: 30000, productId: 'VNM-S-03', storage: 168, company: 'Vinamilk' },
+import OrderStepOne from './order-process/OrderStepOne'
+import type { ProductDetailType } from '../../types/product-type'
+import OrderStepTwo from './order-process/OrderStepTwo'
+import type { OrderReviewType } from '../../types/order-type'
+import OrderStepThree from './order-process/OrderStepThree'
 
-  // TH True Milk (3)
-  { name: 'TH True Milk', capacity: [180, 490, 880, 1760], category: 'not', price: 35000, productId: 'THM-N-01', storage: 195, company: 'TH True Milk' },
-  { name: 'TH True Milk', capacity: [180, 490, 880], category: 'have', price: 36000, productId: 'THM-H-02', storage: 174, company: 'TH True Milk' },
-  { name: 'TH True Milk', capacity: [180, 490], category: 'sour', price: 34000, productId: 'THM-S-03', storage: 142, company: 'TH True Milk' },
 
-  // Dalat Milk (3)
-  { name: 'Dalat Milk', capacity: [180, 490, 880, 1760], category: 'not', price: 31000, productId: 'DLM-N-01', storage: 210, company: 'Dalat Milk' },
-  { name: 'Dalat Milk', capacity: [180, 490, 880], category: 'have', price: 32000, productId: 'DLM-H-02', storage: 184, company: 'Dalat Milk' },
-  { name: 'Dalat Milk', capacity: [180, 490], category: 'sour', price: 29500, productId: 'DLM-S-03', storage: 153, company: 'Dalat Milk' }
-
-]
-
-type ProductCompanyType = {
-  id: string
-  name: string
-}
-
-const listProductCompany: ProductCompanyType[] = [
-  { id: 'goajgorewg', name: 'Vinamilk' },
-  { id: 'agwojgowg', name: 'TH True Milk' },
-  { id: 'agwjgowga', name: 'Dalat Milk' },
-  { id: 'gajgowgag', name: 'Ông thọ' }
-]
-
-type BatchesType = {
-  batchId: string
-  date: string
-  storage: number
-}
-
-const listBatches: BatchesType[] = [
-  { batchId: 'LOT20260125', date: '25/03/2026', storage: 120 },
-  { batchId: 'LOT20260122', date: '22/03/2026', storage: 89 },
-  { batchId: 'LOT20260118', date: '18/03/2026', storage: 71 }
-]
 export default function CreateOrderSection() {
   const [isOpen, setIsOpen] = useState(false)
   const [index, setIndex] = useState(1)
-  const [typeProduct, setTypeProduct] = useState<{ type: 'sour' | 'have' | 'not' }>()
-  const [capacityProduct, setCapacityProduct] = useState<{ capacity: 180 | 490 | 880 | 1760 }>()
-  const [batchChosen, setBatchChosen] = useState<BatchesType>(listBatches[0])
-  const [checked, setChecked] = useState(true)
-  const [productCompany, setProductCompany] = useState<ProductCompanyType>()
-  const [selectedProduct, setSelectedProduct] = useState<ProductListType>()
-  // const [numberOfProduct, setNumberOfProduct] = useState(1)
-  const [totalBatch, setTotalBatch] = useState(1)
-  // const [dateOfShipment, setDateOfShipment] = useState<string>()
+  const [listProductSelected, setListProductSelected] = useState<ProductDetailType[]>([])
+  const [listProductsWithOrderItems, setListProductsWithOrderItems] = useState<Map<string, OrderReviewType>>(new Map())
   const handleOpen = () => {
     setIsOpen((prev) => !prev)
-  }
-  const handleSelectProduct = (productId: string) => {
-    const product = listProducts.find((product) => product.productId === productId)
-    setSelectedProduct(product)
-  }
-
-  const handleSelectCompany = (companyId: string) => {
-    const company = listProductCompany.find((company) => company.id === companyId)
-    setProductCompany(company)
   }
 
   const handlePrev = () => {
@@ -97,44 +27,7 @@ export default function CreateOrderSection() {
     if (index == 4) return
     setIndex((page) => page + 1)
   }
-  const handleSelectTypeProduct = (type: typeof typeProduct) => {
-    if (type?.type == typeProduct?.type) {
-      setTypeProduct(undefined)
-      return
-    }
-    setTypeProduct(type)
-  }
-  const handleSelectCapacity = (capacity: typeof capacityProduct) => {
-    if (capacity?.capacity == capacityProduct?.capacity) {
-      setCapacityProduct(undefined)
-      return
-    }
-    setCapacityProduct(capacity)
-  }
-  const handleChecked = () => {
-    setChecked((prev) => !prev)
-    setBatchChosen(listBatches[0])
-  }
 
-  const handleSelectBatch = (batch: BatchesType) => {
-    if (batch.batchId != batchChosen.batchId) {
-      setTotalBatch(0)
-    }
-    setBatchChosen(batch)
-  }
-
-  const filterProductList = useMemo(() => {
-    return listProducts.filter((product) => {
-      const matchCompany = productCompany ? product.company === productCompany.name : true
-      const matchCapacity = capacityProduct
-        ? product.capacity.includes(capacityProduct.capacity)
-        : true
-      const matchType = typeProduct
-        ? product.category === typeProduct.type
-        : true
-      return matchCapacity && matchType && matchCompany
-    })
-  }, [typeProduct, capacityProduct, productCompany])
   return (
     <>
       <Button variant='outline' className='rounded-2xl py-2 border border-border-secondary hover:bg-secondary hover:text-white hover:border-none gap-2' onClick={handleOpen}>
@@ -161,246 +54,25 @@ export default function CreateOrderSection() {
               </div>
             </div>
             { index == 1 &&
-            <div id='index#1'>
-              <div className='mt-7'>
-                <TutorialBox step='Bước 1: Chọn sản phẩm sữa' description='Hãy chọn sản phẩm khách hàng muốn đặt'/>
-                <div className='my-5'>
-                  <label htmlFor="select-product" className='text-primary text-sm-body-desktop font-medium'>Tên hãng</label>
-                  <Select id='select-product' className='border border-border-primary mt-2' onChange={(e) => handleSelectCompany(e.target.value)}>
-                    <option value="">Tất cả các hãng</option>
-                    {listProductCompany.map((company) => (
-                      <option id={company.id} value={company.id}>{company.name}</option>
-                    ))}
-                  </Select>
-                </div>
-                <div className='my-5'>
-                  <label htmlFor="select-capacity" className='text-primary text-sm-body-desktop font-medium'>Dung tích / Khối lượng</label>
-                  <div className='grid grid-cols-4 gap-3 mt-2' id='select-capacity'>
-                    <SelectionBox
-                      isChosen={capacityProduct?.capacity == 180 ? true : false}
-                      onClick={() => handleSelectCapacity({ capacity: 180 })}
-                    >
-                      <p className="text-sm-body-desktop">180ml</p>
-                    </SelectionBox>
-                    <SelectionBox
-                      isChosen={capacityProduct?.capacity == 490 ? true : false}
-                      onClick={() => handleSelectCapacity({ capacity: 490 })}
-                    >
-                      <p className="text-sm-body-desktop">490 ml</p>
-                    </SelectionBox>
-                    <SelectionBox
-                      isChosen={capacityProduct?.capacity == 880 ? true : false}
-                      onClick={() => handleSelectCapacity({ capacity: 880 })}
-                    >
-                      <p className="text-sm-body-desktop">880 ml</p>
-                    </SelectionBox>
-                    <SelectionBox
-                      isChosen={capacityProduct?.capacity == 1760 ? true : false}
-                      onClick={() => handleSelectCapacity({ capacity: 1760 })}
-                    >
-                      <p className="text-sm-body-desktop">1760 ml</p>
-                    </SelectionBox>
-                  </div>
-                </div>
-                <div className='my-1'>
-                  <label htmlFor="select-type" className='text-primary text-sm-body-desktop font-medium'>Loại</label>
-                  <div id='select-type' className='grid grid-cols-3 gap-3 mt-2'>
-                    <SelectionBox
-                      isChosen={typeProduct?.type == 'not' ? true : false}
-                      onClick={() => handleSelectTypeProduct({ type: 'not' })}
-                    >
-                      <p className="text-sm-body-desktop">Không đường</p>
-                    </SelectionBox>
-                    <SelectionBox
-                      content='Có đường'
-                      isChosen={typeProduct?.type == 'have' ? true : false}
-                      onClick={() => handleSelectTypeProduct({ type: 'have' })}
-                    >
-                      <p className="text-sm-body-desktop">Có đường</p>
-                    </SelectionBox>
-                    <SelectionBox
-                      content='Sữa chua'
-                      isChosen={typeProduct?.type == 'sour' ? true : false}
-                      onClick={() => handleSelectTypeProduct({ type: 'sour' })}
-                    >
-                      <p className="text-sm-body-desktop">Sữa chua</p>
-                    </SelectionBox>
-                  </div>
-                </div>
-                {/* <Input label='Số lượng' variant='gray' type='number' onChange={(e) => setNumberOfProduct(Number(e.target.value))}/> */}
-                <div className='flex justify-between items-center my-3'>
-                  <p className='text-sm-body-desktop font-medium text-primary'>Sản phẩm phù hợp</p>
-                  <p className='text-sm-body-desktop text-soft-gray bg-gray-200 rounded-md px-2 py-1'>{filterProductList.length} sản phẩm</p>
-                </div>
-                <ScrollArea className='h-60'>
-                  { filterProductList.map((product) => (
-                    <Card key={product.productId} className={`border-2 border-border-primary px-5 py-3 my-3 ${product.productId === selectedProduct?.productId && 'border-secondary bg-[#EFF6FF]'}`} onClick={() => handleSelectProduct(product.productId)}>
-                      <div className='flex items-center justify-between'>
-                        <div className='flex gap-2 items-center'>
-                          <p className='text-sm-body-desktop text-primary font-medium'>{product.name}</p>
-                          <Tag className={`bg-transparent px-2 py-1 border ${product.category === 'sour' ? ' border-[#C27AFF] text-[#9810FA]'
-                            : product.category === 'have' ? 'border-[#FF8904] text-[#F54E06]'
-                              : 'border-[#00C950] text-green-accent'}`}>
-                            {product.category === 'sour' ? 'Sữa chua'
-                              : product.category === 'have' ? 'Có đường'
-                                : 'Không đường'}
-                          </Tag>
-                        </div>
-                        { selectedProduct?.productId === product.productId && <IoMdCheckmarkCircleOutline className='size-5 text-secondary'/> }
-                      </div>
-                      <div className='flex gap-2 my-2'>
-                        {product.capacity.map((cap) => (
-                          <Tag key={cap} className={`bg-gray-100 border-none text-soft-gray rounded-sm font-normal py-1 px-2 ${capacityProduct?.capacity === cap && 'bg-[#DBEAFE] text-secondary'}`}>
-                            {cap}ml
-                          </Tag>
-                        ))}
-                      </div>
-                      <div className='flex gap-3'>
-                        <p className='text-sm-body-desktop text-green-accent font-bold'>{product.price.toLocaleString('vi-VN')}đ</p>
-                        <p className='text-sm-body-desktop text-soft-gray font-medium'>Tồn kho: <span className='text-primary'>{product.storage}</span></p>
-                      </div>
-                    </Card>
-                  )) }
-                </ScrollArea>
-              </div>
-              <Button className={`w-full font-bold mt-5 ${!selectedProduct && 'opacity-50'}`} onClick={handleNext} disabled={selectedProduct ? false : true}>
-                  Tiếp theo
-                <IoIosArrowForward/>
-              </Button>
-            </div>
+            <OrderStepOne
+              onNextStep={handleNext}
+              setListProductSelected={setListProductSelected}
+            />
             }
             { index == 2 &&
-            <div id='index#2'>
-              <div className='mt-7'>
-                <TutorialBox step='Bước 2: Chọn lô hàng & Số lượng' description='Chọn lô hàng và nhập số lượng mong muốn'/>
-                <Card className='bg-[#EFF6FF] border-2 border-[#C9D9F5] rounded-xl my-5'>
-                  <p className='text-sm-body-desktop text-soft-gray'>Sản phẩm đã chọn</p>
-                  <p className='text-sm-body-desktop text-primary font-medium text-sm/7'>{selectedProduct?.name}</p>
-                  <div className='flex items-center gap-3 my-2'>
-                    <Tag className={`bg-transparent rounded-2xl px-2 py-0.5 border-2 ${typeProduct?.type === 'sour' ? ' border-[#C27AFF] text-[#9810FA]'
-                      : typeProduct?.type === 'have' ? 'border-[#FF8904] text-[#F54E06]'
-                        : 'border-[#00C950] text-green-accent'}`}>
-                      { typeProduct?.type === 'sour' ? 'Sữa chua'
-                        : typeProduct?.type === 'have' ? 'Có đường'
-                          : 'Không đường'}
-                    </Tag>
-                    <Tag className='bg-transparent border-2 rounded-2xl px-2 py-0.5 text-secondary font-medium border-secondary'>
-                      {capacityProduct?.capacity}ml
-                    </Tag>
-                    <p className='text-sm-body-desktop text-soft-gray'>Tồn kho: <span className='font-medium text-primary'>{selectedProduct?.storage}</span></p>
-                  </div>
-                </Card>
-                <div className='flex items-center gap-3 my-4 bg-[#F5F7FA] py-3 px-4 rounded-xl'>
-                  <Checkbox id='check-batch' onCheckedChange={handleChecked} checked={checked}/>
-                  <div>
-                    <label htmlFor="check-batch" className='text-sm-body-desktop font-semibold text-primary'>Tự động chọn lô hàng mới nhất (FIFO)</label>
-                    <p className='text-[0.85rem] text-soft-gray'>Hệ thống sẽ tự động chọn lô có hạn sử dụng xa nhất</p>
-                  </div>
-                </div>
-                <div>
-                  { checked ?
-                    <SelectionBox
-                      id={batchChosen.batchId}
-                      className='flex flex-col px-4 py-3 my-2'
-                      isChosen={batchChosen.batchId ? true : false }>
-                      <div className='w-full flex flex-col mb-3'>
-                        <div className='w-full flex gap-3'>
-                          <IoMdCheckmarkCircleOutline className='size-6'/>
-                          <div className='flex justify-between items-start w-full'>
-                            <div className='flex items-start gap-2'>
-                              <div>
-                                <p className='text-sm-body-desktop font-medium text-primary'>Lô: {batchChosen.batchId}</p>
-                                <p className='text-sm-body-desktop text-soft-gray font-normal'>HSD: {batchChosen.date}</p>
-                              </div>
-                              <Tag variant='primary' className='py-0.5 px-3 text-[0.85rem]'>Mới nhất</Tag>
-                            </div>
-                            <Tag variant='success' className='py-0.5 px-3 flex items-center'>
-                              <p className='text-[0.85rem] text-center font-medium'>Tồn: {batchChosen.storage}</p>
-                            </Tag>
-                          </div>
-                        </div>
-                      </div>
-                      <hr className='border-2 border-border-primary my-2 w-full'/>
-                      <Input label='Số lượng muốn mua' variant='gray' placeholder='1' type='number' onChange={(e) => setTotalBatch(Number(e.target.value))} className='w-[20%] text-center text-black shadow-[0px_2px_1px_1px_rgba(0,0,0,0.1)]'/>
-                    </SelectionBox>
-                    :
-                    <>
-                      <p className='text-sm-body-desktop text-primary font-medium mt-2'>Chọn lô hàng theo HSD</p>
-                      { listBatches.map((batch) => (
-                        <SelectionBox
-                          id={batch.batchId}
-                          className='flex items-start gap-3 px-4 py-3 my-2'
-                          isChosen={batch.batchId == batchChosen.batchId ? true : false }
-                          onClick={() => handleSelectBatch(batch)}>
-                          { batchChosen.batchId === batch.batchId && <IoMdCheckmarkCircleOutline className='size-6'/>}
-                          <div className='flex flex-col w-full'>
-                            <div className='w-full flex flex-col mb-3'>
-                              <div className='w-full flex gap-3'>
-                                <div className='flex justify-between items-start w-full'>
-                                  <div className='flex items-start gap-2'>
-                                    <div>
-                                      <p className='text-sm-body-desktop font-medium text-primary'>Lô: {batch.batchId}</p>
-                                      <p className='text-sm-body-desktop text-soft-gray font-normal'>HSD: {batch.date}</p>
-                                    </div>
-                                    <Tag variant='primary' className='py-0.5 px-3 text-[0.85rem]'>Mới nhất</Tag>
-                                  </div>
-                                  <Tag variant='success' className='py-0.5 px-3 flex items-center'>
-                                    <p className='text-[0.85rem] text-center font-medium'>Tồn: {batch.storage}</p>
-                                  </Tag>
-                                </div>
-                              </div>
-                            </div>
-                            { batchChosen.batchId === batch.batchId &&
-                            <>
-                              <hr className='border-2 border-border-primary my-2 w-full'/>
-                              <Input label='Số lượng muốn mua' variant='gray' placeholder='1' type='number' onChange={(e) => setTotalBatch(Number(e.target.value))} className='w-[20%] text-center text-black shadow-[0px_2px_1px_1px_rgba(0,0,0,0.1)]'/>
-                            </>
-                            }
-                          </div>
-                        </SelectionBox>
-                      )) }
-                    </>
-                  }
-                </div>
-                {/* <Input label='Ngày giao hàng' type='date' variant='gray' onChange={(e) => setDateOfShipment(e.target.value)}/> */}
-              </div>
-              <div className='flex gap-2 mt-3'>
-                <Button variant='outline' className='w-full font-bold border-2 border-border-primary text-black hover:bg-gray-100' onClick={handlePrev}>
-                  Quay lại
-                </Button>
-                <Button className={`w-full font-bold ${!batchChosen && 'opacity-50'}`} onClick={handleNext} disabled={batchChosen ? false : true}>
-                  Tiếp theo
-                  <IoIosArrowForward/>
-                </Button>
-              </div>
-            </div>
+              <OrderStepTwo
+                listProductSelected={listProductSelected}
+                listProductWithOrderItems={listProductsWithOrderItems}
+                setListProductWithOrderItems={setListProductsWithOrderItems}
+                onNext={handleNext}
+                onPrevious={handlePrev}
+              />
             }
             { index == 3 &&
-              <div id='index#3'>
-                <div className='mt-7'>
-                  <TutorialBox step='Bước 3: Xác nhận đơn hàng' description='Kiểm tra lại thông tin khi tạo đơn'/>
-                  <OrderReview
-                    batch={batchChosen.batchId}
-                    batchDate={batchChosen.date}
-                    capacityProduct={capacityProduct?.capacity}
-                    productName={selectedProduct?.name}
-                    // shipDate={dateOfShipment}
-                    totalPrice={30000}
-                    // totalProduct={numberOfProduct}
-                    totalBatch={totalBatch}
-                    typeProduct={typeProduct?.type}
-                  />
-                </div>
-                <div className='flex gap-2'>
-                  <Button variant='outline' className='w-full font-bold border-2 border-border-primary text-black hover:bg-gray-100' onClick={handlePrev}>
-                  Quay lại
-                  </Button>
-                  <Button variant='success' className='w-full font-bold items-center'>
-                    <LuCircleCheckBig/>
-                  Tạo đơn hàng
-                  </Button>
-                </div>
-              </div>
+             <OrderStepThree
+               onPrevious={handlePrev}
+               listProductWithOrderItems={listProductsWithOrderItems}
+             />
             }
           </PopupBasic>
         }

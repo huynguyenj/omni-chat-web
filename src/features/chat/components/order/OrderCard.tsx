@@ -148,7 +148,7 @@ export default function OrderCard({ data }: { data: OrderType }) {
                       :
                       <>
                         <div className='flex w-full items-center gap-3 my-3'>
-                          <Button variant='outline' className='basis-[50%] border-3 border-border-primary text-black hover:bg-gray-200'>
+                          <Button variant='outline' className='basis-[50%] border-3 border-border-primary text-black hover:bg-gray-200' onClick={handleOpen}>
                               Hủy
                           </Button>
                           <Button className={`bg-orange-600 hover:bg-orange-700 text-white basis-[50%] ${!handleCheckInputValid() && 'opacity-50'}`} disabled={!handleCheckInputValid()} onClick={() => handleRefundOrder(orderItemCheck, reasonValue, data.customerId)}>

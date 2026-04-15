@@ -11,11 +11,14 @@ import { FaShoppingBag, FaTicketAlt } from 'react-icons/fa'
 import { GoTasklist } from 'react-icons/go'
 import TaskList from '../task/TaskList'
 import ListProductSection from '../product/ListProductSection'
+import useCompleteConversationId from '../../hooks/useCompleteConversationId'
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 
 type CustomerInfoType = Omit<Partial<ConversationDetail>, 'messages'>
 
 export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoType) {
   const [isOpen, setIsOpen] = useState(false)
+  const { handleCompleteConversation, loading } = useCompleteConversationId()
   const [tab, setTab] = useState(1)
   const handleOpen = () => {
     setIsOpen((prev) => !prev)
@@ -46,16 +49,23 @@ export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoT
           </div>
         </div>
         <div className='mt-5 px-4'>
-          <div className='my-5 flex flex-col gap-3'>
-            <Button variant='success'>
-              <FiCheckCircle className='text-[1.25rem]'/>
-              Hoàn thành hỗ trợ
-            </Button>
-            <Button variant='outline' onClick={handleOpen}>
-              <CiSearch className='text-[1.25rem]'/>
-              Tìm kiếm sản phẩm
-            </Button>
-          </div>
+          { loading ?
+            <div className='flex justify-center items-center'>
+              <LoadingSpinner size='lg'/>
+            </div>
+            :
+            <div className='my-5 flex flex-col gap-3'>
+              <Button variant='success'>
+                <FiCheckCircle className='text-[1.25rem]' onClick={handleCompleteConversation}/>
+                Hoàn thành hỗ trợ
+              </Button>
+              <Button variant='outline' onClick={handleOpen}>
+                <CiSearch className='text-[1.25rem]'/>
+                Tìm kiếm sản phẩm
+              </Button>
+            </div>
+
+          }
         </div>
         <div className='bg-gray-200 w-full px-1 py-1 md:grid md:grid-cols-2 xl:flex gap-2 items-center justify-center'>
           <Button className={`text-[0.85rem] px-5 py-1 gap-2 ${tab === 1 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(1)}>
