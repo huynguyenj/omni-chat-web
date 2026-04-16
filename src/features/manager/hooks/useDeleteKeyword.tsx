@@ -2,26 +2,26 @@ import useApiCall from '@/config/useApiCall'
 import { useState, type Dispatch, type SetStateAction } from 'react'
 import { toast } from 'react-toastify'
 
-type UseUpdateStaffProps = {
+type UseDeleteKeywordProps = {
   onRefresh: Dispatch<SetStateAction<boolean>>
 }
 
-export default function useDeleteStaff({ onRefresh }: UseUpdateStaffProps) {
+export default function useDeleteKeyword({ onRefresh }: UseDeleteKeywordProps) {
   const { execute, loading } = useApiCall<null>()
-  const [staffId, setStaffId] = useState('')
+  const [keywordId, setKeywordId] = useState('')
   const handleDelete = async () => {
     const apiData = await execute({
-      apiUrl:  `/staff/delete/${staffId}`,
+      apiUrl:  `/keywords/delete/${keywordId}`,
       method: 'del',
       type: 'private'
     })
     const { error } = apiData
     if (error) {
-      toast.error('Xóa nhân viên thất bại')
+      toast.error('Xóa keyword thất bại')
       return
     }
-    toast.success('Xóa nhân viên thành công')
+    toast.success('Xóa keyword thành công')
     onRefresh(prev => !prev)
   }
-  return { loading, handleDelete, setStaffId }
+  return { loading, handleDelete, setKeywordId }
 }

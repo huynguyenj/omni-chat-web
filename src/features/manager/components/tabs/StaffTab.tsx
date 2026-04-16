@@ -23,7 +23,7 @@ import useDeleteStaff from '../../hooks/useDeleteStaff'
 export default function StaffTab() {
   const { listStaffs, loading, setCurrentPage, setSearchText, currentPage, setOnRefresh } = useGetListStaff()
   const { checkedIntentType, errors, handleSubmit, loading: editLoading, onSubmit, register, setCheckIntentType, setStaffInfoEdit, reset } = useUpdateStaffInfo({ onRefresh: setOnRefresh })
-  const { handleDelete, loading: deleteLoading, setStaffId } = useDeleteStaff()
+  const { handleDelete, loading: deleteLoading, setStaffId } = useDeleteStaff({ onRefresh: setOnRefresh })
   const [isOpenEdit, setIsOpenEdit] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
   const { intentType } = useGetIntentType()
