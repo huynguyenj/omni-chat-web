@@ -56,19 +56,19 @@ export default function useCreateProduct() {
     form.append('Price', String(formData.price))
     form.append('LifeSpan', String(formData.lifeSpan))
     form.append('Image', formData.image)
-    // const res = await execute({
-    //   apiUrl: '/products',
-    //   method: 'post',
-    //   type: 'private',
-    //   body: form
-    // })
+    const res = await execute({
+      apiUrl: '/products',
+      method: 'post',
+      type: 'private',
+      body: form
+    })
 
-    // if (res.error) {
-    //   toast.error('Tạo sản phẩm thất bại')
-    //   return
-    // }
+    if (res.error) {
+      toast.error('Tạo sản phẩm thất bại')
+      return
+    }
 
-    // toast.success('Tạo sản phẩm thành công')
+    toast.success('Tạo sản phẩm thành công')
     reset()
   }
 

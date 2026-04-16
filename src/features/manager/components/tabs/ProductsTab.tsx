@@ -30,7 +30,7 @@ export default function ProductsTab() {
   const { currentPage, listProducts, loading, setCurrentPage, setOnRefresh, setSearchText } = useGetProductListManager()
   const [isOpenCreateBatch, setIsOpenCreateBatch] = useState(false)
   const { handleCreateBatch, listBatchItems, loading: loadingCreateBatch, productChoseForBatch, setListBatchItems, setProductChoseForBatch, handleAddBatch, handleDeleteBatch, handleSubmit, register } = useCreateBatchProduct()
-  const [isOpenEdit, setIsOpenEdit] = useState(false)
+  // const [isOpenEdit, setIsOpenEdit] = useState(false)
   const { handleDelete, loading: deleteLoading, setProductId } = useDeleteProduct({ onRefresh: setOnRefresh })
   const [isOpenCreateProduct, setIsOpenCreateProduct] = useState(false)
   const { control, errors, handleSubmit:handleSubmitProduct, loading: createProductLoading, onSubmit: onSubmitProduct, register: registerProduct, preview, reset, setPreview } = useCreateProduct()
@@ -41,9 +41,9 @@ export default function ProductsTab() {
     setSearchText(text)
   }
   const debounce = useDebounce(handleSearch, 500)
-  const handleOpenEdit = () => {
+  // const handleOpenEdit = () => {
 
-  }
+  // }
 
   const handleOpenAlert = (productId: string) => {
     setIsAlertOpen((prev) => !prev)
@@ -197,14 +197,20 @@ export default function ProductsTab() {
                 </Card>
               )) }
               <div className='flex w-full gap-2 items-center'>
-                <Button variant="basic" className="py-2 px-3 hover:bg-gray-200 w-full" onClick={handleCloseCreateBatch}
-                >
-                 Hủy
-                </Button>
-                <Button variant='default' className='py-2 px-3 w-full' onClick={handleCreateBatch}>
-                  <FiCheckCircle className='size-4' />
-                                Tạo lô ({listBatchItems.length})
-                </Button>
+                { loadingCreateBatch ?
+                  <LoadingSpinner size='lg'/>
+                  :
+                  <>
+                    <Button variant="basic" className="py-2 px-3 hover:bg-gray-200 w-full" onClick={handleCloseCreateBatch}
+                    >
+                    Hủy
+                    </Button>
+                    <Button variant='default' className='py-2 px-3 w-full' onClick={handleCreateBatch}>
+                      <FiCheckCircle className='size-4' />
+                                    Tạo lô ({listBatchItems.length})
+                    </Button>
+                  </>
+                }
               </div>
             </>
           }
@@ -349,7 +355,7 @@ export default function ProductsTab() {
             }
           </div>
           <div className='flex w-full gap-2 items-center my-3'>
-            { loadingCreateBatch ?
+            { createProductLoading ?
               <LoadingSpinner size='lg'/>
               :
               <>
