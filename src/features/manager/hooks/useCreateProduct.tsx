@@ -1,0 +1,98 @@
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import useApiCall from '@/config/useApiCall'
+import { toast } from 'react-toastify'
+import { z } from 'zod'
+import { useEffect, useState } from 'react'
+
+export const createProductSchema = z.object({
+  name: z.string({ error: 'Tên không được để trống' }),
+
+  productPackagingType: z.string({ error: 'Loại hộp không được để trống' }),
+  productKind: z.string({ error: 'Loại sữa không được để trống' }),
+
+  volumeMl: z.number().min(1),
+
+  description: z.string().optional(),
+
+  brandId: z.string({ error: 'Hãng sữa không được để trống' }),
+
+  price: z.number().min(0),
+
+  lifeSpan: z.number().min(0),
+
+  image: z
+    .any()
+    .refine((file) => file instanceof File, 'Vui lòng chọn ảnh')
+})
+
+type CreateProductForm = z.infer<typeof createProductSchema>
+export default function useCreateProduct() {
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+    reset,
+    watch
+  } = useForm<CreateProductForm>({
+    resolver: zodResolver(createProductSchema)
+  })
+
+  const { execute, loading } = useApiCall<null>()
+  const imageFile = watch('image')
+  const [preview, setPreview] = useState<string | null>(null)
+
+
+  const onSubmit = async (formData: CreateProductForm) => {
+    const form = new FormData()
+
+    form.append('Name', formData.name)
+    form.append('ProductPackagingType', formData.productPackagingType)
+    form.append('ProductKind', formData.productKind)
+    form.append('VolumeMl', String(formData.volumeMl))
+    form.append('Description', formData.description || '')
+    form.append('BrandId', formData.brandId)
+    form.append('Price', String(formData.price))
+    form.append('LifeSpan', String(formData.lifeSpan))
+    form.append('Image', formData.image)
+    // const res = await execute({
+    //   apiUrl: '/products',
+    //   method: 'post',
+    //   type: 'private',
+    //   body: form
+    // })
+
+    // if (res.error) {
+    //   toast.error('Tạo sản phẩm thất bại')
+    //   return
+    // }
+
+    // toast.success('Tạo sản phẩm thành công')
+    reset()
+  }
+
+  useEffect(() => {
+    if (!imageFile) return
+
+    const file = imageFile as File
+    const url = URL.createObjectURL(file)
+
+    setPreview(url)
+
+    return () => URL.revokeObjectURL(url)
+  }, [imageFile])
+
+  return {
+    register,
+    handleSubmit,
+    control,
+    errors,
+    loading,
+    onSubmit,
+    preview,
+    imageFile,
+    reset,
+    setPreview
+  }
+}

@@ -130,11 +130,11 @@ export default function StaffTab() {
                       </div>
                       <hr className='border border-border-primary my-3 rounded-sm'/>
                       <div className="flex items-center justify-center gap-2">
-                        <Button variant="outline" className="flex-9 text-black border-border-primary py-1 hover:bg-gray-200" onClick={() => handleOpenEdit(staff)}>
+                        <Button variant='basic' className='py-1 hover:bg-gray-200 w-full flex-17' onClick={() => handleOpenEdit(staff)}>
                           <Edit2 className="size-4" />
                           Sửa
                         </Button>
-                        <Button variant="outline" className="py-2 px-3 text-red-500 hover:text-red-500 border-border-primary hover:bg-gray-200" onClick={() => handleOpenAlert(staff.id)}
+                        <Button variant="danger" className="py-2 px-3 text-white hover:text-red-500 border-border-primary hover:bg-gray-200 w-full flex-1" onClick={() => handleOpenAlert(staff.id)}
                         >
                           <Trash2 className="size-4" />
                         </Button>
