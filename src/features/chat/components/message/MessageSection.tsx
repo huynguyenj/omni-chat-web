@@ -14,6 +14,7 @@ import { TbLayoutSidebarLeftExpandFilled } from 'react-icons/tb'
 import { AnimatePresence, motion } from 'motion/react'
 import useConnectChat from '../../hooks/useConnectChat'
 import ChatContentSkeleton from '@/components/ui/skeleton/ChatContentSkeleton'
+import type { KeywordsRecommendation } from '../../types/system-recommendation-type'
 
 export default function MessageSection() {
   const { connectionRef, conversationDetail, messages, setMessages, context, loading } = useConnectChat()
@@ -85,6 +86,14 @@ export default function MessageSection() {
     setIsCustomerOpen((prev) => !prev)
   }
 
+  const checkedRecommendation = (
+    extractKeywords: KeywordsRecommendation | null | undefined
+  ) => {
+    if (extractKeywords?.recommends?.length) {
+      return extractKeywords.recommends
+    }
+    return []
+  }
   return (
     <div className='h-full flex overflow-x-hidden'>
       {context?.conversationId ?
@@ -117,8 +126,8 @@ export default function MessageSection() {
                         message={message.content}
                         sender={message.senderType.toLocaleLowerCase()}
                         time={message.timestamp}
-                        highlightWords={message.extractKeywordsResponses?.highlights}
-                        recommends={message.extractKeywordsResponses?.recommends}
+                        highlightWords={message.extractKeywordResponses?.highlights}
+                        recommends={checkedRecommendation(message.extractKeywordResponses)}
                         index={i === messages.length - 1}
                       />
                     </div>

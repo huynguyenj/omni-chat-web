@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router'
 import { PRIVATE_PATH } from '@/router/path'
 import type { LoginResponseType } from '../types/login-types'
 import useApiCall from '@/config/useApiCall'
+import { toast } from 'react-toastify'
 
 const LoginFormSchema = z.object({
   username: z.email(),
@@ -26,8 +27,12 @@ export default function useLogin() {
       body: formData
     })
     const error = apiData.error
-    if (error) return
+    if (error) {
+      toast.error('Tài khoản hoặc mật khẩu sai!')
+      return
+    }
     const { accessToken, role, accountId, staffId } = apiData.data
+    toast.success('Đăng nhập thành công')
     addAuthStore(accessToken, accountId, staffId, role)
     navigate(PRIVATE_PATH.CHAT)
   }
