@@ -4,9 +4,10 @@ import { toast } from 'react-toastify'
 
 type UseDeleteKeywordProps = {
   onRefresh: Dispatch<SetStateAction<boolean>>
+  onCloseModalDelete: Dispatch<SetStateAction<boolean>>
 }
 
-export default function useDeleteKeyword({ onRefresh }: UseDeleteKeywordProps) {
+export default function useDeleteKeyword({ onRefresh, onCloseModalDelete }: UseDeleteKeywordProps) {
   const { execute, loading } = useApiCall<null>()
   const [keywordId, setKeywordId] = useState('')
   const handleDelete = async () => {
@@ -22,6 +23,7 @@ export default function useDeleteKeyword({ onRefresh }: UseDeleteKeywordProps) {
     }
     toast.success('Xóa keyword thành công')
     onRefresh(prev => !prev)
+    onCloseModalDelete(false)
   }
   return { loading, handleDelete, setKeywordId }
 }

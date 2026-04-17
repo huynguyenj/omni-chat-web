@@ -33,7 +33,11 @@ export default function useCreateBatchProduct() {
       body: [productBatchData]
     })
     const { error } = apiData
-    if (error) toast.error('Tạo lô sản phẩm thất bại')
+    if (error) {
+      toast.error('Tạo lô sản phẩm thất bại')
+      return
+    }
+    toast.success('Thêm lô sản phẩm thành công')
   }
   const handleAddBatch = (formData: BatchItemType) => {
     setListBatchItems(prev => [...prev, formData])

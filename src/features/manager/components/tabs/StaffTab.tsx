@@ -22,10 +22,10 @@ import useDeleteStaff from '../../hooks/useDeleteStaff'
 
 export default function StaffTab() {
   const { listStaffs, loading, setCurrentPage, setSearchText, currentPage, setOnRefresh } = useGetListStaff()
-  const { checkedIntentType, errors, handleSubmit, loading: editLoading, onSubmit, register, setCheckIntentType, setStaffInfoEdit, reset } = useUpdateStaffInfo({ onRefresh: setOnRefresh })
-  const { handleDelete, loading: deleteLoading, setStaffId } = useDeleteStaff({ onRefresh: setOnRefresh })
   const [isOpenEdit, setIsOpenEdit] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
+  const { checkedIntentType, errors, handleSubmit, loading: editLoading, onSubmit, register, setCheckIntentType, setStaffInfoEdit, reset } = useUpdateStaffInfo({ onRefresh: setOnRefresh })
+  const { handleDelete, loading: deleteLoading, setStaffId } = useDeleteStaff({ onRefresh: setOnRefresh, onCloseModalUpdate: setIsAlertOpen })
   const { intentType } = useGetIntentType()
 
   const handleSearch = (text: string) => {
@@ -162,7 +162,7 @@ export default function StaffTab() {
         <PopupBasic title='Sửa thông tin nhân viên' onClose={() => setIsOpenEdit(false)}>
           <p className='text-sm-body-desktop text-soft-gray'>Cập nhật thông tin nhân viên</p>
           <div className='flex flex-col gap-3 my-3'>
-            <Input {...register('name')}placeholder='Tên nhân viên' variant='gray' label='Tên nhân viên' error={errors.name?.message}/>
+            <Input {...register('name')} placeholder='Tên nhân viên' variant='gray' label='Tên nhân viên' error={errors.name?.message}/>
             <Input {...register('email')} placeholder='Email' variant='gray' label='Email' error={errors.email?.message}/>
             <Input {...register('phone')} placeholder='Số điện thoại' variant='gray' label='Số điện thoại' error={errors.phone?.message}/>
             <p className='text-sm-body-desktop text-primary font-medium'>Chức năng</p>

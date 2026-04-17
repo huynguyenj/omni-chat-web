@@ -4,14 +4,15 @@ import { toast } from 'react-toastify'
 
 type UseDeleteProductProps = {
   onRefresh: Dispatch<SetStateAction<boolean>>
+  onCloseModalDelete: Dispatch<SetStateAction<boolean>>
 }
 
-export default function useDeleteProduct({ onRefresh }: UseDeleteProductProps) {
+export default function useDeleteProduct({ onRefresh, onCloseModalDelete }: UseDeleteProductProps) {
   const { execute, loading } = useApiCall<null>()
   const [productId, setProductId] = useState('')
   const handleDelete = async () => {
     const apiData = await execute({
-      apiUrl:  `/product/delete/${productId}`,
+      apiUrl:  `/products/delete/${productId}`,
       method: 'del',
       type: 'private'
     })
@@ -22,6 +23,7 @@ export default function useDeleteProduct({ onRefresh }: UseDeleteProductProps) {
     }
     toast.success('Xóa sản phẩm thành công')
     onRefresh(prev => !prev)
+    onCloseModalDelete(false)
   }
   return { loading, handleDelete, setProductId }
 }

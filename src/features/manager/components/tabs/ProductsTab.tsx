@@ -16,7 +16,7 @@ import { PRODUCT_PACKAGE_TYPE } from '../../const/product'
 import { LuPackageSearch } from 'react-icons/lu'
 import type { ProductDetailType } from '@/features/chat/types/product-type'
 import useCreateBatchProduct from '../../hooks/useCreateBatchProduct'
-import { formatDate } from '@/utils/date-resolver'
+import { countRestDay, formatDate } from '@/utils/date-resolver'
 import { FiCheckCircle } from 'react-icons/fi'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 import useDeleteProduct from '../../hooks/useDeleteProduct'
@@ -24,19 +24,26 @@ import useCreateProduct from '../../hooks/useCreateProduct'
 import { Controller } from 'react-hook-form'
 import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
 import useGetAllBrand from '@/features/chat/hooks/useGetAllBrand'
+import useGetProductBatchManager from '../../hooks/useGetProductBatchManager'
+import CardSkeleton from '@/components/ui/skeleton/CardSkeleton'
+import { ScrollArea } from '@/components/ui/scrollbar/ScrollArea'
+import useUpdateProduct from '../../hooks/useUpdateProduct'
 
 
 export default function ProductsTab() {
   const { currentPage, listProducts, loading, setCurrentPage, setOnRefresh, setSearchText } = useGetProductListManager()
   const [isOpenCreateBatch, setIsOpenCreateBatch] = useState(false)
-  const { handleCreateBatch, listBatchItems, loading: loadingCreateBatch, productChoseForBatch, setListBatchItems, setProductChoseForBatch, handleAddBatch, handleDeleteBatch, handleSubmit, register } = useCreateBatchProduct()
-  // const [isOpenEdit, setIsOpenEdit] = useState(false)
-  const { handleDelete, loading: deleteLoading, setProductId } = useDeleteProduct({ onRefresh: setOnRefresh })
-  const [isOpenCreateProduct, setIsOpenCreateProduct] = useState(false)
-  const { control, errors, handleSubmit:handleSubmitProduct, loading: createProductLoading, onSubmit: onSubmitProduct, register: registerProduct, preview, reset, setPreview } = useCreateProduct()
   const [isAlertOpen, setIsAlertOpen] = useState(false)
-  const { listBrand } = useGetAllBrand()
+  const [isOpenCreateProduct, setIsOpenCreateProduct] = useState(false)
+  const [isOpenProductInfoEdit, setIsOpenProductInfoEdit] = useState(false)
+  const [isOpenProductImageEdit, setIsOpenProductImageEdit] = useState(false)
 
+  const { handleCreateBatch, listBatchItems, loading: loadingCreateBatch, productChoseForBatch, setListBatchItems, setProductChoseForBatch, handleAddBatch, handleDeleteBatch, handleSubmit, register } = useCreateBatchProduct()
+  const { handleDelete, loading: deleteLoading, setProductId } = useDeleteProduct({ onRefresh: setOnRefresh, onCloseModalDelete: setIsAlertOpen })
+  const { control, errors, handleSubmit:handleSubmitProduct, loading: createProductLoading, onSubmit: onSubmitProduct, register: registerProduct, preview, reset, setPreview } = useCreateProduct()
+  const { listBrand } = useGetAllBrand()
+  const { loading:batchLoading, productBatchList, setBatchCurrentPage, setProductForBatchId, productForBatchId, batchCurrentPage } = useGetProductBatchManager()
+  const { errors: errorUpdate, handleSubmitImage, handleSubmitProductInfo, loading: loadingUpdate, newImagePreview, onProductImageSubmit, onProductInfoSubmit, resetImage, resetProductInfo, setProductUpdateSelected, registerProductInfoUpdate, setNewImagePreview, controlProductUpdateImage, productUpdateSelected } = useUpdateProduct({ onRefresh: setOnRefresh })
   const handleSearch = (text: string) => {
     setSearchText(text)
   }
@@ -64,6 +71,25 @@ export default function ProductsTab() {
     setPreview(null)
     setIsOpenCreateProduct(prev => !prev)
   }
+
+  const handleUpdateProductInfo = (productInfo: ProductDetailType) => {
+    setIsOpenProductInfoEdit(prev => !prev)
+    setProductUpdateSelected(productInfo)
+    resetProductInfo({
+      name: productInfo.name,
+      description: productInfo.description,
+      price: productInfo.price
+    })
+  }
+
+  const handleUpdateProductImage = (productInfo: ProductDetailType) => {
+    setNewImagePreview(null)
+    setIsOpenProductImageEdit(prev => !prev)
+    setProductUpdateSelected(productInfo)
+    resetImage({
+      Image: undefined
+    })
+  }
   return (
     <div className="space-y-4">
       <Card className="p-6">
@@ -86,22 +112,25 @@ export default function ProductsTab() {
           <>
             {listProducts && listProducts.items.length > 0 ?
               <div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 xl:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {listProducts.items.map((product) => (
                     <Card
                       key={product.id}
                       className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full text-sm-body-desktop px-9 py-7"
                     >
                       <div className="flex flex-col gap-2">
-                        { product.imageUrl ?
-                          <div className='shadow-[0px_2px_4px_2px_rgba(0,0,0,0.1)] rounded-2xl w-full'>
+                        <div className='relative shadow-[0px_2px_4px_2px_rgba(0,0,0,0.1)] rounded-2xl w-full py-3'>
+                          { product.imageUrl ?
                             <img src={product.imageUrl} alt='avatar' className='shrink-0 w-full h-60 object-contain'/>
-                          </div>
-                          :
-                          <div className=" shrink-0 h-12 w-12 rounded-full bg-[#3366CC] text-white flex items-center justify-center font-semibold">
-                            {product.name.charAt(0)}
-                          </div>
-                        }
+                            :
+                            <div className="shrink-0 h-12 w-12 rounded-full bg-[#3366CC] text-white flex items-center justify-center font-semibold">
+                              {product.name.charAt(0)}
+                            </div>
+                          }
+                          <Button className='absolute top-2 left-2 bg-transparent text-black hover:bg-gray-200' onClick={() => handleUpdateProductImage(product)}>
+                            <Edit2/>
+                          </Button>
+                        </div>
                         <div className='flex flex-col gap-1'>
                           <p className="font-semibold text-m-body-desktop line-clamp-1 my-2 ml-2">{product.name.toUpperCase()}</p>
                           <div className='flex gap-2 items-center px-2'>
@@ -122,31 +151,61 @@ export default function ProductsTab() {
                             <p className='text-sm-body-desktop font-medium'>Dung tích: <span className='text-primary text-m-body-desktop'>{product.volumeMl}ml</span></p>
                             <p className='text-sm-body-desktop font-medium'>Hãng: <span className='text-primary text-m-body-desktop'>{product.brand}</span></p>
                           </div>
-                          <div className='flex justify-end'>
+                          <div className='flex justify-between'>
+                            <Button variant='basic' className='py-1 hover:bg-gray-200 w-fit' onClick={() => handleUpdateProductInfo(product)}>
+                              <Edit2 className="size-4" />
+                            </Button>
                             <p className='text-xl-body-desktop text-green-accent font-medium'>{product.price.toLocaleString()}đ</p>
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2 my-3">
-                        <Button variant="default" onClick={() => handleOpenCreateBatch(product)}>
+                      <div className='flex w-full gap-2 items-center my-3'>
+                        <Button variant="default" onClick={() => handleOpenCreateBatch(product)} className='w-full'>
                           <PlusIcon className="size-4" />
                           Tạo lô
                         </Button>
-                        <div className='flex w-full gap-2 items-center'>
-                          <Button variant='basic' className='py-1 hover:bg-gray-200 w-full flex-17'>
-                            <Edit2 className="size-4" />
-                                Sửa
-                          </Button>
-                          <Button variant="danger" className="py-2 px-3 text-white hover:text-red-500 border-border-primary hover:bg-gray-200 w-full flex-1" onClick={() => handleOpenAlert(product.id)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
+                        <Button variant="danger" className="py-3 px-3 text-white hover:text-red-500 border-border-primary hover:bg-gray-200 w-full flex-1" onClick={() => handleOpenAlert(product.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
                       </div>
-                      <Button variant="basic" className=''>
+                      <Button variant="basic" className='' onClick={() => setProductForBatchId(product.id)}>
                         <LuPackageSearch />
                           Xem lô hàng
                       </Button>
+                      { productForBatchId === product.id &&
+                        <>
+                          { batchLoading ?
+                            <CardSkeleton count={3}/>
+                            :
+                            <>
+                              { productBatchList && productBatchList.items.length > 0 ?
+                                <>
+                                  <ScrollArea className='h-50 my-3 px-4'>
+                                    { productBatchList.items.map((batch) => (
+                                      <Card key={batch.id} className='text-sm-body-desktop my-2'>
+                                        <div className='flex justify-between items-center'>
+                                          <p className='text-primary font-medium'>{batch.code}</p>
+                                          <p className='text-primary font-medium'>{batch.quantity} sp</p>
+                                        </div>
+                                        <p className='text-[0.85rem] text-soft-gray'>EXP: {formatDate(batch.expiryDate)}</p>
+                                        <p className={`${countRestDay(batch.expiryDate) <= 30 ? 'text-red-500 font-medium' : 'text-soft-gray text-[0.85rem]'}`}>Còn {countRestDay(batch.expiryDate)} ngày</p>
+                                      </Card>
+                                    )) }
+                                  </ScrollArea>
+                                  <PaginationBar
+                                    currentPage={batchCurrentPage}
+                                    setPage={setBatchCurrentPage}
+                                    totalPage={productBatchList.meta.total_pages}
+                                  />
+                                </>
+                                :
+                                <NodataCard content='Không có lô nào từ sản phẩm này'/>
+                              }
+                            </>
+                          }
+                        </>
+                      }
                     </Card>
                   ))}
 
@@ -217,38 +276,6 @@ export default function ProductsTab() {
         </PopupBasic>
         }
       </AnimatePresence>
-      {/* <AnimatePresence>
-        { isOpenEdit &&
-        <PopupBasic title='Sửa thông tin nhân viên' onClose={() => setIsOpenEdit(false)}>
-          <p className='text-sm-body-desktop text-soft-gray'>Cập nhật thông tin nhân viên</p>
-          <div className='flex flex-col gap-3 my-3'>
-            <Input {...register('name')}placeholder='Tên nhân viên' variant='gray' label='Tên nhân viên' error={errors.name?.message}/>
-            <Input {...register('email')} placeholder='Email' variant='gray' label='Email' error={errors.email?.message}/>
-            <Input {...register('phone')} placeholder='Số điện thoại' variant='gray' label='Số điện thoại' error={errors.phone?.message}/>
-            <p className='text-sm-body-desktop text-primary font-medium'>Chức năng</p>
-            <Card className='rounded-xl'>
-              { intentType?.map((intent) => (
-                <div key={intent.id} className='flex items-center gap-3'>
-                  <Checkbox checked={checkedIntentType.has(intent.id)} onCheckedChange={() => handleCheckedIntentType(intent)}/>
-                  <p>{intent.typeName}</p>
-                </div>
-              )) }
-            </Card>
-          </div>
-          <div className='flex gap-2 items-center my-3 w-full justify-center'>
-            { editLoading ?
-              <LoadingSpinner size='lg'/>
-              :
-              <>
-                <Button variant='outline' className='w-full' onClick={() => setIsOpenEdit(false)}>Hủy</Button>
-                <Button className='w-full' onClick={handleSubmit(onSubmit)}>Lưu thay đổi</Button>
-              </>
-            }
-          </div>
-        </PopupBasic>
-        }
-      </AnimatePresence>
-     */}
       <AnimatePresence>
         { isOpenCreateProduct &&
         <PopupBasic title='Thêm sản phẩm mới' onClose={handleOpenCreateProduct}>
@@ -386,6 +413,80 @@ export default function ProductsTab() {
                   <Button className='w-full' variant='danger' onClick={handleDelete}>Có</Button>
                 </>
               }
+            </div>
+          </PopupBasic>
+        }
+      </AnimatePresence>
+      <AnimatePresence>
+        { isOpenProductInfoEdit &&
+          <PopupBasic title='Cập nhật thông tin sản phẩm' onClose={() => setIsOpenProductInfoEdit(false)}>
+            <div className='text-sm-body-desktop'>
+              <p className='text-soft-gray'>Cập nhật lại thông tin cơ bản của sản phẩm</p>
+              <div className='flex flex-col gap-3 my-5'>
+                <Input {...registerProductInfoUpdate('name')} variant='gray' label='Tên sản phẩm' error={errorUpdate.name?.message}/>
+                <Input {...registerProductInfoUpdate('description')} variant='gray' label='Mô tả sản phẩm' placeholder='Mô tả sản phẩm'/>
+                <Input type='number' {...registerProductInfoUpdate('price', { valueAsNumber: true })} variant='gray' label='Giá sản phẩm'/>
+              </div>
+              <div className='flex gap-2 items-center my-3 w-full justify-center'>
+                { loading ?
+                  <LoadingSpinner size='lg'/>
+                  :
+                  <>
+                    <Button variant='basic' className='w-full' onClick={() => setIsOpenProductInfoEdit(false)}>Hủy</Button>
+                    <Button className='w-full' onClick={handleSubmitProductInfo(onProductInfoSubmit)}>Cập nhật thông tin</Button>
+                  </>
+                }
+              </div>
+            </div>
+          </PopupBasic>
+        }
+      </AnimatePresence>
+      <AnimatePresence>
+        { isOpenProductImageEdit &&
+          <PopupBasic title='Cập nhật ảnh cho sản phẩm' onClose={() => setIsOpenProductImageEdit(false)}>
+            <div className='text-sm-body-desktop'>
+              <p className='text-soft-gray'>Cập nhật lại thông tin cơ bản của sản phẩm</p>
+              <div className='flex flex-col gap-3 my-5'>
+                { productUpdateSelected?.imageUrl ?
+                  <div className='w-full h-40 my-3'>
+                    <p className='font-medium'>Ảnh hiện tại</p>
+                    <img src={productUpdateSelected.imageUrl} alt='product-image' className='w-full h-full object-contain'/>
+                  </div>
+                  :
+                  <p>Sản phẩm chưa có ảnh</p>
+                }
+                <Controller
+                  name="Image"
+                  control={controlProductUpdateImage}
+                  render={({ field }) => (
+                    <Input
+                      variant='gray'
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => field.onChange(e.target.files?.[0])}
+                      label='Tải ảnh sản phẩm'
+                    />
+                  )}
+                />
+                <div className='w-full h-50 my-4'>
+                  <p className='font-medium'>Ảnh mới</p>
+                  { newImagePreview ?
+                    <img src={newImagePreview} alt='product-image' className='w-full h-full object-contain'/>
+                    :
+                    <p>Chưa có ảnh mới được tải lên</p>
+                  }
+                </div>
+              </div>
+              <div className='flex gap-2 items-center my-3 w-full justify-center'>
+                { loadingUpdate ?
+                  <LoadingSpinner size='lg'/>
+                  :
+                  <>
+                    <Button variant='basic' className='w-full' onClick={() => setIsOpenProductImageEdit(false)}>Hủy</Button>
+                    <Button className='w-full' onClick={handleSubmitImage(onProductImageSubmit)}>Cập nhật thông tin</Button>
+                  </>
+                }
+              </div>
             </div>
           </PopupBasic>
         }

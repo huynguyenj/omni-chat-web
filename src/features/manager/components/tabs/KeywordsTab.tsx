@@ -23,13 +23,13 @@ import { Controller } from 'react-hook-form'
 
 export default function KeywordsTab() {
   const { currentPage, keyWordList, loading, setCurrentPage, setOnRefresh } = useGetKeywords()
-  const { handleSubmit, loading: updateLoading, onSubmit, register, reset, setKeywordSelected } = useUpdateKeyword({ onRefresh: setOnRefresh })
-  const { intentType } = useGetIntentType()
-  const { handleDelete, loading: deleteLoading, setKeywordId } = useDeleteKeyword({ onRefresh: setOnRefresh })
-  const { control, errors, handleSubmit: handleSubmitCreate, loading:createLoading, onSubmit:onSubmitCreate, register:registerCreate, reset:resetCreate } = useCreateKeyword({ onRefresh: setOnRefresh })
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
   const [isCreateKeywordOpen, setIsCreateKeywordOpen] = useState(false)
+  const { handleSubmit, loading: updateLoading, onSubmit, register, reset, setKeywordSelected } = useUpdateKeyword({ onRefresh: setOnRefresh })
+  const { intentType } = useGetIntentType()
+  const { handleDelete, loading: deleteLoading, setKeywordId } = useDeleteKeyword({ onRefresh: setOnRefresh, onCloseModalDelete: setIsAlertOpen })
+  const { control, errors, handleSubmit: handleSubmitCreate, loading:createLoading, onSubmit:onSubmitCreate, register:registerCreate, reset:resetCreate } = useCreateKeyword({ onRefresh: setOnRefresh })
   // const debounce = useDebounce(handleSearch, 500)
   const handleOpenEdit = (keyword: KeywordDetailType) => {
     setKeywordSelected(keyword)

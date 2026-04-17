@@ -4,9 +4,10 @@ import { toast } from 'react-toastify'
 
 type UseUpdateStaffProps = {
   onRefresh: Dispatch<SetStateAction<boolean>>
+  onCloseModalUpdate: Dispatch<SetStateAction<boolean>>
 }
 
-export default function useDeleteStaff({ onRefresh }: UseUpdateStaffProps) {
+export default function useDeleteStaff({ onRefresh, onCloseModalUpdate }: UseUpdateStaffProps) {
   const { execute, loading } = useApiCall<null>()
   const [staffId, setStaffId] = useState('')
   const handleDelete = async () => {
@@ -22,6 +23,7 @@ export default function useDeleteStaff({ onRefresh }: UseUpdateStaffProps) {
     }
     toast.success('Xóa nhân viên thành công')
     onRefresh(prev => !prev)
+    onCloseModalUpdate(false)
   }
   return { loading, handleDelete, setStaffId }
 }
