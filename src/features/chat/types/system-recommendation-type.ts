@@ -6,6 +6,8 @@ export type Recommendation =
   | { recommendType: 'SearchOrderHistory'; data: OrderType }
   | { recommendType: 'SearchProduct'; data: ProductType }
   | { recommendType: 'SearchCustomerInfo'; data: CustomerType }
+  | { recommendType: 'AutoCreateOrder'; data: null }
+  | { recommendType: 'CreateOrder'; data: null }
 export type KeywordsRecommendation = {
   highlights: string[]
   recommends: Recommendation[]

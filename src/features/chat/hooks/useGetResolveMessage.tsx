@@ -20,7 +20,7 @@ export default function useGetResolveMessage(staffId: string | null) {
   useEffect(() => {
     const fetchResolveMessage = async () => {
       if (!staffId) {
-        toast.warning('Hãy đăng nhập để thực hiện chức năng')
+        toast.warning('Hãy đăng nhập để thực hiện chức năng tin nhan cho')
         navigate(PUBLIC_PATH.LOGIN)
         return
       }

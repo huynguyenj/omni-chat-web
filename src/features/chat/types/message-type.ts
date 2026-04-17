@@ -15,7 +15,7 @@ export interface MessageType {
    senderId: string
    content: string
    timestamp: number
-   extractKeywordsResponses?: null | KeywordsRecommendation
+   extractKeywordResponses?: null | KeywordsRecommendation
 }
 
 export type SenderMessage = {

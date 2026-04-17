@@ -26,17 +26,16 @@ export default function useConnectChat() {
     connectionRef.current = connection
     const startConnection = async () => {
       try {
-        await connection.start()
         // setIsConnected(true)
-
-        // Join the conversation group
-        await connection.invoke('JoinConversationGroup', context.conversationId)
-        console.log(`Joined group: conversation:${context.conversationId}`)
-        // Listen for incoming messages
         connection.on('CustomerReceiveMessage', (message: MessageType) => {
           console.log('Received message:', message)
           setMessages((prev) => [...prev, message])
         })
+        // Join the conversation group
+        await connection.start()
+        await connection.invoke('JoinConversationGroup', context.conversationId)
+        console.log(`Joined group: conversation:${context.conversationId}`)
+        // Listen for incoming messages
       } catch (err) {
         console.error('SignalR Connection Error:', err)
         // setIsConnected(false)
