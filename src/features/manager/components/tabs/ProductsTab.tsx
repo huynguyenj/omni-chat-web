@@ -136,13 +136,13 @@ export default function ProductsTab() {
                           <div className='flex gap-2 items-center px-2'>
                             <div className='flex gap-2 items-center'>
                               <p className='text-sm-body-desktop font-medium'>Loại: </p>
-                              <Tag className={`bg-transparent rounded-2xl px-2 py-0.5 border ${PRODUCT_TYPE[product.productKind].style}`}>
+                              <Tag className={`bg-transparent rounded-2xl px-2 py-0.5 border text-nowrap ${PRODUCT_TYPE[product.productKind].style}`}>
                                 {PRODUCT_TYPE[product.productKind].name}
                               </Tag>
                             </div>
                             <div className='flex gap-2 items-center px-2'>
                               <p className='text-sm-body-desktop font-medium'>Kiểu hộp: </p>
-                              <Tag variant='primary' className='rounded-2xl px-5'>
+                              <Tag variant='primary' className='rounded-2xl px-5 text-nowrap'>
                                 {PRODUCT_PACKAGE_TYPE[product.productPackagingType]}
                               </Tag>
                             </div>

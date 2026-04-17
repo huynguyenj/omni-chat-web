@@ -139,7 +139,7 @@ export default function KeywordsTab() {
       </Card>
       <AnimatePresence>
         { isEditOpen &&
-        <PopupBasic title='Sửa thông tin nhân viên' onClose={() => setIsEditOpen(false)}>
+        <PopupBasic title='Sửa keyword' onClose={() => setIsEditOpen(false)}>
           <p className='text-sm-body-desktop text-soft-gray'>Cập nhật thông tin từ khóa</p>
           <div className='flex flex-col gap-3 my-3'>
             <Input {...register('weight', { valueAsNumber: true })} type='number' placeholder='Độ ưu tiên' variant='gray' label='Độ ưu tiên'/>
