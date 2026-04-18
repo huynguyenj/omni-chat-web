@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Box,
   Calendar,
@@ -18,6 +18,7 @@ import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import { ManagerOrderApi } from '../../api/order-api'
+import PostSaleRequestsSection from './PostSaleRequestsSection'
 import type { ManagerOrderItem, ManagerOrderLineItem, ManagerOrderStatus, ManagerOrderStatusFilter } from '../../types/order-type'
 
 function readStr(obj: Record<string, unknown>, keys: string[]): string | undefined {
@@ -110,12 +111,14 @@ function OrderDetailModal({
   order,
   open,
   loading,
-  onClose
+  onClose,
+  onOrderActionSuccess
 }: {
   order: ManagerOrderItem | null
   open: boolean
   loading: boolean
   onClose: () => void
+  onOrderActionSuccess: () => void
 }) {
   if (!open) return null
 
@@ -143,17 +146,53 @@ function OrderDetailModal({
             <p className="text-sm text-gray-600">Đang tải chi tiết đơn hàng...</p>
           </div>
         ) : (
-          <OrderDetailModalBody order={order} onClose={onClose} />
+          <OrderDetailModalBody order={order} onClose={onClose} onOrderActionSuccess={onOrderActionSuccess} />
         )}
       </div>
     </div>
   )
 }
 
-function OrderDetailModalBody({ order, onClose }: { order: ManagerOrderItem; onClose: () => void }) {
+function OrderDetailModalBody({
+  order,
+  onClose,
+  onOrderActionSuccess
+}: {
+  order: ManagerOrderItem
+  onClose: () => void
+  onOrderActionSuccess: () => void
+}) {
+  const [pendingAction, setPendingAction] = useState<'cancel' | 'confirm' | null>(null)
   const lines = getLineItems(order)
   const totalQty = lines.reduce((s, l) => s + l.quantity, 0)
   const pill = orderStatusPill(String(order.status))
+  const canCancelOrConfirm = order.status === 'Draft' || order.status === 'Pending'
+
+  const handleCancelOrder = async () => {
+    setPendingAction('cancel')
+    try {
+      const msg = await ManagerOrderApi.cancelOrder(order.id)
+      toast.success(msg)
+      onOrderActionSuccess()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không thể hủy đơn hàng.')
+    } finally {
+      setPendingAction(null)
+    }
+  }
+
+  const handleConfirmOrder = async () => {
+    setPendingAction('confirm')
+    try {
+      const msg = await ManagerOrderApi.confirmOrder(order.id)
+      toast.success(msg)
+      onOrderActionSuccess()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không thể xác nhận đơn hàng.')
+    } finally {
+      setPendingAction(null)
+    }
+  }
 
   return (
     <div className="flex flex-col">
@@ -246,18 +285,28 @@ function OrderDetailModalBody({ order, onClose }: { order: ManagerOrderItem; onC
         </Button>
         <Button
           type="button"
-          className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0"
-          onClick={() => toast.info('Tính năng hủy đơn đang được kết nối API.')}
+          disabled={!canCancelOrConfirm || pendingAction !== null}
+          className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0 disabled:opacity-60"
+          onClick={() => void handleCancelOrder()}
         >
-          <XCircle className="h-4 w-4 mr-1.5 inline" />
+          {pendingAction === 'cancel' ? (
+            <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
+          ) : (
+            <XCircle className="h-4 w-4 mr-1.5 inline" />
+          )}
           Hủy đơn
         </Button>
         <Button
           type="button"
-          className="flex-1 min-w-[120px] bg-[#26C271] hover:bg-[#22b366] text-white border-0"
-          onClick={() => toast.info('Tính năng xác nhận đơn đang được kết nối API.')}
+          disabled={!canCancelOrConfirm || pendingAction !== null}
+          className="flex-1 min-w-[120px] bg-[#26C271] hover:bg-[#22b366] text-white border-0 disabled:opacity-60"
+          onClick={() => void handleConfirmOrder()}
         >
-          <CheckCircle2 className="h-4 w-4 mr-1.5 inline" />
+          {pendingAction === 'confirm' ? (
+            <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 mr-1.5 inline" />
+          )}
           Xác nhận
         </Button>
       </div>
@@ -372,8 +421,8 @@ export default function OrdersTab() {
   const [detailLoading, setDetailLoading] = useState(false)
   const pageSize = 6
 
-  const openOrderDetail = async (order: ManagerOrderItem) => {
-    if (!order.id) {
+  const openOrderDetailById = async (orderId: string) => {
+    if (!orderId) {
       toast.error('Không có mã đơn để tải chi tiết.')
       return
     }
@@ -381,7 +430,7 @@ export default function OrdersTab() {
     setDetailOrder(null)
     setDetailLoading(true)
     try {
-      const data = await ManagerOrderApi.getOrderById(order.id)
+      const data = await ManagerOrderApi.getOrderById(orderId)
       setDetailOrder(normalizeOrderItem(data))
     } catch {
       toast.error('Không thể tải chi tiết đơn hàng. Vui lòng thử lại.')
@@ -391,36 +440,40 @@ export default function OrdersTab() {
     }
   }
 
+  const openOrderDetail = async (order: ManagerOrderItem) => {
+    await openOrderDetailById(order.id)
+  }
+
   const closeOrderDetail = () => {
     setDetailOpen(false)
     setDetailOrder(null)
     setDetailLoading(false)
   }
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const response = await ManagerOrderApi.getOrders({
-          pageNumber: page,
-          pageSize,
-          orderStatuses: selectedStatus === 'all' ? NON_PENDING_STATUSES : [selectedStatus]
-        })
-        const items = response?.data?.items ?? []
-        const pages = response?.data?.meta?.total_pages ?? 1
-        setOrders(items.map((item) => normalizeOrderItem(item as unknown)))
-        setTotalPages(Math.max(1, pages))
-      } catch {
-        setError('Không thể tải danh sách đơn hàng. Vui lòng thử lại.')
-        setOrders([])
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchOrders = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await ManagerOrderApi.getOrders({
+        pageNumber: page,
+        pageSize,
+        orderStatuses: selectedStatus === 'all' ? NON_PENDING_STATUSES : [selectedStatus]
+      })
+      const items = response?.data?.items ?? []
+      const pages = response?.data?.meta?.total_pages ?? 1
+      setOrders(items.map((item) => normalizeOrderItem(item as unknown)))
+      setTotalPages(Math.max(1, pages))
+    } catch {
+      setError('Không thể tải danh sách đơn hàng. Vui lòng thử lại.')
+      setOrders([])
+    } finally {
+      setIsLoading(false)
     }
+  }, [page, pageSize, selectedStatus])
 
+  useEffect(() => {
     void fetchOrders()
-  }, [page, selectedStatus])
+  }, [fetchOrders])
 
   return (
     <div className="space-y-4">
@@ -490,11 +543,17 @@ export default function OrdersTab() {
         </div>
       </Card>
 
+      <PostSaleRequestsSection onViewOrder={(orderId) => void openOrderDetailById(orderId)} />
+
       <OrderDetailModal
         order={detailOrder}
         open={detailOpen}
         loading={detailLoading}
         onClose={closeOrderDetail}
+        onOrderActionSuccess={() => {
+          closeOrderDetail()
+          void fetchOrders()
+        }}
       />
     </div>
   )

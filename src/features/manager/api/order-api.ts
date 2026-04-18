@@ -8,6 +8,12 @@ function resolveOrderByIdEndpoint(id: string) {
   return `/api/v1/orders/get/${id}`
 }
 
+function resolveOrderActionEndpoint(id: string, action: 'cancel' | 'confirm') {
+  const baseUrl = (apiPublic.defaults.baseURL ?? '').toLowerCase()
+  if (baseUrl.includes('/api/v1')) return `/orders/${id}/${action}`
+  return `/api/v1/orders/${id}/${action}`
+}
+
 export const ManagerOrderApi = {
   getOrders: async (query: ManagerOrderListQuery = {}): Promise<ApiResponseStructure<ManagerOrderListResponse>> => {
     const {
@@ -61,5 +67,23 @@ export const ManagerOrderApi = {
       throw new Error(body.message || 'Không tải được chi tiết đơn hàng')
     }
     return body.data
+  },
+
+  /** PATCH /api/v1/orders/{id}/cancel */
+  cancelOrder: async (id: string): Promise<string> => {
+    const body = (await apiPublic.patch(resolveOrderActionEndpoint(id, 'cancel'))) as unknown as ApiResponseStructure<unknown>
+    if (body.is_success === false) {
+      throw new Error(body.message || 'Không thể hủy đơn hàng.')
+    }
+    return body.message?.trim() ? body.message : 'Đã hủy đơn hàng thành công.'
+  },
+
+  /** PATCH /api/v1/orders/{id}/confirm */
+  confirmOrder: async (id: string): Promise<string> => {
+    const body = (await apiPublic.patch(resolveOrderActionEndpoint(id, 'confirm'))) as unknown as ApiResponseStructure<unknown>
+    if (body.is_success === false) {
+      throw new Error(body.message || 'Không thể xác nhận đơn hàng.')
+    }
+    return body.message?.trim() ? body.message : 'Đã xác nhận đơn hàng thành công.'
   }
 }
