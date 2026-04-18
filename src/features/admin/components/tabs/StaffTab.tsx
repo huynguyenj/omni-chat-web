@@ -315,20 +315,18 @@ export default function StaffTab() {
           </Card>
         ))}
       </div>
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-xs text-gray-500">
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <Button variant="outline" size="sm" disabled={effectiveStaffPage === 1} onClick={() => setStaffPage((p) => Math.max(1, p - 1))}>
+          Trước
+        </Button>
+        <p className="text-xs text-gray-500 text-center flex-1 min-w-0">
           Trang {effectiveStaffPage}/{totalStaffPages} - Hiển thị {uiStaffs.length === 0 ? 0 : (effectiveStaffPage - 1) * STAFFS_PER_PAGE + 1}
           -
           {Math.min(effectiveStaffPage * STAFFS_PER_PAGE, uiStaffs.length)} / {uiStaffs.length}
         </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={effectiveStaffPage === 1} onClick={() => setStaffPage((p) => Math.max(1, p - 1))}>
-            Trước
-          </Button>
-          <Button variant="outline" size="sm" disabled={effectiveStaffPage === totalStaffPages} onClick={() => setStaffPage((p) => Math.min(totalStaffPages, p + 1))}>
-            Sau
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" disabled={effectiveStaffPage === totalStaffPages} onClick={() => setStaffPage((p) => Math.min(totalStaffPages, p + 1))}>
+          Sau
+        </Button>
       </div>
 
       {addStaffDialogOpen && (

@@ -48,12 +48,6 @@ export const KEY_STATS = [
   }
 ]
 
-export const MONTH_OPTIONS = [
-  { value: '2026-01', label: 'Tháng 01/2026', shortLabel: 'T01/2026' },
-  { value: '2026-02', label: 'Tháng 02/2026', shortLabel: 'T02/2026' },
-  { value: '2026-03', label: 'Tháng 03/2026', shortLabel: 'T03/2026' }
-]
-
 export const ISSUES_TRENDING_DATA = [
   { date: '25/01', 'Sản phẩm': 45, 'Đơn hàng': 32, 'Giá': 28, 'Đổi trả': 15 },
   { date: '26/01', 'Sản phẩm': 52, 'Đơn hàng': 38, 'Giá': 31, 'Đổi trả': 18 },
@@ -86,104 +80,6 @@ export const WAREHOUSE_BY_CATEGORY = [
   { category: 'Sữa đặc', quantity: 23, value: '28.7M', trend: 'down' },
   { category: 'Sữa bột', quantity: 25, value: '12.1M', trend: 'neutral' }
 ]
-
-export const MILK_CHART_COLORS = {
-  'Có đường': '#3366CC',
-  'Không đường': '#2ECC71',
-  'Yogurt': '#FF9800'
-}
-
-export const MILK_QUANTITY_BY_MONTH = {
-  '180ml': [
-    { month: 'T01/26', 'Có đường': 45, 'Không đường': 38, Yogurt: 22 },
-    { month: 'T02/26', 'Có đường': 52, 'Không đường': 43, Yogurt: 28 },
-    { month: 'T03/26', 'Có đường': 48, 'Không đường': 40, Yogurt: 25 },
-    { month: 'T04/26', 'Có đường': 61, 'Không đường': 50, Yogurt: 33 },
-    { month: 'T05/26', 'Có đường': 57, 'Không đường': 47, Yogurt: 30 },
-    { month: 'T06/26', 'Có đường': 65, 'Không đường': 54, Yogurt: 36 }
-  ],
-  '490ml': [
-    { month: 'T01/26', 'Có đường': 62, 'Không đường': 55, Yogurt: 31 },
-    { month: 'T02/26', 'Có đường': 71, 'Không đường': 63, Yogurt: 38 },
-    { month: 'T03/26', 'Có đường': 68, 'Không đường': 59, Yogurt: 35 },
-    { month: 'T04/26', 'Có đường': 80, 'Không đường': 70, Yogurt: 44 },
-    { month: 'T05/26', 'Có đường': 75, 'Không đường': 66, Yogurt: 41 },
-    { month: 'T06/26', 'Có đường': 88, 'Không đường': 78, Yogurt: 50 }
-  ],
-  '880ml': [
-    { month: 'T01/26', 'Có đường': 48, 'Không đường': 42, Yogurt: 25 },
-    { month: 'T02/26', 'Có đường': 55, 'Không đường': 48, Yogurt: 30 },
-    { month: 'T03/26', 'Có đường': 51, 'Không đường': 45, Yogurt: 27 },
-    { month: 'T04/26', 'Có đường': 63, 'Không đường': 56, Yogurt: 35 },
-    { month: 'T05/26', 'Có đường': 59, 'Không đường': 52, Yogurt: 32 },
-    { month: 'T06/26', 'Có đường': 70, 'Không đường': 61, Yogurt: 39 }
-  ],
-  '1760ml': [
-    { month: 'T01/26', 'Có đường': 35, 'Không đường': 28, Yogurt: 18 },
-    { month: 'T02/26', 'Có đường': 41, 'Không đường': 33, Yogurt: 22 },
-    { month: 'T03/26', 'Có đường': 38, 'Không đường': 30, Yogurt: 20 },
-    { month: 'T04/26', 'Có đường': 47, 'Không đường': 38, Yogurt: 26 },
-    { month: 'T05/26', 'Có đường': 44, 'Không đường': 35, Yogurt: 24 },
-    { month: 'T06/26', 'Có đường': 53, 'Không đường': 42, Yogurt: 30 }
-  ]
-}
-
-export const SERVICE_STATS_BY_MONTH = {
-  '2026-01': [
-    { name: 'PRE_SALE', value: 150, color: '#3366CC' },
-    { name: 'ORDER_CREATION', value: 185, color: '#2ECC71' },
-    { name: 'ORDER_STATUS', value: 165, color: '#FF9800' },
-    { name: 'POST_SALE', value: 95, color: '#9C27B0' },
-    { name: 'PAYMENT', value: 160, color: '#F44336' }
-  ],
-  '2026-02': [
-    { name: 'PRE_SALE', value: 165, color: '#3366CC' },
-    { name: 'ORDER_CREATION', value: 205, color: '#2ECC71' },
-    { name: 'ORDER_STATUS', value: 180, color: '#FF9800' },
-    { name: 'POST_SALE', value: 105, color: '#9C27B0' },
-    { name: 'PAYMENT', value: 175, color: '#F44336' }
-  ],
-  '2026-03': [
-    { name: 'PRE_SALE', value: 182, color: '#3366CC' },
-    { name: 'ORDER_CREATION', value: 225, color: '#2ECC71' },
-    { name: 'ORDER_STATUS', value: 195, color: '#FF9800' },
-    { name: 'POST_SALE', value: 115, color: '#9C27B0' },
-    { name: 'PAYMENT', value: 192, color: '#F44336' }
-  ]
-}
-
-export const ORDER_STATS_BY_MONTH = {
-  '2026-01': {
-    successful: 148,
-    pending: 37,
-    cancelled: 12,
-    chartData: [
-      { name: 'Thành công', value: 148, color: '#2ECC71' },
-      { name: 'Chưa thanh toán', value: 37, color: '#FF9800' },
-      { name: 'Bị hủy', value: 12, color: '#F44336' }
-    ]
-  },
-  '2026-02': {
-    successful: 165,
-    pending: 42,
-    cancelled: 15,
-    chartData: [
-      { name: 'Thành công', value: 165, color: '#2ECC71' },
-      { name: 'Chưa thanh toán', value: 42, color: '#FF9800' },
-      { name: 'Bị hủy', value: 15, color: '#F44336' }
-    ]
-  },
-  '2026-03': {
-    successful: 182,
-    pending: 38,
-    cancelled: 18,
-    chartData: [
-      { name: 'Thành công', value: 182, color: '#2ECC71' },
-      { name: 'Chưa thanh toán', value: 38, color: '#FF9800' },
-      { name: 'Bị hủy', value: 18, color: '#F44336' }
-    ]
-  }
-}
 
 export const ORDERS_OVER_TIME = [
   { date: '25/01', 'Thành công': 18, 'Chờ thanh toán': 5, 'Đã hủy': 2 },
