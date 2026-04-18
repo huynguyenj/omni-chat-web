@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import { toast } from 'react-toastify'
 import { useAdminDashboard } from '../../hooks/useAdminDashboard'
 import type { StaffAccount } from '../../context/AdminDashboardContext'
+import { RolesApi, type RoleItem } from '../../api/roles-api'
 import { StaffApi } from '../../api/staff-api'
 import type { StaffItem } from '../../types/staff-type'
 
@@ -44,6 +45,8 @@ export default function StaffTab() {
     setSelectedStaff
   } = useAdminDashboard()
   const [apiStaffs, setApiStaffs] = useState<StaffItem[] | null>(null)
+  const [roles, setRoles] = useState<RoleItem[]>([])
+  const [rolesLoading, setRolesLoading] = useState(false)
   const [addForm, setAddForm] = useState({
     name: '',
     email: '',
@@ -80,6 +83,29 @@ export default function StaffTab() {
       console.log('Fetch staffs failed:', error)
     }
   }
+
+  useEffect(() => {
+    if (!addStaffDialogOpen) return
+    let cancelled = false
+    const loadRoles = async () => {
+      setRolesLoading(true)
+      try {
+        const list = await RolesApi.getRoles()
+        if (!cancelled) setRoles(list)
+      } catch {
+        if (!cancelled) {
+          setRoles([])
+          toast.error('Không tải được danh sách vai trò.')
+        }
+      } finally {
+        if (!cancelled) setRolesLoading(false)
+      }
+    }
+    void loadRoles()
+    return () => {
+      cancelled = true
+    }
+  }, [addStaffDialogOpen])
 
   useEffect(() => {
     let cancelled = false
@@ -145,6 +171,10 @@ export default function StaffTab() {
   }
 
   const handleCreateStaff = async () => {
+    if (!addForm.roleId.trim()) {
+      toast.error('Vui lòng chọn vai trò.')
+      return
+    }
     const duplicateMsg = getDuplicateCreateMessage(addForm.email, addForm.phone)
     if (duplicateMsg) {
       toast.error(duplicateMsg)
@@ -321,12 +351,25 @@ export default function StaffTab() {
               <Input id="phone" placeholder="Nhập số điện thoại" variant="gray" value={addForm.phone} onChange={(e) => setAddForm((prev) => ({ ...prev, phone: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <label htmlFor="roleId" className="text-sm font-medium">Role ID</label>
-              <Input id="roleId" placeholder="UUID roleId" variant="gray" value={addForm.roleId} onChange={(e) => setAddForm((prev) => ({ ...prev, roleId: e.target.value }))} />
+              <label htmlFor="role" className="text-sm font-medium">Role</label>
+              <select
+                id="role"
+                value={addForm.roleId}
+                onChange={(e) => setAddForm((prev) => ({ ...prev, roleId: e.target.value }))}
+                disabled={rolesLoading}
+                className="w-full py-2 px-3 rounded-[6px] bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30 text-sm disabled:opacity-60"
+              >
+                <option value="">-- Chọn vai trò --</option>
+                {roles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <label htmlFor="intentId" className="text-sm font-medium">Intent ID(s)</label>
-              <Input id="intentId" placeholder="UUID intentId, ngăn cách bởi dấu phẩy" variant="gray" value={addForm.intentId} onChange={(e) => setAddForm((prev) => ({ ...prev, intentId: e.target.value }))} />
+              <Input id="intentId" placeholder="UUID intentId" variant="gray" value={addForm.intentId} onChange={(e) => setAddForm((prev) => ({ ...prev, intentId: e.target.value }))} />
             </div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={() => setAddStaffDialogOpen(false)} className="flex-1">Hủy</Button>
@@ -360,11 +403,7 @@ export default function StaffTab() {
             </div>
             <div className="space-y-2">
               <label htmlFor="edit-intentId" className="text-sm font-medium">Intent ID(s)</label>
-              <Input id="edit-intentId" placeholder="UUID intentId, ngăn cách bởi dấu phẩy" value={editForm.intentId} onChange={(e) => setEditForm((prev) => ({ ...prev, intentId: e.target.value }))} variant="gray" />
-            </div>
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-800">
-              <p className="font-semibold mb-1">Thông tin API cập nhật</p>
-              <p>Role không chỉnh tại endpoint update, chỉ cập nhật name/email/phone/staffIntentTypes.</p>
+              <Input id="edit-intentId" placeholder="UUID intentId" value={editForm.intentId} onChange={(e) => setEditForm((prev) => ({ ...prev, intentId: e.target.value }))} variant="gray" />
             </div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={() => setEditStaffDialogOpen(false)} className="flex-1">Hủy</Button>
