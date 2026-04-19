@@ -3,11 +3,11 @@ import type { ReactNode } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
 import { REVENUE_ORDERS } from '@/components/admin/admin-dashboard-data'
-import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, ArrowDown, ArrowUp, RotateCcw, XCircle } from 'lucide-react'
+import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, RotateCcw, XCircle } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'react-toastify'
 import { isAxiosError } from 'axios'
-import { useAdminDashboard } from '../../hooks/useAdminDashboard'
+import type { ManagerOrderStatusFilter } from '../../../manager/types/order-type'
 import { OrderApi } from '../../api/order-api'
 import type { AdminOrderDetail, AdminOrderItem, OrderDashboardMonthRow } from '../../types/order-type'
 import { InvoiceApi } from '../../api/invoice-api'
@@ -125,6 +125,51 @@ function extractRevenueRowsFromResponse(response: unknown): TotalRevenue[] {
   return []
 }
 
+/** Hiển thị trạng thái đơn (API thường trả tiếng Anh) — pill + viền card */
+/** Lọc đơn theo status API (chuỗi như Draft, Completed, …) */
+function revenueOrderMatchesStatus(filter: ManagerOrderStatusFilter | 'all', apiStatus: string): boolean {
+  if (filter === 'all') return true
+  return apiStatus.trim().toLowerCase() === filter.toLowerCase()
+}
+
+const REVENUE_ORDER_STATUS_FILTERS: Array<{ value: 'all' | ManagerOrderStatusFilter; label: string }> = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'Draft', label: 'Đợi duyệt' },
+  { value: 'Shipped', label: 'Đang giao' },
+  { value: 'Completed', label: 'Hoàn thành' },
+  { value: 'Cancelled', label: 'Đã hủy' },
+  { value: 'PendingReturn', label: 'Chờ trả hàng' },
+  { value: 'Returned', label: 'Đã trả' },
+  { value: 'ReturnedDefective', label: 'Xã hàng lỗi' }
+]
+
+function adminOrderStatusUi(statusRaw: string): { labelVi: string; pillClass: string; cardBorderClass: string } {
+  const normalized = String(statusRaw).trim().toLowerCase().replace(/\s+/g, '')
+
+  const rows: Array<{ match: string; labelVi: string; pillClass: string; cardBorderClass: string }> = [
+    { match: 'draft', labelVi: 'Đợi duyệt', pillClass: 'bg-gray-500 text-white', cardBorderClass: 'border-t-gray-500' },
+    { match: 'pending', labelVi: 'Chờ xử lý', pillClass: 'bg-amber-500 text-white', cardBorderClass: 'border-t-amber-500' },
+    { match: 'shipped', labelVi: 'Đang giao', pillClass: 'bg-[#3366CC] text-white', cardBorderClass: 'border-t-[#3366CC]' },
+    { match: 'completed', labelVi: 'Hoàn thành', pillClass: 'bg-[#26C271] text-white', cardBorderClass: 'border-t-[#26C271]' },
+    { match: 'cancelled', labelVi: 'Đã hủy', pillClass: 'bg-[#FB2C36] text-white', cardBorderClass: 'border-t-[#FB2C36]' },
+    { match: 'pendingreturn', labelVi: 'Chờ trả hàng', pillClass: 'bg-[#FF9800] text-white', cardBorderClass: 'border-t-[#FF9800]' },
+    { match: 'returned', labelVi: 'Đã trả', pillClass: 'bg-slate-600 text-white', cardBorderClass: 'border-t-slate-600' },
+    { match: 'returneddefective', labelVi: 'Xã hàng lỗi', pillClass: 'bg-amber-800 text-white', cardBorderClass: 'border-t-amber-800' }
+  ]
+
+  const hit = rows.find((r) => r.match === normalized)
+  if (hit) {
+    return { labelVi: hit.labelVi, pillClass: hit.pillClass, cardBorderClass: hit.cardBorderClass }
+  }
+
+  const raw = String(statusRaw).trim()
+  return {
+    labelVi: raw || '—',
+    pillClass: 'bg-slate-400 text-white',
+    cardBorderClass: 'border-t-slate-400'
+  }
+}
+
 function extractOrderDashboardRowsFromResponse(response: unknown): OrderDashboardMonthRow[] {
   if (Array.isArray(response)) return response as OrderDashboardMonthRow[]
 
@@ -149,7 +194,7 @@ function sumOrderStatus(rows: OrderDashboardMonthRow[], statusLabel: string): nu
 
 export default function RevenueTab() {
   const ORDERS_PER_PAGE = 9
-  const { sortBy, sortOrder, toggleSort } = useAdminDashboard()
+  const [revenueOrderStatusFilter, setRevenueOrderStatusFilter] = useState<'all' | ManagerOrderStatusFilter>('all')
   const [revenueChartInput, setRevenueChartInput] = useState('2026')
   const [totalRevenueAmount, setTotalRevenueAmount] = useState(0)
   const [totalRevenueLoading, setTotalRevenueLoading] = useState(false)
@@ -452,36 +497,25 @@ export default function RevenueTab() {
 
   const sortedApiOrders = useMemo(() => {
     if (!apiOrders) return []
-    const sorted = [...apiOrders].sort((a, b) => {
-      let comparison = 0
-      if (sortBy === 'date') {
-        comparison = new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime()
-      } else if (sortBy === 'value') {
-        comparison = a.totalAmount - b.totalAmount
-      } else if (sortBy === 'customer') {
-        comparison = a.name.localeCompare(b.name)
-      }
-      return sortOrder === 'asc' ? comparison : -comparison
-    })
-    return sorted
-  }, [apiOrders, sortBy, sortOrder])
+    let list = apiOrders.filter((o) => revenueOrderMatchesStatus(revenueOrderStatusFilter, o.status))
+    list = [...list].sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
+    return list
+  }, [apiOrders, revenueOrderStatusFilter])
+
   const sortedFallbackOrders = useMemo(() => {
-    return [...REVENUE_ORDERS].sort((a, b) => {
-      let comparison = 0
-
-      if (sortBy === 'date') {
-        const dateA = new Date(a.date.split('/').reverse().join('-') + ' ' + a.time)
-        const dateB = new Date(b.date.split('/').reverse().join('-') + ' ' + b.time)
-        comparison = dateA.getTime() - dateB.getTime()
-      } else if (sortBy === 'value') {
-        comparison = a.value - b.value
-      } else if (sortBy === 'customer') {
-        comparison = a.customer.localeCompare(b.customer)
-      }
-
-      return sortOrder === 'asc' ? comparison : -comparison
+    let list = [...REVENUE_ORDERS]
+    if (revenueOrderStatusFilter !== 'all') {
+      list = list.filter((o) => {
+        const mapped = o.status === 'completed' ? 'Completed' : 'Draft'
+        return revenueOrderMatchesStatus(revenueOrderStatusFilter, mapped)
+      })
+    }
+    return list.sort((a, b) => {
+      const dateA = new Date(a.date.split('/').reverse().join('-') + ' ' + a.time).getTime()
+      const dateB = new Date(b.date.split('/').reverse().join('-') + ' ' + b.time).getTime()
+      return dateB - dateA
     })
-  }, [sortBy, sortOrder])
+  }, [revenueOrderStatusFilter])
   const activeOrderCount = apiOrders ? sortedApiOrders.length : sortedFallbackOrders.length
   const totalOrderPages = Math.max(1, Math.ceil(activeOrderCount / ORDERS_PER_PAGE))
   const paginatedApiOrders = useMemo(() => {
@@ -494,18 +528,18 @@ export default function RevenueTab() {
     return sortedFallbackOrders.slice(start, start + ORDERS_PER_PAGE)
   }, [sortedFallbackOrders, ordersPage])
 
+  const orderDetailStatusUi = useMemo(
+    () => (orderDetail ? adminOrderStatusUi(orderDetail.status) : null),
+    [orderDetail]
+  )
+
   useEffect(() => {
     setOrdersPage(1)
-  }, [sortBy, sortOrder, apiOrders])
+  }, [revenueOrderStatusFilter, apiOrders])
 
   useEffect(() => {
     if (ordersPage > totalOrderPages) setOrdersPage(totalOrderPages)
   }, [ordersPage, totalOrderPages])
-
-  const sortIndicator = (column: typeof sortBy) => {
-    if (sortBy !== column) return null
-    return sortOrder === 'desc' ? <ArrowDown className="h-3 w-3 ml-1" /> : <ArrowUp className="h-3 w-3 ml-1" />
-  }
 
   const openOrderDetail = (order: AdminOrderItem) => {
     if (!order.id) {
@@ -722,24 +756,31 @@ export default function RevenueTab() {
       </Card>
 
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+        <div className="mb-4">
+          <div className="mb-3">
             <h3 className="text-[#003366] text-lg font-semibold">Chi tiết đơn hàng</h3>
-            <p className="text-sm text-gray-500">Danh sách {apiOrders ? apiOrders.length : REVENUE_ORDERS.length} đơn hàng trong khoảng thời gian</p>
+            <p className="text-sm text-gray-500">
+              Danh sách {activeOrderCount} đơn hàng trong khoảng thời gian
+              {revenueOrderStatusFilter !== 'all' && (
+                <span className="text-gray-400"> · Lọc: {REVENUE_ORDER_STATUS_FILTERS.find((f) => f.value === revenueOrderStatusFilter)?.label}</span>
+              )}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => toggleSort('date')} className={sortBy === 'date' ? 'bg-blue-50 border-[#3366CC]' : ''}>
-              Ngày
-              {sortIndicator('date')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => toggleSort('value')} className={sortBy === 'value' ? 'bg-blue-50 border-[#3366CC]' : ''}>
-              Giá trị
-              {sortIndicator('value')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => toggleSort('customer')} className={sortBy === 'customer' ? 'bg-blue-50 border-[#3366CC]' : ''}>
-              Khách hàng
-              {sortIndicator('customer')}
-            </Button>
+          <div className="flex flex-wrap gap-2">
+            {REVENUE_ORDER_STATUS_FILTERS.map((item) => {
+              const active = revenueOrderStatusFilter === item.value
+              return (
+                <Button
+                  key={item.value}
+                  size="sm"
+                  variant={active ? 'default' : 'outline'}
+                  className={active ? 'bg-[#3366CC] hover:bg-[#2952A3]' : ''}
+                  onClick={() => setRevenueOrderStatusFilter(item.value)}
+                >
+                  {item.label}
+                </Button>
+              )
+            })}
           </div>
         </div>
 
@@ -749,6 +790,7 @@ export default function RevenueTab() {
               const orderDate = new Date(order.orderDate)
               const dateText = orderDate.toLocaleDateString('vi-VN')
               const timeText = orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+              const statusUi = adminOrderStatusUi(order.status)
               const badgeClass =
                   order.deliveryStatus === 'Delivered'
                     ? 'bg-[#1F9D55]'
@@ -763,11 +805,14 @@ export default function RevenueTab() {
                       : 'Đang xử lý'
 
               return (
-                <Card key={order.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#2ECC71] bg-white group">
+                <Card
+                  key={order.id}
+                  className={`p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 ${statusUi.cardBorderClass} bg-white group`}
+                >
                   <div>
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-3 gap-2">
                       <h3 className="font-bold text-[#003366] text-lg">{order.code}</h3>
-                      <span className={`px-2 py-1 rounded text-[10px] text-white ${badgeClass}`}>
+                      <span className={`shrink-0 px-2 py-1 rounded-full text-[10px] font-semibold text-white ${badgeClass}`}>
                         {badgeText}
                       </span>
                     </div>
@@ -776,10 +821,17 @@ export default function RevenueTab() {
                         <p className="text-[10px] text-gray-400 uppercase font-medium">Tên đơn hàng</p>
                         <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.name}</p>
                       </div>
-                      <div className="bg-[#F5F7FA] p-2 rounded-lg">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Trạng thái đơn</p>
-                        <div className="flex justify-between text-xs mb-1 last:mb-0">
-                          <span className="text-gray-700 line-clamp-1 flex-1">{order.status}</span>
+                      <div className="rounded-lg border border-gray-100 overflow-hidden">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase px-2 pt-2 pb-1 bg-gray-50">Trạng thái đơn</p>
+                        <div className="px-2 pb-2 pt-1 bg-white flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusUi.pillClass}`}>
+                            {statusUi.labelVi}
+                          </span>
+                          {order.status && statusUi.labelVi !== order.status && (
+                            <span className="text-[11px] text-gray-400 font-mono truncate max-w-[140px]" title={order.status}>
+                              ({order.status})
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center justify-between pt-1">
@@ -797,62 +849,69 @@ export default function RevenueTab() {
                 </Card>
               )
             })
-            : paginatedFallbackOrders.map(order => (
-              <Card key={order.id} className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 border-t-[#2ECC71] bg-white group">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-[#003366] text-lg">{order.id}</h3>
-                    <span className={`px-2 py-1 rounded text-[10px] text-white ${order.status === 'completed' ? 'bg-[#1F9D55]' : 'bg-[#EF6C00]'}`}>
-                      {order.status === 'completed' ? 'Hoàn thành' : 'Chờ xử lý'}
-                    </span>
-                  </div>
-                  <div className="space-y-3 mb-4">
-                    <div className="flex flex-col gap-1">
-                      <p className="text-[10px] text-gray-400 uppercase font-medium">Khách hàng</p>
-                      <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.customer}</p>
-                    </div>
-                    <div className="bg-[#F5F7FA] p-2 rounded-lg">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Sản phẩm</p>
-                      <div className="flex justify-between text-xs mb-1 last:mb-0">
-                        <span className="text-gray-700 line-clamp-1 flex-1">
-                          {order.product} <span className="text-gray-400">x{order.quantity}</span>
+            : paginatedFallbackOrders.map((order) => {
+                const mappedStatus = order.status === 'completed' ? 'Completed' : 'Draft'
+                const statusUi = adminOrderStatusUi(mappedStatus)
+                return (
+                  <Card
+                    key={order.id}
+                    className={`p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 ${statusUi.cardBorderClass} bg-white group`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold text-[#003366] text-lg">{order.id}</h3>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white ${statusUi.pillClass}`}>
+                          {statusUi.labelVi}
                         </span>
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between pt-1">
-                      <div className="flex flex-col gap-1 text-[10px] text-gray-500">
-                        <span className="flex items-center gap-1 font-mono text-gray-400">📅 {order.date} | ⏰ {order.time}</span>
-                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Staff: {order.staff}</span>
+                      <div className="space-y-3 mb-4">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-[10px] text-gray-400 uppercase font-medium">Khách hàng</p>
+                          <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.customer}</p>
+                        </div>
+                        <div className="bg-[#F5F7FA] p-2 rounded-lg">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Sản phẩm</p>
+                          <div className="flex justify-between text-xs mb-1 last:mb-0">
+                            <span className="text-gray-700 line-clamp-1 flex-1">
+                              {order.product} <span className="text-gray-400">x{order.quantity}</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex flex-col gap-1 text-[10px] text-gray-500">
+                            <span className="flex items-center gap-1 font-mono text-gray-400">📅 {order.date} | ⏰ {order.time}</span>
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" /> Staff: {order.staff}
+                            </span>
+                          </div>
+                          <p className="font-bold text-[#2ECC71] text-lg">{order.value.toLocaleString()}đ</p>
+                        </div>
                       </div>
-                      <p className="font-bold text-[#2ECC71] text-lg">{order.value.toLocaleString()}đ</p>
                     </div>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-2 border-[#3366CC] text-[#3366CC]"
-                  onClick={() => toast.info('Dữ liệu mẫu không có API chi tiết đơn hàng.')}
-                >
-                  Chi tiết đơn hàng
-                </Button>
-              </Card>
-            ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2 border-[#3366CC] text-[#3366CC]"
+                      onClick={() => toast.info('Dữ liệu mẫu không có API chi tiết đơn hàng.')}
+                    >
+                      Chi tiết đơn hàng
+                    </Button>
+                  </Card>
+                )
+              })}
         </div>
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-xs text-gray-500">
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <Button variant="outline" size="sm" disabled={ordersPage === 1} onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}>
+            Trước
+          </Button>
+          <p className="text-xs text-gray-500 text-center flex-1 min-w-0">
             Trang {ordersPage}/{totalOrderPages} - Hiển thị {activeOrderCount === 0 ? 0 : (ordersPage - 1) * ORDERS_PER_PAGE + 1}
             -
             {Math.min(ordersPage * ORDERS_PER_PAGE, activeOrderCount)} / {activeOrderCount}
           </p>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled={ordersPage === 1} onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}>
-              Trước
-            </Button>
-            <Button variant="outline" size="sm" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage((p) => Math.min(totalOrderPages, p + 1))}>
-              Sau
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage((p) => Math.min(totalOrderPages, p + 1))}>
+            Sau
+          </Button>
         </div>
       </Card>
 
@@ -903,9 +962,17 @@ export default function RevenueTab() {
                   <dt className="text-gray-500">Ngày tạo</dt>
                   <dd className="text-right">{new Date(orderDetail.orderDate).toLocaleString('vi-VN')}</dd>
                 </div>
-                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
+                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2 items-center">
                   <dt className="text-gray-500">Trạng thái đơn</dt>
-                  <dd className="text-right">{orderDetail.status}</dd>
+                  <dd className="text-right">
+                    {orderDetailStatusUi && (
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${orderDetailStatusUi.pillClass}`}
+                      >
+                        {orderDetailStatusUi.labelVi}
+                      </span>
+                    )}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
                   <dt className="text-gray-500">Trạng thái giao</dt>

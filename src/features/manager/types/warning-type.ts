@@ -17,3 +17,13 @@ export type ManagerWarningListResponse = {
     page_size: number
   }
 }
+
+export type ManagerWarningDetailResponse = {
+  id: string
+  customerName: string
+  staffName: string
+  createAt: string
+  warningType: string
+  reason: string
+  isReviewed: boolean
+}
