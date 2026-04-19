@@ -25,12 +25,12 @@ export default function SystemRecommendation({ recommends, message }: { recommen
       return <CreateOrderSection/>
   }
   return (
-    <div className="py-2 px-3 bg-linear-to-r from-blue-100 to-[#F9F5FF] border border-border-secondary rounded-lg mb-2 min-w-90">
+    <div className="py-2 px-3 bg-linear-to-r from-blue-100 to-[#F9F5FF] border border-border-secondary rounded-lg mb-2 min-w-90 w-fit">
       <div className="flex items-center gap-2">
         <BsStars className="text-secondary"/>
         <p className="text-sm-body-desktop text-primary">Gợi ý từ hệ thống</p>
       </div>
-      <div className='grid grid-cols-2 items-center justify-center mt-2 gap-2'>
+      <div className='grid grid-cols-1 md:grid-cols-2 items-center justify-center mt-2 gap-2'>
         { recommends?.map((data) => (
           <div key={data.recommendType} className='mt-1'>
             {button(data)}

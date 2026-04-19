@@ -31,9 +31,9 @@ export default function useLogin() {
       toast.error('Tài khoản hoặc mật khẩu sai!')
       return
     }
-    const { accessToken, role, accountId, staffId } = apiData.data
+    const { accessToken, role, accountId, staffId, avatarUrl, staffName } = apiData.data
     toast.success('Đăng nhập thành công')
-    addAuthStore(accessToken, accountId, staffId, role)
+    addAuthStore(accessToken, accountId, staffId, role, staffName, avatarUrl)
     navigate(PRIVATE_PATH.CHAT)
   }
   return { register, handleSubmit, onSubmit, errors, loading }

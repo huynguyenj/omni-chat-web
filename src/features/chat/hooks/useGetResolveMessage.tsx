@@ -3,25 +3,18 @@ import type { ResolveMessageType } from '../types/message-type'
 import { signalrConnection } from '../config/signalr'
 import SelectionMessageContext from '../context/SelectionMessageProvider'
 import { toast } from 'react-toastify'
-import { useNavigate } from 'react-router'
-import { PUBLIC_PATH } from '@/router/path'
 import * as signalr from '@microsoft/signalr'
 import useApiCall from '@/config/useApiCall'
 
-// import SelectionMessageContext from '../context/SelectionMessageProvider'
 
 export default function useGetResolveMessage(staffId: string | null) {
   const [resolveMessageTab, setResolveMessageTab] = useState<ResolveMessageType[]>([])
   const context = useContext(SelectionMessageContext)
   const connectionRef = useRef<signalr.HubConnection | null>(null)
   const { execute, loading } = useApiCall<ResolveMessageType[]>()
-  const navigate = useNavigate()
-  // const context = useContext(SelectionMessageContext)
   useEffect(() => {
     const fetchResolveMessage = async () => {
       if (!staffId) {
-        toast.warning('Hãy đăng nhập để thực hiện chức năng tin nhan cho')
-        navigate(PUBLIC_PATH.LOGIN)
         return
       }
       const apiData = await execute({

@@ -80,6 +80,8 @@ export default function OrderStepTwo({
   }
 
   const handleValidateData = () => {
+    if (listProductWithOrderItems.size == 0) return true
+    if (listProductWithOrderItems.size !== listProductSelected.length) return true
     return Array.from(listProductWithOrderItems.values()).map((product) => {
       if (product.orderItems.length === 0) return false
       if (product.listBatch.length === 0) return false
@@ -102,6 +104,7 @@ export default function OrderStepTwo({
     if (!listProductWithOrderItems.has(productId)) return false
     if (listProductWithOrderItems.get(productId)?.orderItems.length) return true
   }
+
 
   return (
     <div id='index#2'>
@@ -148,7 +151,7 @@ export default function OrderStepTwo({
                                 <CardSkeleton count={3}/>
                                 :
                                 <>
-                                  {listBatch.items.map((batch) => (
+                                  {listBatch.items.map((batch, i) => (
                                     <BatchItem
                                       key={batch.id}
                                       batch={batch}
@@ -157,6 +160,8 @@ export default function OrderStepTwo({
                                       setListOrderItems={setListOrderItems}
                                       onSelect={() => handleOrderItemSelected(batch)}
                                       showQuantity={listOrderItems.has(batch.id)}
+                                      isNewestBoxChecked={checked}
+                                      indexItem={i}
                                     />
                                   ))}
                                 </>

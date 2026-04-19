@@ -8,6 +8,7 @@ import useContextValid from '@/hooks/useContextValid'
 import SelectionMessageContext from '@/features/chat/context/SelectionMessageProvider'
 import { toast } from 'react-toastify'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
+import { ScrollArea } from '@/components/ui/scrollbar/ScrollArea'
 
 type OrderStepThreeProps = {
    onPrevious: () => void
@@ -43,13 +44,16 @@ export default function OrderStepThree({ onPrevious, listProductWithOrderItems }
       <div className='mt-7'>
         <TutorialBox step='Bước 3: Xác nhận đơn hàng' description='Kiểm tra lại thông tin khi tạo đơn'/>
         { listProductWithOrderItems &&
-                                  Array.from(listProductWithOrderItems.values()).map((product) => (
-                                    <OrderReview
-                                      listBatch={product.listBatch}
-                                      listOrderItems={product.orderItems}
-                                      product={product}
-                                    />
-                                  ))
+          <ScrollArea className='h-100'>
+            { Array.from(listProductWithOrderItems.values()).map((product) => (
+              <OrderReview
+                listBatch={product.listBatch}
+                listOrderItems={product.orderItems}
+                product={product}
+              />
+            ))}
+          </ScrollArea>
+
         }
       </div>
       { loading ?

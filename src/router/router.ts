@@ -3,17 +3,13 @@ import PageLayout from '@/layouts/PageLayout'
 import { createBrowserRouter } from 'react-router'
 import { ERROR_PATH, PRIVATE_PATH, PUBLIC_PATH } from './path'
 import { ROLE } from './roles'
-import authLoader from './loader/auth-loader'
-import roleLoader from './loader/role-loader'
+import { guestLoader } from './loader/guest-loader'
+import protectedRole from './loader/protectedRole'
 export const router = createBrowserRouter([
   {
     path: '/admin',
     Component: PageLayout,
-    loader: async () => {
-      await authLoader()()
-      await roleLoader(ROLE.ADMIN)()
-      return null
-    },
+    loader: protectedRole(ROLE.ADMIN),
     children: [
       {
         path: PRIVATE_PATH.ADMIN,
@@ -27,11 +23,7 @@ export const router = createBrowserRouter([
   {
     path: '/manager',
     Component: PageLayout,
-    loader: async () => {
-      await authLoader()()
-      await roleLoader(ROLE.MANAGER)()
-      return null
-    },
+    loader: protectedRole(ROLE.MANAGER),
     children: [
       {
         path: PRIVATE_PATH.MANAGER,
@@ -45,11 +37,7 @@ export const router = createBrowserRouter([
   {
     path: '/staff',
     Component: PageLayout,
-    loader: async () => {
-      await authLoader()()
-      await roleLoader(ROLE.STAFF)()
-      return null
-    },
+    loader: protectedRole(ROLE.STAFF),
     children: [
       {
         path: PRIVATE_PATH.CHAT,
@@ -80,6 +68,7 @@ export const router = createBrowserRouter([
 
   {
     path: PUBLIC_PATH.LOGIN,
+    loader: guestLoader(),
     lazy: {
       Component: async () => (await import('@/pages/global/LoginPage')).default
     }
