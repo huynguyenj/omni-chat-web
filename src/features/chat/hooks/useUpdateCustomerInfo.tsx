@@ -15,7 +15,7 @@ const updateCustomerInfoSchema = z.object({
 type CustomerUpdateForm = z.infer<typeof updateCustomerInfoSchema>
 
 export default function useUpdateCustomerInfo({ customerId, setIsRefetch }: { customerId?: string, setIsRefetch: React.Dispatch<React.SetStateAction<boolean>> }) {
-  const { register, formState: { errors }, handleSubmit } = useForm<CustomerUpdateForm>({ resolver: zodResolver(updateCustomerInfoSchema) })
+  const { register, formState: { errors }, handleSubmit, reset } = useForm<CustomerUpdateForm>({ resolver: zodResolver(updateCustomerInfoSchema) })
   const { execute, loading } = useApiCall<null>()
   const onSubmit = async (formData: CustomerUpdateForm) => {
     if (!customerId) {
@@ -36,5 +36,5 @@ export default function useUpdateCustomerInfo({ customerId, setIsRefetch }: { cu
     if (error)
       toast.error('Cập nhật thông tin khách hàng thất bại!')
   }
-  return { register, errors, loading, onSubmit, handleSubmit }
+  return { register, errors, loading, onSubmit, handleSubmit, reset }
 }

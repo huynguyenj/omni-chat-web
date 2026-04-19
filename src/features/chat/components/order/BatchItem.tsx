@@ -11,6 +11,8 @@ type BatchItemProps = {
   batch: BatchType
   isSelected?: boolean
   showQuantity?: boolean
+  isNewestBoxChecked: boolean
+  indexItem: number
   onSelect: (batch: BatchType) => void
   setListOrderItems: Dispatch<SetStateAction<Map<string, OrderItems>>>
   listOrderItems: Map<string, OrderItems>
@@ -22,7 +24,9 @@ export default function BatchItem({
   showQuantity = false,
   onSelect,
   setListOrderItems,
-  listOrderItems
+  listOrderItems,
+  isNewestBoxChecked = false,
+  indexItem
 }: BatchItemProps) {
   const [quantity, setQuantity] = useState(listOrderItems.get(batch.id)?.quantity || 1)
   const handleAdd = () => {
@@ -71,10 +75,11 @@ export default function BatchItem({
                   HSD: {formatDate(batch.expiryDate)}
                 </p>
               </div>
-
+              { isNewestBoxChecked && indexItem === 0 &&
               <Tag variant='primary' className='py-0.5 px-3 text-[0.85rem]'>
                 Mới nhất
               </Tag>
+              }
             </div>
 
             <Tag variant='success' className='py-0.5 px-3'>

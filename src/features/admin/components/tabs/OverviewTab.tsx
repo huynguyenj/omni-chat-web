@@ -1,16 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
-import Select from '@/components/ui/select/Select'
-import {
-  MILK_CHART_COLORS,
-  MILK_QUANTITY_BY_MONTH,
-  MONTH_OPTIONS,
-  SERVICE_STATS_BY_MONTH
-} from '@/components/admin/admin-dashboard-data'
 import { isAxiosError } from 'axios'
 import { CheckCircle, Clock, FileX2, Milk, ShoppingCart, TrendingUp } from 'lucide-react'
-import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'react-toastify'
 import { OrderApi } from '../../api/order-api'
 import { ProductApi } from '../../api/product-api'
@@ -268,8 +261,6 @@ function buildOrderDashboardChartRows(rows: OrderDashboardMonthRow[], statusName
 }
 
 export default function OverviewTab() {
-  const [selectedServiceMonth, setSelectedServiceMonth] = useState('2026-01')
-  const [selectedOrderMonth, setSelectedOrderMonth] = useState('2026-01')
   const [intentSummaryPeriodInput, setIntentSummaryPeriodInput] = useState('2026')
   const [intentSummaryAppliedPeriod, setIntentSummaryAppliedPeriod] = useState('2026')
   const [intentCardAppliedByName, setIntentCardAppliedByName] = useState<Record<string, string>>(
@@ -332,40 +323,6 @@ export default function OverviewTab() {
     }
     return totals
   }, [orderChartData, orderDashboardStatusNames])
-
-  const getOrderStatsByPeriod = useCallback((input: string) => {
-    const normalized = normalizeTaskPeriodInput(input)
-    if (!normalized) return { successful: 0, pending: 0, cancelled: 0 }
-
-    const rows = orderDashboardRows.filter((item) => {
-      const month = item.month.trim()
-      if (/^\d{4}$/.test(normalized)) return month.endsWith(`/${normalized}`)
-      return month === normalized
-    })
-
-    return rows.reduce(
-      (acc, row) => {
-        const byStatus = new Map((row.status ?? []).map((item) => [item.status, Number(item.count ?? 0)]))
-        acc.successful += byStatus.get('Completed') ?? 0
-        acc.pending += byStatus.get('Returned') ?? 0
-        acc.cancelled += byStatus.get('Cancelled') ?? 0
-        return acc
-      },
-      { successful: 0, pending: 0, cancelled: 0 }
-    )
-  }, [orderDashboardRows])
-
-  const currentOrderStats = useMemo(() => {
-    const stats = getOrderStatsByPeriod(selectedOrderMonth)
-    return {
-      ...stats,
-      chartData: [
-        { name: 'Đơn hoàn thành', value: stats.successful, color: '#2ECC71' },
-        { name: 'Đơn trả về', value: stats.pending, color: '#FF9800' },
-        { name: 'Đơn đã hủy', value: stats.cancelled, color: '#F44336' }
-      ]
-    }
-  }, [getOrderStatsByPeriod, selectedOrderMonth])
 
   useEffect(() => {
     const fetchInventoryDashboard = async () => {
@@ -921,106 +878,6 @@ export default function OverviewTab() {
           </>
         )}
       </Card>
-
-      <Card className="p-6">
-        <div className="mb-6">
-          <h3 className="text-[#003366] text-lg font-semibold">Số lượng sữa theo loại và tháng</h3>
-          <p className="text-sm text-gray-500">Biểu đồ số lượng từng loại sữa theo từng dung tích</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.entries(MILK_QUANTITY_BY_MONTH).map(([capacity, data]) => (
-            <Card key={capacity} className="p-4 border border-[#3366CC]/20 bg-gradient-to-br from-white to-blue-50">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-[#003366] rounded-lg">
-                  <Milk className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-[#003366]">Sữa {capacity}</h4>
-                  <p className="text-xs text-gray-500">Số lượng theo tháng (T01 - T06/2026)</p>
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={data} barCategoryGap="25%" barGap={2}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="month" stroke="#666" fontSize={11} />
-                  <YAxis stroke="#666" fontSize={11} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e0e0e0',
-                      borderRadius: '8px',
-                      fontSize: '12px'
-                    }}
-                  />
-                  <Bar dataKey="Có đường" name="Có đường" fill={MILK_CHART_COLORS['Có đường']} radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="Không đường" name="Không đường" fill={MILK_CHART_COLORS['Không đường']} radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="Yogurt" name="Yogurt" fill={MILK_CHART_COLORS.Yogurt} radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          ))}
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-[#003366] text-lg font-semibold">Dịch vụ phổ biến</h3>
-              <p className="text-sm text-gray-500">Thống kê các loại dịch vụ theo tháng</p>
-            </div>
-            <Select value={selectedServiceMonth} onChange={(e) => setSelectedServiceMonth(e.target.value)} className="w-40 border border-gray-200 bg-white py-2">
-              {MONTH_OPTIONS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={SERVICE_STATS_BY_MONTH[selectedServiceMonth as keyof typeof SERVICE_STATS_BY_MONTH]}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" stroke="#666" fontSize={11} angle={-15} textAnchor="end" height={80} />
-              <YAxis stroke="#666" fontSize={12} />
-              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {SERVICE_STATS_BY_MONTH[selectedServiceMonth as keyof typeof SERVICE_STATS_BY_MONTH].map((entry, index) => (
-                  <Cell key={`service-cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card className="p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-[#003366] text-lg font-semibold">Đơn hàng theo tháng</h3>
-              <p className="text-sm text-gray-500">Thống kê tích lũy đơn hàng trong tháng</p>
-            </div>
-            <Select value={selectedOrderMonth} onChange={(e) => setSelectedOrderMonth(e.target.value)} className="w-40 border border-gray-200 bg-white py-2">
-              {MONTH_OPTIONS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={currentOrderStats.chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" stroke="#666" fontSize={12} />
-              <YAxis stroke="#666" fontSize={12} />
-              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {currentOrderStats.chartData.map((entry, index) => (
-                  <Cell key={`order-cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
     </div>
   )
 }

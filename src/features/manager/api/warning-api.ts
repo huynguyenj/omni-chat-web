@@ -1,11 +1,17 @@
 import { apiPublic } from '@/config/axios'
 import type { ApiResponseStructure } from '@/types/api-response'
-import type { ManagerWarningListResponse } from '../types/warning-type'
+import type { ManagerWarningDetailResponse, ManagerWarningListResponse } from '../types/warning-type'
 
 function resolveWarningsEndpoint() {
   const baseUrl = (apiPublic.defaults.baseURL ?? '').toLowerCase()
   if (baseUrl.includes('/api/v1')) return '/conversation-warnings/get'
   return '/api/v1/conversation-warnings/get'
+}
+
+function resolveWarningDetailEndpoint(id: string) {
+  const baseUrl = (apiPublic.defaults.baseURL ?? '').toLowerCase()
+  if (baseUrl.includes('/api/v1')) return `/conversation-warnings/${id}/warning`
+  return `/api/v1/conversation-warnings/${id}/warning`
 }
 
 export const WarningApi = {
@@ -18,5 +24,10 @@ export const WarningApi = {
 
     const response = await apiPublic.get<ApiResponseStructure<ManagerWarningListResponse>>(resolveWarningsEndpoint(), { params })
     return (response as unknown as ApiResponseStructure<ManagerWarningListResponse>).data
+  },
+  getWarningDetail: async (id: string): Promise<ManagerWarningDetailResponse> => {
+    const endpoint = resolveWarningDetailEndpoint(id)
+    const response = await apiPublic.get<ApiResponseStructure<ManagerWarningDetailResponse>>(endpoint)
+    return (response as unknown as ApiResponseStructure<ManagerWarningDetailResponse>).data
   }
 }

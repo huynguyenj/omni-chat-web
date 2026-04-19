@@ -8,7 +8,7 @@ import Tag from '@/components/ui/tag/Tag'
 import { AnimatePresence } from 'motion/react'
 import { FiRotateCcw } from 'react-icons/fi'
 import { PiWarningCircleBold } from 'react-icons/pi'
-import { DELIVERY_STATUS } from '../../const/order-status'
+import { DELIVERY_STATUS, ORDER_STATUS } from '../../const/order-status'
 import { formatDate } from '@/utils/date-resolver'
 import { useState } from 'react'
 import useRefundRequest from '../../hooks/useRefundRequest'
@@ -60,17 +60,29 @@ export default function OrderCard({ data }: { data: OrderType }) {
     })
   }
   return (
-    <Card>
-      <div className="flex items-center justify-between">
+    <Card className='text-sm-body-desktop'>
+      <div className="flex flex-col gap-2">
         <p className="text-m-body-desktop text-primary font-bold">{data.code}</p>
-        <Tag variant={DELIVERY_STATUS[data.deliveryStatus].tagVariant}>
-          {DELIVERY_STATUS[data.deliveryStatus].name}
-        </Tag>
+        <div className='flex justify-between items-center'>
+          <p>Trạng thái đơn hàng</p>
+          <Tag variant={ORDER_STATUS[data.status].tagVariant}>{ORDER_STATUS[data.status].name}</Tag>
+        </div>
+        <div className='flex justify-between items-center'>
+          <p>Trạng thái giao hàng</p>
+          <Tag variant={DELIVERY_STATUS[data.deliveryStatus].tagVariant}>
+            {DELIVERY_STATUS[data.deliveryStatus].name}
+          </Tag>
+        </div>
       </div>
-      <p className="text-sm-body-desktop text-gray-500">{formatDate(data.orderDate)}</p>
-      <div className="flex flex-col gap-5 bg-gray-100 py-5 px-3 rounded-[5px] my-10">
+      <p className="text-sm-body-desktop text-gray-500">Ngày đặt hàng: {formatDate(data.orderDate)}</p>
+      <div className="flex flex-col gap-3 bg-gray-100 py-5 px-3 rounded-[5px] my-10">
         <p className="text-sm-body-desktop text-gray-600">Tổng số sản phẩm: {data.orderItems.length}</p>
-        <p className="text-sm-body-desktop text-gray-600">Danh sách sản phẩm: {data.orderItems.map((item) => item.productName).join(', ')}</p>
+        <p className="text-sm-body-desktop text-gray-600">Danh sách sản phẩm: </p>
+        <ul className='ml-8 list-disc'>
+          {data.orderItems.map((item) => (
+            <li key={item.id}>{item.productName} ({item.quantity})</li>
+          ))}
+        </ul>
         {/* <Button>Xem chi tiết</Button> */}
       </div>
       <hr className="text-gray-200 mb-3"/>

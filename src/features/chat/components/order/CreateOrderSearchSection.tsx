@@ -34,7 +34,7 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
   const [index, setIndex] = useState(1)
   const [checked, setChecked] = useState(false)
   const { listBatch, loading, setCurrentPage, currentPage, setNewFilter } = useGetListBatchByProductId({ productId: product.id })
-  const [newestBatchChosen, setNewestBatchChosen] = useState<BatchType>()
+  // const [newestBatchChosen, setNewestBatchChosen] = useState<BatchType>()
   const [listOrderItems, setListOrderItems] = useState<Map<string, OrderItems>>(new Map())
   const [listBatchChosen, setListBatchChosen] = useState<Map<string, BatchType>>(new Map())
   const context = useContextValid(SelectionMessageContext)
@@ -42,20 +42,7 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
   const { handleOrder, loading: orderLoading } = useCreateOrder()
   const handleChecked = () => {
     setChecked((prev) => !prev)
-    if (!listBatch || listBatch.items.length == 0) return
-    const newestBatchItem = listBatch.items[0]
-    if (newestBatchChosen) {
-      setNewFilter(false)
-      setNewestBatchChosen(undefined)
-      listBatchChosen.delete(newestBatchItem.id)
-      listOrderItems.delete(newestBatchItem.id)
-      return
-    }
-    setNewFilter(true)
-    const updateListBatchItem = new Map()
-    updateListBatchItem.set(newestBatchItem.id, newestBatchItem)
-    setNewestBatchChosen(newestBatchItem)
-    setListOrderItems(updateListBatchItem)
+    setNewFilter((prevState) => !prevState)
   }
   const handlePrev = () => {
     if (index == 1) return
@@ -128,8 +115,8 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                       <div className='flex items-center gap-3 my-4 bg-[#F5F7FA] py-3 px-4 rounded-xl'>
                         <Checkbox id='check-batch' onCheckedChange={handleChecked} checked={checked}/>
                         <div>
-                          <label htmlFor="check-batch" className='text-sm-body-desktop font-semibold text-primary'>Tự động chọn lô hàng mới nhất (FIFO)</label>
-                          <p className='text-[0.85rem] text-soft-gray'>Hệ thống sẽ tự động chọn lô có hạn sử dụng xa nhất</p>
+                          <label htmlFor="check-batch" className='text-sm-body-desktop font-semibold text-primary'>Tự động lọc lô hàng mới nhất (FIFO)</label>
+                          <p className='text-[0.85rem] text-soft-gray'>Hệ thống sẽ tự động hiện lô có hạn sử dụng xa nhất</p>
                         </div>
                       </div>
                       { loading ?
@@ -138,21 +125,12 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                         <>
                           {listBatch && listBatch.items.length > 0 ?
                             <div>
-                              { checked && listOrderItems && newestBatchChosen ?
-                                <BatchItem
-                                  batch={newestBatchChosen}
-                                  isSelected={newestBatchChosen != undefined}
-                                  setListOrderItems={setListOrderItems}
-                                  onSelect={() => handleOrderItemSelected(newestBatchChosen)}
-                                  showQuantity={newestBatchChosen != undefined ? true : false}
-                                  listOrderItems={listOrderItems}
-                                />
-                                :
+                              { listOrderItems &&
                                 <>
                                   <p className='text-sm-body-desktop text-primary font-medium mt-2'>Chọn lô hàng theo HSD</p>
                                   { listBatch.items.length > 0 &&
                                     <ScrollArea className='h-50'>
-                                      { listBatch?.items.map((batch) => (
+                                      { listBatch?.items.map((batch, i) => (
                                         <BatchItem
                                           key={batch.id}
                                           batch={batch}
@@ -161,6 +139,8 @@ export default function CreateOrderSearchSection({ handleOpenCreate, product }: 
                                           onSelect={() => handleOrderItemSelected(batch)}
                                           showQuantity={listOrderItems.has(batch.id)}
                                           listOrderItems={listOrderItems}
+                                          indexItem={i}
+                                          isNewestBoxChecked={checked}
                                         />
                                       )) }
                                     </ScrollArea>

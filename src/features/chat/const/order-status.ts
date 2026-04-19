@@ -3,7 +3,7 @@ type OrderStatusType = {
    tagVariant: 'default' | 'primary' | 'success' | 'danger' | 'warn' | 'gray'
 }
 
-export const DELIVERY_STATUS: Record<string, OrderStatusType> = {
+export const ORDER_STATUS: Record<string, OrderStatusType> = {
   Draft: {
     name: 'Bản mẫu',
     tagVariant: 'gray'
@@ -17,12 +17,12 @@ export const DELIVERY_STATUS: Record<string, OrderStatusType> = {
     tagVariant: 'danger'
   },
   Shipped: {
-    name: 'Đang vận chuyển',
-    tagVariant: 'warn'
+    name: 'Đã vận chuyển',
+    tagVariant: 'default'
   },
   Returned: {
     name: 'Trả hàng',
-    tagVariant: 'default'
+    tagVariant: 'warn'
   },
   Completed: {
     name: 'Thành công',
@@ -31,5 +31,17 @@ export const DELIVERY_STATUS: Record<string, OrderStatusType> = {
   ReturnDefective: {
     name: 'Hoàn trả lại hàng',
     tagVariant: 'danger'
+  }
+}
+
+export const DELIVERY_STATUS: Record<string, OrderStatusType> = {
+  Pending: {
+    name: 'Đang chờ giao',
+    tagVariant: 'primary'
+  },
+
+  Completed: {
+    name: 'Giao thành công',
+    tagVariant: 'success'
   }
 }
