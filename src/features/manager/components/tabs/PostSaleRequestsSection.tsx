@@ -64,6 +64,15 @@ type PostSaleRequestsSectionProps = {
   listRefreshKey?: number
 }
 
+type PostSaleFilterStatus = 'all' | 'Pending' | 'Approved' | 'Rejected'
+
+const STATUS_FILTERS: Array<{ value: PostSaleFilterStatus; label: string }> = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'Pending', label: 'Chờ duyệt' },
+  { value: 'Approved', label: 'Đã duyệt' },
+  { value: 'Rejected', label: 'Đã từ chối' }
+]
+
 export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 0 }: PostSaleRequestsSectionProps) {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(9)
@@ -71,6 +80,7 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<PostSaleRequestItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
+  const [statusFilter, setStatusFilter] = useState<PostSaleFilterStatus>('all')
 
   const fetchList = useCallback(async () => {
     setLoading(true)
@@ -100,15 +110,10 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
     void fetchList()
   }, [fetchList, listRefreshKey])
 
-  const counts = useMemo(() => {
-    let pending = 0
-    let approved = 0
-    for (const r of items) {
-      if (r.status === 'Pending') pending += 1
-      else if (r.status === 'Approved') approved += 1
-    }
-    return { pending, approved }
-  }, [items])
+  const filteredItems = useMemo(() => {
+    if (statusFilter === 'all') return items
+    return items.filter((r) => String(r.status) === statusFilter)
+  }, [items, statusFilter])
 
   return (
     <Card className="p-6">
@@ -118,12 +123,21 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
           <p className="text-sm text-gray-500 mt-1">Các yêu cầu hoàn tiền từ nhân viên cần xử lý</p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
-          <span className="inline-flex items-center rounded-full bg-[#FF9800] px-3 py-1 text-xs font-semibold text-white">
-            {counts.pending} Chờ duyệt
-          </span>
-          <span className="inline-flex items-center rounded-full bg-[#26C271] px-3 py-1 text-xs font-semibold text-white">
-            {counts.approved} Đã duyệt
-          </span>
+          {STATUS_FILTERS.map((option) => {
+            const active = statusFilter === option.value
+            return (
+              <Button
+                key={option.value}
+                size="sm"
+                variant={active ? 'default' : 'outline'}
+                className={active ? 'bg-[#3366CC] hover:bg-[#2952A3]' : ''}
+                onClick={() => setStatusFilter(option.value)}
+                disabled={loading}
+              >
+                {option.label}
+              </Button>
+            )
+          })}
         </div>
       </div>
 
@@ -139,13 +153,13 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {!loading && items.length === 0 && (
+        {!loading && filteredItems.length === 0 && (
           <div className="col-span-full rounded-md border border-gray-200 bg-gray-50 px-3 py-8 text-center text-sm text-gray-600">
-            Chưa có yêu cầu sau bán hàng.
+            Không có yêu cầu phù hợp với bộ lọc.
           </div>
         )}
 
-        {items.map((req, idx) => {
+        {filteredItems.map((req, idx) => {
           const ui = requestStatusUi(String(req.status))
           const displayId = `PSR${String((page - 1) * pageSize + idx + 1).padStart(3, '0')}`
           return (
