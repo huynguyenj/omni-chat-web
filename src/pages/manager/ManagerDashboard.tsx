@@ -1,6 +1,18 @@
 
+import ManagerDashboardContent from '@/features/manager/components/ManagerDashboardContent'
+import ManagerDashboardHeader from '@/features/manager/components/ManagerDashboardHeader'
+import ManagerDashboardShell from '@/features/manager/components/ManagerDashboardShell'
+import ManagerDashboardTabs from '@/features/manager/components/ManagerDashboardTabs'
+import { ManagerDashboardProvider } from '@/features/manager/context/ManagerDashboardProvider'
+
 export default function ManagerDashboard() {
   return (
-    <div>ManagerDashboard</div>
+    <ManagerDashboardProvider>
+      <ManagerDashboardShell>
+        <ManagerDashboardHeader />
+        <ManagerDashboardTabs />
+        <ManagerDashboardContent />
+      </ManagerDashboardShell>
+    </ManagerDashboardProvider>
   )
 }

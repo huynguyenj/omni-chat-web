@@ -1,0 +1,40 @@
+import useApiCall from '@/config/useApiCall'
+import { zodResolver } from '@hookform/resolvers/zod'
+import type React from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'react-toastify'
+import { z } from 'zod'
+const updateCustomerInfoSchema = z.object({
+  customerName: z.string({ error: 'Tên khách hàng không được để trống' }),
+  address: z.string({ error: 'Địa chỉ khách hàng không được để trống' }),
+  email: z.string({ error: 'Email khách hàng không được để trống' }),
+  phoneNumber: z.string({ error: 'Số điện thoại khách hàng không được để trống' }),
+  avatarUrl: z.string().optional()
+})
+
+type CustomerUpdateForm = z.infer<typeof updateCustomerInfoSchema>
+
+export default function useUpdateCustomerInfo({ customerId, setIsRefetch }: { customerId?: string, setIsRefetch: React.Dispatch<React.SetStateAction<boolean>> }) {
+  const { register, formState: { errors }, handleSubmit, reset } = useForm<CustomerUpdateForm>({ resolver: zodResolver(updateCustomerInfoSchema) })
+  const { execute, loading } = useApiCall<null>()
+  const onSubmit = async (formData: CustomerUpdateForm) => {
+    if (!customerId) {
+      toast.error('Không có id của khách hàng')
+      return
+    }
+    const apiData = await execute({
+      apiUrl: `/customer-profile/${customerId}`,
+      method: 'put',
+      type: 'private',
+      body: formData
+    })
+    const { error, success } = apiData
+    if (success) {
+      setIsRefetch((prev) => !prev)
+      return
+    }
+    if (error)
+      toast.error('Cập nhật thông tin khách hàng thất bại!')
+  }
+  return { register, errors, loading, onSubmit, handleSubmit, reset }
+}

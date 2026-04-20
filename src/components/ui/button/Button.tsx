@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
 import { cn } from '../cn'
 const buttonVariants = cva(
-  'flex items-center justify-center gap-3 rounded-[10px] font-medium',
+  'flex items-center justify-center gap-3 rounded-[10px] font-medium text-sm-body-desktop',
   {
     variants: {
       variant: {
@@ -40,7 +40,7 @@ export default function Button({
       data-slot= 'button'
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   )

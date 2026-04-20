@@ -4,4 +4,6 @@ export type LoginResponseType = {
   role: string
   accountId: string
   staffId: string
+  avatarUrl: string | null
+  staffName: string
 }

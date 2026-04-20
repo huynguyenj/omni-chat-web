@@ -26,10 +26,10 @@
 
       /*Desktop*/
       --text-xl-title-desktop: 3.8rem;
-      --text-m-title-desktop: 2rem;
+      --text-m-title-desktop: 2.2rem;
       --text-sm-title-desktop: 1.875rem;
       --text-xl-body-desktop: 1.5rem;
-      --text-m-body-desktop: 1.25rem;
+      --text-m-body-desktop: 1.2rem;
       --text-sm-body-desktop: 1rem;
       --text-secondary-desktop: calc(1.5rem - 2px);
       /*Mobile*/
@@ -40,6 +40,12 @@
       --text-m-body-mobile: 1.125rem;
       --text-sm-body-mobile: 1rem;
       --text-secondary-mobile: calc(1.25rem - 2px);
+
+      /*Color*/
+      --soft-gray: #8E8E9B;
+      /*Border color*/
+      --border-primary: #ECEDF0;
+      --border-secondary: #CFD9F5;
 }
 
 @theme inline {
@@ -53,6 +59,10 @@
       --color-foreground-light-blue: var(--light-blue);
       --color-foreground-secondary: var(--foreground-secondary);
       --color-foreground-accent: var(--accent);
+      --color-soft-gray: var(--soft-gray);
+      --color-border-primary: var(--border-primary);
+      --color-border-secondary: var(--border-secondary);
+      --color-graphite: var(--graphite);
       /**Desktop**/
       --text-xl-title-desktop: var(--text-xl-title-desktop);
       --text-m-title-desktop: var(--text-m-title-desktop);
@@ -75,7 +85,7 @@
       body {
             margin: 0;
             box-sizing: border-box;
-            font-family: Roboto, sans-serif;
+            /* font-family: Roboto, sans-serif; */
       }
       
 }
