@@ -607,7 +607,9 @@ export default function RevenueTab() {
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Tổng doanh thu</h3>
           <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold text-[#2ECC71]">{Math.round(totalRevenueAmount / 1000).toLocaleString('vi-VN')}K VND</p>
+            <p className="text-3xl font-bold text-[#2ECC71]">
+              {totalRevenueAmount === 0 ? '0 VNĐ' : `${Math.round(totalRevenueAmount / 1000).toLocaleString('vi-VN')}K VNĐ`}
+            </p>
             <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
           </div>
           <p className="text-xs text-gray-500 mt-2">
@@ -622,7 +624,9 @@ export default function RevenueTab() {
             </div>
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Chờ thanh toán</h3>
-          <p className="text-3xl font-bold text-[#FF9800]">{Math.round(totalUnpaidAmount / 1000).toLocaleString('vi-VN')}K VND</p>
+          <p className="text-3xl font-bold text-[#FF9800]">
+            {totalUnpaidAmount === 0 ? '0 VNĐ' : `${Math.round(totalUnpaidAmount / 1000).toLocaleString('vi-VN')}K VNĐ`}
+          </p>
           <p className="text-xs text-gray-500 mt-2">
             {totalUnpaidLoading ? 'Đang tải...' : `Tổng chưa thanh toán từ dữ liệu ${summaryAppliedPeriod}`}
           </p>
