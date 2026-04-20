@@ -12,7 +12,7 @@ export default function useRefundRequest({ orderId }: UseRefundRequestProps) {
   const staffId = useAuthStore((s) => s.staffId)
   const handleRefundOrder = async (listItems: Map<string, number>, reason: string, customerId: string) => {
     if (!staffId) {
-      toast.error('Hãy đăng nhập lại để thực hiện hành động')
+      // toast.error('Hãy đăng nhập lại để thực hiện hành động')
       return
     }
     const refundData: RefundOrderRequest = {

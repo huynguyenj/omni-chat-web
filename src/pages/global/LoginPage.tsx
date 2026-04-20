@@ -1,6 +1,7 @@
 import Logo from '@/assets/logo.jpg'
 import Button from '@/components/ui/button/Button'
 import Input from '@/components/ui/input/Input'
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 import useLogin from '@/features/auth/hooks/useLogin'
 export default function LoginPage() {
   const { errors, handleSubmit, onSubmit, register, loading } = useLogin()
@@ -17,8 +18,13 @@ export default function LoginPage() {
             <Input {...register('username')} type='text' variant='gray' label='Email' placeholder='example@company.com' error={errors.username?.message}/>
             <Input {...register('password')} type='password' variant='gray' label='Mật khẩu' placeholder='123456789' error={errors.password?.message}/>
           </div>
-          <Button variant='default' className={`w-full ${loading && 'bg-soft-gray text-white'}`} disabled={loading ? true: false}>
-            Đăng nhập
+          <Button variant='default' className={`w-full ${loading && 'bg-soft-gray text-white'}`} disabled={loading}>
+            {
+              loading ?
+                <LoadingSpinner size='md'/>
+                :
+                'Đăng nhập'
+            }
           </Button>
         </form>
       </div>

@@ -14,6 +14,9 @@ export default function PaginationBar({ currentPage, totalPage, setPage }: Pagin
     label: String(i + 1)
   }))
   const listPages = () => {
+    if (totalPage < 5) {
+      return pages
+    }
     if (totalPage - currentPage < 5) {
       return pages.slice(totalPage - 5, totalPage)
     } else {
@@ -36,7 +39,6 @@ export default function PaginationBar({ currentPage, totalPage, setPage }: Pagin
   const handleGoToPreviousPage = () => {
     if (currentPage - 1 > 0) setPage(currentPage - 1)
   }
-
   return (
     <div className='flex justify-center gap-10'>
       <div className='flex gap-2 items-center'>

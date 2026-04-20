@@ -1,23 +1,35 @@
 import Logo from '@/assets/logo.jpg'
-import { FiBell } from 'react-icons/fi'
+// import { FiBell } from 'react-icons/fi'
 import { RxExit } from 'react-icons/rx'
-
+import Button from '../ui/button/Button'
+import { useAuthStore } from '@/features/auth/store/auth-store'
+import useLogout from '@/features/auth/hooks/useLogout'
+import LoadingSpinner from '../ui/loading/LoadingSpinner'
 
 export default function MainNavbar() {
+  const { role, staffName, avatarUrl } = useAuthStore()
+  const { handleLogout, loading } = useLogout()
   return (
     <div className="sticky flex items-center justify-between top-0 w-full h-20 bg-primary px-5 z-10">
       <img src={Logo} alt="Logo" loading='lazy' className='w-10 h-10' />
       <div className='flex items-center justify-between gap-8'>
-        <FiBell className='w-6 h-6 text-white'/>
+        {/* <FiBell className='w-6 h-6 text-white'/> */}
         <div className='h-15 w-[0.1rem] bg-white'></div>
         <div className='flex items-center gap-3'>
-          <img src={Logo} alt="avatar" loading='lazy' className='w-10 h-10 rounded-full' />
+          <img src={avatarUrl ? avatarUrl : Logo} alt="avatar" loading='lazy' className='w-10 h-10 rounded-full' />
           <div className=''>
-            <p className='text-sm-body-desktop text-white'>nguyenhuyjobs</p>
-            <p className='text-foreground-light-blue'>staff</p>
+            <p className='text-sm-body-desktop text-white'>{staffName}</p>
+            <p className='text-foreground-light-blue'>{role}</p>
           </div>
         </div>
-        <RxExit className='w-6 h-6 text-white'/>
+        <Button className='bg-transparent text-white border-none' onClick={handleLogout} disabled={loading}>
+          {
+            loading ?
+              <LoadingSpinner size='md'/>
+              :
+              <RxExit className='w-6 h-6 text-white'/>
+          }
+        </Button>
       </div>
     </div>
   )

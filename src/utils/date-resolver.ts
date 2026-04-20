@@ -27,3 +27,14 @@ export function startOfDay(date: Date) {
   d.setHours(0, 0, 0, 0)
   return d
 }
+
+export function countRestDay (targetDate: Date) {
+  const msPerDay = 1000 * 60 * 60 * 24
+  const start = new Date()
+  const end = new Date(targetDate)
+  start.setHours(0, 0, 0, 0)
+  end.setHours(0, 0, 0, 0)
+
+  const leftDay = Math.ceil((end.getTime() - start.getTime())/ msPerDay)
+  return leftDay
+}

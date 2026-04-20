@@ -43,7 +43,7 @@ export default function ClaimInfoSection() {
                               <SelectContent>
                                 { claimCategories ?
                                   claimCategories.map((category) => (
-                                    <SelectItem value={category.id}>{CLAIM_TYPE[category.typeName]}</SelectItem>
+                                    <SelectItem key={category.id} value={category.id}>{CLAIM_TYPE[category.typeName]}</SelectItem>
                                   ))
                                   :
                                   <SelectItem value=''></SelectItem>

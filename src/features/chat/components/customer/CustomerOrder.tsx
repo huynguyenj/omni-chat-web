@@ -1,20 +1,20 @@
 import Tag from '@/components/ui/tag/Tag'
 import { useState } from 'react'
 import useGetListOrderCustomer from '../../hooks/useGetListOrderCustomer'
-import CardSkeleton from '@/components/ui/skeleton/CardSkeleton'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import NodataCard from '@/components/ui/card/NodataCard'
 import OrderCard from '../order/OrderCard'
+import OrderSkeleton from '@/components/ui/skeleton/OrderSkeleton'
 
 
-export default function CustomerOrder({ customerId }: { customerId?: string }) {
+export default function CustomerOrder() {
   const [currentPage, setCurrentPage] = useState(1)
-  const { listOrders, loading } = useGetListOrderCustomer({ customerId: customerId, currentPage:  currentPage })
+  const { listOrders, loading } = useGetListOrderCustomer({ currentPage:  currentPage })
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       { loading ?
-        <CardSkeleton count={3}/>
+        <OrderSkeleton count={3}/>
         :
         <>
           { listOrders ?

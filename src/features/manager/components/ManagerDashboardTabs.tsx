@@ -42,7 +42,7 @@ function TabButton({
 
 export default function ManagerDashboardTabs() {
   return (
-    <Card className='flex py-2 px-3 gap-2 w-fit mb-5'>
+    <Card className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:flex xl:flex-row py-2 px-3 gap-2 w-fit mb-5'>
       {tabs.map(t => (
         <TabButton key={t.value} value={t.value} label={t.label} Icon={t.Icon} />
       ))}

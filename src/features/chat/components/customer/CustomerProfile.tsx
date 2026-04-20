@@ -5,30 +5,40 @@ import { MdChatBubbleOutline, MdMailOutline, MdOutlineMail } from 'react-icons/m
 import { LuPhone, LuShoppingBag } from 'react-icons/lu'
 import { IoCalendarClearOutline, IoLocationOutline } from 'react-icons/io5'
 import Card from '@/components/ui/card/Card'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import PopupBasic from '@/components/ui/popup/PopupBasic'
 import Input from '@/components/ui/input/Input'
 import { CiPhone } from 'react-icons/ci'
 import useGetCustomerInfo from '../../hooks/useGetCustomerInfo'
-import CardSkeleton from '@/components/ui/skeleton/CardSkeleton'
 import NodataCard from '@/components/ui/card/NodataCard'
 import { formatDate } from '@/utils/date-resolver'
 import { FaImage } from 'react-icons/fa6'
 import useUpdateCustomerInfo from '../../hooks/useUpdateCustomerInfo'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
+import CustomerInfoSkeleton from '@/components/ui/skeleton/CustomerInfoSkeleton'
 
 
 export default function CustomerProfile() {
   const { customerInfo, loading, setIsRefetch } = useGetCustomerInfo()
-  const { errors, handleSubmit, loading: updateLoading, onSubmit, register } = useUpdateCustomerInfo({ customerId: customerInfo?.id, setIsRefetch: setIsRefetch })
+  const { errors, handleSubmit, loading: updateLoading, onSubmit, register, reset } = useUpdateCustomerInfo({ customerId: customerInfo?.id, setIsRefetch: setIsRefetch })
   const [isOpen, setIsOpen] = useState(false)
   const handleOpen = () => {
     setIsOpen((prev) => !prev)
   }
+
+  useEffect(() => {
+    reset({
+      address: customerInfo?.address,
+      avatarUrl: customerInfo?.avatarUrl,
+      customerName: customerInfo?.customerName,
+      email: customerInfo?.email,
+      phoneNumber: customerInfo?.customerPhone
+    })
+  }, [customerInfo])
   return (
     <div className='flex flex-col gap-3'>
       { loading ?
-        <CardSkeleton/>
+        <CustomerInfoSkeleton count={5}/>
         :
         <>
           { customerInfo ?
@@ -108,22 +118,22 @@ export default function CustomerProfile() {
         <PopupBasic onClose={handleOpen} title='Chỉnh sửa thông tin khách hàng'>
           <p className='text-[0.85rem] text-gray-400'>Cập nhật thông tin liên hệ của khách hàng</p>
           <div className='flex flex-col gap-2 mt-3'>
-            <Input {...register('customerName')} value={customerInfo?.customerName} variant='gray' placeholder='Nguyễn Văn A' label='Họ và tên' error={errors.customerName?.message}/>
-            <Input {...register('phoneNumber')} value={customerInfo?.customerPhone} icon={CiPhone} variant='gray' placeholder='0901234567' label='Số điện thoại' error={errors.phoneNumber?.message}/>
-            <Input {...register('email')} value={customerInfo?.email} icon={MdMailOutline} variant='gray' placeholder='nguyenvana@email.com' label='Email' error={errors.email?.message}/>
-            <Input {...register('address')} value={customerInfo?.address} icon={IoLocationOutline} variant='gray' placeholder='123 Đường ABC, Quận 1, TP.HCM' label='Địa chỉ' error={errors.address?.message}/>
-            <Input {...register('avatarUrl')} value={customerInfo?.avatarUrl} icon={FaImage} variant='gray' placeholder='' label='Đường dẫn của ảnh'/>
+            <Input {...register('customerName')} variant='gray' placeholder='Nguyễn Văn A' label='Họ và tên' error={errors.customerName?.message}/>
+            <Input {...register('phoneNumber')} icon={CiPhone} variant='gray' placeholder='0901234567' label='Số điện thoại' error={errors.phoneNumber?.message}/>
+            <Input {...register('email')} icon={MdMailOutline} variant='gray' placeholder='nguyenvana@email.com' label='Email' error={errors.email?.message}/>
+            <Input {...register('address')} icon={IoLocationOutline} variant='gray' placeholder='123 Đường ABC, Quận 1, TP.HCM' label='Địa chỉ' error={errors.address?.message}/>
+            <Input {...register('avatarUrl')} icon={FaImage} variant='gray' placeholder='' label='Đường dẫn của ảnh'/>
           </div>
           <hr className='text-gray-200 my-7'/>
-          <div className='w-full flex gap-2'>
+          <div className='w-full justify-center items-center flex gap-2'>
             { updateLoading ?
               <LoadingSpinner size='lg'/>
               :
               <>
-                <Button className='border border-gray-200 bg-white text-black flex-1' onClick={handleOpen}>
+                <Button className='border border-gray-200 bg-white text-black flex-1 hover:bg-gray-300' onClick={handleOpen}>
                   <p>Hủy</p>
                 </Button>
-                <Button className='flex-1' onClick={() => handleSubmit(onSubmit)}>
+                <Button className='flex-1' onClick={handleSubmit(onSubmit)}>
                   <FiCheckCircle/>
                 Lưu thay đổi
                 </Button>
