@@ -18,6 +18,7 @@ import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import { ManagerOrderApi } from '../../api/order-api'
+import { PostSaleRequestApi } from '../../api/post-sale-request-api'
 import PostSaleRequestsSection from './PostSaleRequestsSection'
 import type { ManagerOrderItem, ManagerOrderLineItem, ManagerOrderStatus, ManagerOrderStatusFilter } from '../../types/order-type'
 
@@ -107,18 +108,26 @@ function formatDateShort(iso: string) {
   return d.toLocaleDateString('vi-VN')
 }
 
+type OrderDetailPostSaleContext = {
+  id: string
+  status: string
+  type?: string
+}
+
 function OrderDetailModal({
   order,
   open,
   loading,
   onClose,
-  onOrderActionSuccess
+  onOrderActionSuccess,
+  postSaleRequest
 }: {
   order: ManagerOrderItem | null
   open: boolean
   loading: boolean
   onClose: () => void
   onOrderActionSuccess: () => void
+  postSaleRequest?: OrderDetailPostSaleContext | null
 }) {
   if (!open) return null
 
@@ -146,7 +155,11 @@ function OrderDetailModal({
             <p className="text-sm text-gray-600">Đang tải chi tiết đơn hàng...</p>
           </div>
         ) : (
-          <OrderDetailModalBody order={order} onOrderActionSuccess={onOrderActionSuccess} />
+          <OrderDetailModalBody
+            order={order}
+            postSaleRequest={postSaleRequest ?? null}
+            onOrderActionSuccess={onOrderActionSuccess}
+          />
         )}
       </div>
     </div>
@@ -155,25 +168,39 @@ function OrderDetailModal({
 
 function OrderDetailModalBody({
   order,
+  postSaleRequest,
   onOrderActionSuccess
 }: {
   order: ManagerOrderItem
+  postSaleRequest: OrderDetailPostSaleContext | null
   onOrderActionSuccess: () => void
 }) {
   const [pendingAction, setPendingAction] = useState<'cancel' | 'confirm' | null>(null)
   const lines = getLineItems(order)
   const totalQty = lines.reduce((s, l) => s + l.quantity, 0)
   const pill = orderStatusPill(String(order.status))
-  const canCancelOrConfirm = order.status === 'Draft' || order.status === 'Pending'
+  const fromPostSaleList = Boolean(postSaleRequest?.id)
+  const canActPostSale = fromPostSaleList && postSaleRequest?.status === 'Pending'
+  const canActOrder = !fromPostSaleList && (order.status === 'Draft' || order.status === 'Pending')
+  const canCancelOrConfirm = canActPostSale || canActOrder
 
   const handleCancelOrder = async () => {
     setPendingAction('cancel')
     try {
-      const msg = await ManagerOrderApi.cancelOrder(order.id)
+      const msg =
+        canActPostSale && postSaleRequest
+          ? await PostSaleRequestApi.rejectPostSaleRequest(postSaleRequest.id)
+          : await ManagerOrderApi.cancelOrder(order.id)
       toast.success(msg)
       onOrderActionSuccess()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Không thể hủy đơn hàng.')
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : canActPostSale
+            ? 'Không thể từ chối yêu cầu.'
+            : 'Không thể hủy đơn hàng.'
+      )
     } finally {
       setPendingAction(null)
     }
@@ -182,11 +209,20 @@ function OrderDetailModalBody({
   const handleConfirmOrder = async () => {
     setPendingAction('confirm')
     try {
-      const msg = await ManagerOrderApi.confirmOrder(order.id)
+      const msg =
+        canActPostSale && postSaleRequest
+          ? await PostSaleRequestApi.approvePostSaleRequest(postSaleRequest.id)
+          : await ManagerOrderApi.confirmOrder(order.id)
       toast.success(msg)
       onOrderActionSuccess()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Không thể xác nhận đơn hàng.')
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : canActPostSale
+            ? 'Không thể duyệt yêu cầu.'
+            : 'Không thể xác nhận đơn hàng.'
+      )
     } finally {
       setPendingAction(null)
     }
@@ -414,13 +450,16 @@ export default function OrdersTab() {
   const [detailOrder, setDetailOrder] = useState<ManagerOrderItem | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailPostSaleContext, setDetailPostSaleContext] = useState<OrderDetailPostSaleContext | null>(null)
+  const [postSaleListRefreshKey, setPostSaleListRefreshKey] = useState(0)
   const pageSize = 6
 
-  const openOrderDetailById = async (orderId: string) => {
+  const openOrderDetailById = async (orderId: string, psr?: OrderDetailPostSaleContext | null) => {
     if (!orderId) {
       toast.error('Không có mã đơn để tải chi tiết.')
       return
     }
+    setDetailPostSaleContext(psr ?? null)
     setDetailOpen(true)
     setDetailOrder(null)
     setDetailLoading(true)
@@ -436,13 +475,14 @@ export default function OrdersTab() {
   }
 
   const openOrderDetail = async (order: ManagerOrderItem) => {
-    await openOrderDetailById(order.id)
+    await openOrderDetailById(order.id, null)
   }
 
   const closeOrderDetail = () => {
     setDetailOpen(false)
     setDetailOrder(null)
     setDetailLoading(false)
+    setDetailPostSaleContext(null)
   }
 
   const fetchOrders = useCallback(async () => {
@@ -538,16 +578,27 @@ export default function OrdersTab() {
         </div>
       </Card>
 
-      <PostSaleRequestsSection onViewOrder={(orderId) => void openOrderDetailById(orderId)} />
+      <PostSaleRequestsSection
+        listRefreshKey={postSaleListRefreshKey}
+        onViewOrder={(orderId, req) =>
+          void openOrderDetailById(orderId, {
+            id: req.id,
+            status: String(req.status),
+            type: String(req.type)
+          })
+        }
+      />
 
       <OrderDetailModal
         order={detailOrder}
         open={detailOpen}
         loading={detailLoading}
         onClose={closeOrderDetail}
+        postSaleRequest={detailPostSaleContext}
         onOrderActionSuccess={() => {
           closeOrderDetail()
           void fetchOrders()
+          setPostSaleListRefreshKey((k) => k + 1)
         }}
       />
     </div>

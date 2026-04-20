@@ -67,10 +67,11 @@ function requestTypeLabel(t: string) {
 }
 
 type PostSaleRequestsSectionProps = {
-  onViewOrder: (orderId: string) => void
+  onViewOrder: (orderId: string, postSaleRequest: PostSaleRequestItem) => void
+  listRefreshKey?: number
 }
 
-export default function PostSaleRequestsSection({ onViewOrder }: PostSaleRequestsSectionProps) {
+export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 0 }: PostSaleRequestsSectionProps) {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(9)
   const [sortBy, setSortBy] = useState('requestedTime')
@@ -110,7 +111,7 @@ export default function PostSaleRequestsSection({ onViewOrder }: PostSaleRequest
 
   useEffect(() => {
     void fetchList()
-  }, [fetchList])
+  }, [fetchList, listRefreshKey])
 
   const counts = useMemo(() => {
     let pending = 0
@@ -250,7 +251,7 @@ export default function PostSaleRequestsSection({ onViewOrder }: PostSaleRequest
                     size="sm"
                     className="w-full h-10 rounded-lg border-[#3366CC] text-[#3366CC] hover:bg-[#3366CC]/5 bg-transparent font-medium"
                     disabled={loading}
-                    onClick={() => onViewOrder(req.orderId)}
+                    onClick={() => onViewOrder(req.orderId, req)}
                   >
                     <Eye className="h-4 w-4 mr-2 inline" />
                     Xem &amp; Xử lý
