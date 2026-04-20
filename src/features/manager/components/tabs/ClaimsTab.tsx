@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
+import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { toast } from 'react-toastify'
 import { ClaimApi } from '../../api/claim-api'
 import type { ManagerClaimDashboardData, ManagerClaimItem, ManagerClaimStatus } from '../../types/claim-type'
@@ -247,7 +248,7 @@ export default function ClaimsTab() {
                 <div className="pt-3 border-t mt-4 grid grid-cols-2 gap-2">
                   <Button
                     size="sm"
-                    className="bg-[#2ECC71] hover:bg-[#27AE60] text-white"
+                    className="bg-[#6FDFA0] hover:bg-[#5BCB8C] text-white"
                     onClick={() => handleApproveClaim(claim.id)}
                     disabled={!!processingClaimId || isLoading}
                   >
@@ -255,7 +256,7 @@ export default function ClaimsTab() {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-[#EF4444] hover:bg-[#DC2626] text-white"
+                    className="bg-[#F87171] hover:bg-[#F25F5F] text-white"
                     onClick={() => handleRejectClaim(claim.id)}
                     disabled={!!processingClaimId || isLoading}
                   >
@@ -273,14 +274,12 @@ export default function ClaimsTab() {
           ))}
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="outline" size="sm" disabled={page <= 1 || isLoading} onClick={() => setPage(p => Math.max(1, p - 1))}>
-            Prev
-          </Button>
-          <span className="text-sm text-gray-600">Page {page}/{totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages || isLoading} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
-            Next
-          </Button>
+        <div className="mt-6">
+          <PaginationBar
+            currentPage={page}
+            setPage={setPage}
+            totalPage={totalPages}
+          />
         </div>
       </Card>
     </div>

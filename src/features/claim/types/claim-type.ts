@@ -8,6 +8,7 @@ export type ClaimCreation = {
       reason: string
       staffId: string
       claimTypeId: string
+      supportConversationId: string | null
 }
 
 export type ClaimType = {
@@ -18,3 +19,7 @@ export type ClaimType = {
       description: string
       reason: string
     }
+export type ConversationClaimType = {
+      conversationId: string
+      customerName: string
+}

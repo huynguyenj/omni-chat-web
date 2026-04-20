@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
+import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerShipperApi } from '../../api/shipper-api'
 import { ManagerOrderApi } from '../../api/order-api'
 import type { ManagerOrderItem, ManagerOrderLineItem } from '../../types/order-type'
@@ -46,7 +47,8 @@ function normalizeOrder(raw: unknown): ManagerOrderItem {
     name: String(item.name ?? 'Đơn hàng'),
     status: String(item.status ?? 'Pending'),
     totalAmount: Number(item.totalAmount ?? 0),
-    deliveryStatus: String(item.deliveryStatus ?? 'Pending'),
+    // Keep null/undefined as empty so unassigned orders still show shipper picker.
+    deliveryStatus: item.deliveryStatus == null ? '' : String(item.deliveryStatus),
     code: String(item.code ?? ''),
     orderItems: orderItems.length ? orderItems : undefined
   }
@@ -358,13 +360,19 @@ export default function ShippersTab() {
     setAssigningOrderId(orderId)
     try {
       await ManagerShipperApi.assignOrderToShipper(shipperId, orderId)
-      setPendingOrders((prev) => prev.filter((order) => order.id !== orderId))
+      // Keep order visible immediately after assign; mark as assigned locally.
+      setPendingOrders((prev) => prev.map((order) => (
+        order.id === orderId
+          ? { ...order, deliveryStatus: 'Pending' }
+          : order
+      )))
       setSelectedShipperByOrder((prev) => {
         const next = { ...prev }
         delete next[orderId]
         return next
       })
       setShipperReload((n) => n + 1)
+      setOrdersReload((n) => n + 1)
       toast.success('Đã chọn shipper thành công.')
     } catch {
       toast.error('Không thể giao đơn cho shipper. Vui lòng thử lại.')
@@ -501,16 +509,12 @@ export default function ShippersTab() {
           ))}
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="outline" size="sm" disabled={shipperPage <= 1 || shipperLoading} onClick={() => setShipperPage((p) => Math.max(1, p - 1))}>
-            Prev
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {shipperPage}/{shipperTotalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={shipperPage >= shipperTotalPages || shipperLoading} onClick={() => setShipperPage((p) => Math.min(shipperTotalPages, p + 1))}>
-            Next
-          </Button>
+        <div className="mt-6">
+          <PaginationBar
+            currentPage={shipperPage}
+            setPage={setShipperPage}
+            totalPage={shipperTotalPages}
+          />
         </div>
       </Card>
 
@@ -634,14 +638,12 @@ export default function ShippersTab() {
           })}
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="outline" size="sm" disabled={ordersPage <= 1 || ordersLoading} onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}>
-            Prev
-          </Button>
-          <span className="text-sm text-gray-600">Page {ordersPage}/{totalOrderPages}</span>
-          <Button variant="outline" size="sm" disabled={ordersPage >= totalOrderPages || ordersLoading} onClick={() => setOrdersPage((p) => Math.min(totalOrderPages, p + 1))}>
-            Next
-          </Button>
+        <div className="mt-6">
+          <PaginationBar
+            currentPage={ordersPage}
+            setPage={setOrdersPage}
+            totalPage={totalOrderPages}
+          />
         </div>
       </Card>
 

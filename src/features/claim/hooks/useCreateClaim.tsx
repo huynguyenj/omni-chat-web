@@ -5,6 +5,7 @@ import z from 'zod'
 import type { ClaimCreation } from '../types/claim-type'
 import { toast } from 'react-toastify'
 import useApiCall from '@/config/useApiCall'
+import { useState } from 'react'
 
 const ClaimFormSchema = z.object({
   claimTypeId: z.string({ error: 'Hãy chọn loại đơn bạn muốn tạo' }),
@@ -18,6 +19,7 @@ export default function useCreateClaim() {
   const { control, register, handleSubmit, formState: { errors } } = useForm<ClaimFormType>({ resolver: zodResolver(ClaimFormSchema) })
   const staffId = useAuthStore((s) => s.staffId)
   const { execute, loading } = useApiCall<null>()
+  const [conversationId, setConversationId] = useState('')
   const onSubmit = async (formData: ClaimFormType) => {
     if (!staffId) {
       toast.error('Hãy đăng nhập trước khi tạo đơn!')
@@ -27,7 +29,8 @@ export default function useCreateClaim() {
       staffId: staffId,
       claimTypeId: formData.claimTypeId,
       description: formData.description,
-      reason: formData.reason
+      reason: formData.reason,
+      supportConversationId: conversationId
     }
 
     const apiData = await execute({
@@ -39,6 +42,7 @@ export default function useCreateClaim() {
 
     const { error } = apiData
     if (error) toast.error('Tạo đơn thất bại! Xin hãy thử lại')
+    else toast.success('Tạo đơn thành công')
   }
-  return { onSubmit, loading, register, handleSubmit, errors, control }
+  return { onSubmit, loading, register, handleSubmit, errors, control, setConversationId, conversationId }
 }

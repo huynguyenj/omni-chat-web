@@ -320,9 +320,7 @@ export default function StaffTab() {
           Trước
         </Button>
         <p className="text-xs text-gray-500 text-center flex-1 min-w-0">
-          Trang {effectiveStaffPage}/{totalStaffPages} - Hiển thị {uiStaffs.length === 0 ? 0 : (effectiveStaffPage - 1) * STAFFS_PER_PAGE + 1}
-          -
-          {Math.min(effectiveStaffPage * STAFFS_PER_PAGE, uiStaffs.length)} / {uiStaffs.length}
+          Trang {effectiveStaffPage}/{totalStaffPages}
         </p>
         <Button variant="outline" size="sm" disabled={effectiveStaffPage === totalStaffPages} onClick={() => setStaffPage((p) => Math.min(totalStaffPages, p + 1))}>
           Sau

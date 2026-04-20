@@ -69,8 +69,8 @@ export default function OrderCard({ data }: { data: OrderType }) {
         </div>
         <div className='flex justify-between items-center'>
           <p>Trạng thái giao hàng</p>
-          <Tag variant={DELIVERY_STATUS[data.deliveryStatus].tagVariant}>
-            {DELIVERY_STATUS[data.deliveryStatus].name}
+          <Tag variant={data.deliveryStatus !== null ? DELIVERY_STATUS[data.deliveryStatus].tagVariant : 'default'}>
+            {data.deliveryStatus !== null ? DELIVERY_STATUS[data.deliveryStatus].name: 'Chưa giao'}
           </Tag>
         </div>
       </div>

@@ -125,36 +125,39 @@ function extractRevenueRowsFromResponse(response: unknown): TotalRevenue[] {
   return []
 }
 
+type RevenueOrderStatusFilter = 'all' | ManagerOrderStatusFilter
+
 /** Hiển thị trạng thái đơn (API thường trả tiếng Anh) — pill + viền card */
 /** Lọc đơn theo status API (chuỗi như Draft, Completed, …) */
-function revenueOrderMatchesStatus(filter: ManagerOrderStatusFilter | 'all', apiStatus: string): boolean {
+function revenueOrderMatchesStatus(filter: RevenueOrderStatusFilter, apiStatus: string): boolean {
   if (filter === 'all') return true
   return apiStatus.trim().toLowerCase() === filter.toLowerCase()
 }
 
-const REVENUE_ORDER_STATUS_FILTERS: Array<{ value: 'all' | ManagerOrderStatusFilter; label: string }> = [
+const REVENUE_ORDER_STATUS_FILTERS: Array<{ value: RevenueOrderStatusFilter; label: string }> = [
   { value: 'all', label: 'Tất cả' },
-  { value: 'Draft', label: 'Đợi duyệt' },
-  { value: 'Shipped', label: 'Đang giao' },
-  { value: 'Completed', label: 'Hoàn thành' },
+  { value: 'Draft', label: 'Bản nháp' },
+  { value: 'Pending', label: 'Chờ xử lý' },
+  { value: 'Shipped', label: 'Đã giao hàng' },
+  { value: 'Completed', label: 'Đã hoàn thành' },
   { value: 'Cancelled', label: 'Đã hủy' },
   { value: 'PendingReturn', label: 'Chờ trả hàng' },
-  { value: 'Returned', label: 'Đã trả' },
-  { value: 'ReturnedDefective', label: 'Xã hàng lỗi' }
+  { value: 'Returned', label: 'Đã trả hàng' },
+  { value: 'ReturnedDefective', label: 'Đã trả hàng do lỗi' }
 ]
 
 function adminOrderStatusUi(statusRaw: string): { labelVi: string; pillClass: string; cardBorderClass: string } {
   const normalized = String(statusRaw).trim().toLowerCase().replace(/\s+/g, '')
 
   const rows: Array<{ match: string; labelVi: string; pillClass: string; cardBorderClass: string }> = [
-    { match: 'draft', labelVi: 'Đợi duyệt', pillClass: 'bg-gray-500 text-white', cardBorderClass: 'border-t-gray-500' },
+    { match: 'draft', labelVi: 'Bản nháp', pillClass: 'bg-gray-500 text-white', cardBorderClass: 'border-t-gray-500' },
     { match: 'pending', labelVi: 'Chờ xử lý', pillClass: 'bg-amber-500 text-white', cardBorderClass: 'border-t-amber-500' },
-    { match: 'shipped', labelVi: 'Đang giao', pillClass: 'bg-[#3366CC] text-white', cardBorderClass: 'border-t-[#3366CC]' },
-    { match: 'completed', labelVi: 'Hoàn thành', pillClass: 'bg-[#26C271] text-white', cardBorderClass: 'border-t-[#26C271]' },
+    { match: 'shipped', labelVi: 'Đã giao hàng', pillClass: 'bg-[#3366CC] text-white', cardBorderClass: 'border-t-[#3366CC]' },
+    { match: 'completed', labelVi: 'Đã hoàn thành', pillClass: 'bg-[#26C271] text-white', cardBorderClass: 'border-t-[#26C271]' },
     { match: 'cancelled', labelVi: 'Đã hủy', pillClass: 'bg-[#FB2C36] text-white', cardBorderClass: 'border-t-[#FB2C36]' },
     { match: 'pendingreturn', labelVi: 'Chờ trả hàng', pillClass: 'bg-[#FF9800] text-white', cardBorderClass: 'border-t-[#FF9800]' },
-    { match: 'returned', labelVi: 'Đã trả', pillClass: 'bg-slate-600 text-white', cardBorderClass: 'border-t-slate-600' },
-    { match: 'returneddefective', labelVi: 'Xã hàng lỗi', pillClass: 'bg-amber-800 text-white', cardBorderClass: 'border-t-amber-800' }
+    { match: 'returned', labelVi: 'Đã trả hàng', pillClass: 'bg-slate-600 text-white', cardBorderClass: 'border-t-slate-600' },
+    { match: 'returneddefective', labelVi: 'Đã trả hàng do lỗi', pillClass: 'bg-amber-800 text-white', cardBorderClass: 'border-t-amber-800' }
   ]
 
   const hit = rows.find((r) => r.match === normalized)
@@ -194,7 +197,7 @@ function sumOrderStatus(rows: OrderDashboardMonthRow[], statusLabel: string): nu
 
 export default function RevenueTab() {
   const ORDERS_PER_PAGE = 9
-  const [revenueOrderStatusFilter, setRevenueOrderStatusFilter] = useState<'all' | ManagerOrderStatusFilter>('all')
+  const [revenueOrderStatusFilter, setRevenueOrderStatusFilter] = useState<RevenueOrderStatusFilter>('Pending')
   const [revenueChartInput, setRevenueChartInput] = useState('2026')
   const [totalRevenueAmount, setTotalRevenueAmount] = useState(0)
   const [totalRevenueLoading, setTotalRevenueLoading] = useState(false)
@@ -601,7 +604,9 @@ export default function RevenueTab() {
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Tổng doanh thu</h3>
           <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold text-[#2ECC71]">{Math.round(totalRevenueAmount / 1000).toLocaleString('vi-VN')}K VND</p>
+            <p className="text-3xl font-bold text-[#2ECC71]">
+              {totalRevenueAmount === 0 ? '0 VNĐ' : `${Math.round(totalRevenueAmount / 1000).toLocaleString('vi-VN')}K VNĐ`}
+            </p>
             <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
           </div>
           <p className="text-xs text-gray-500 mt-2">
@@ -616,7 +621,9 @@ export default function RevenueTab() {
             </div>
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Chờ thanh toán</h3>
-          <p className="text-3xl font-bold text-[#FF9800]">{Math.round(totalUnpaidAmount / 1000).toLocaleString('vi-VN')}K VND</p>
+          <p className="text-3xl font-bold text-[#FF9800]">
+            {totalUnpaidAmount === 0 ? '0 VNĐ' : `${Math.round(totalUnpaidAmount / 1000).toLocaleString('vi-VN')}K VNĐ`}
+          </p>
           <p className="text-xs text-gray-500 mt-2">
             {totalUnpaidLoading ? 'Đang tải...' : `Tổng chưa thanh toán từ dữ liệu ${summaryAppliedPeriod}`}
           </p>
@@ -791,18 +798,6 @@ export default function RevenueTab() {
               const dateText = orderDate.toLocaleDateString('vi-VN')
               const timeText = orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
               const statusUi = adminOrderStatusUi(order.status)
-              const badgeClass =
-                  order.deliveryStatus === 'Delivered'
-                    ? 'bg-[#1F9D55]'
-                    : order.deliveryStatus === 'Cancelled'
-                      ? 'bg-[#C62828]'
-                      : 'bg-[#EF6C00]'
-              const badgeText =
-                  order.deliveryStatus === 'Delivered'
-                    ? 'Đã giao'
-                    : order.deliveryStatus === 'Cancelled'
-                      ? 'Đã hủy'
-                      : 'Đang xử lý'
 
               return (
                 <Card
@@ -812,9 +807,6 @@ export default function RevenueTab() {
                   <div>
                     <div className="flex items-center justify-between mb-3 gap-2">
                       <h3 className="font-bold text-[#003366] text-lg">{order.code}</h3>
-                      <span className={`shrink-0 px-2 py-1 rounded-full text-[10px] font-semibold text-white ${badgeClass}`}>
-                        {badgeText}
-                      </span>
                     </div>
                     <div className="space-y-3 mb-4">
                       <div className="flex flex-col gap-1">
@@ -905,9 +897,7 @@ export default function RevenueTab() {
             Trước
           </Button>
           <p className="text-xs text-gray-500 text-center flex-1 min-w-0">
-            Trang {ordersPage}/{totalOrderPages} - Hiển thị {activeOrderCount === 0 ? 0 : (ordersPage - 1) * ORDERS_PER_PAGE + 1}
-            -
-            {Math.min(ordersPage * ORDERS_PER_PAGE, activeOrderCount)} / {activeOrderCount}
+            Trang {ordersPage}/{totalOrderPages}
           </p>
           <Button variant="outline" size="sm" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage((p) => Math.min(totalOrderPages, p + 1))}>
             Sau
