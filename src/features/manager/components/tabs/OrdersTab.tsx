@@ -419,30 +419,9 @@ function OrderCard({
   )
 }
 
-const ORDER_STATUS_FILTERS: Array<{ value: 'all' | ManagerOrderStatusFilter; label: string }> = [
-  { value: 'all', label: 'Tất cả' },
-  { value: 'Draft', label: 'Đợi duyệt' },
-  { value: 'Shipped', label: 'Đang giao' },
-  { value: 'Completed', label: 'Hoàn thành' },
-  { value: 'Cancelled', label: 'Đã hủy' },
-  { value: 'PendingReturn', label: 'Chờ trả hàng' },
-  { value: 'Returned', label: 'Đã trả' },
-  { value: 'ReturnedDefective', label: 'Xã hàng lỗi' }
-]
-
-const NON_PENDING_STATUSES: ManagerOrderStatusFilter[] = [
-  'Draft',
-  'Cancelled',
-  'Shipped',
-  'PendingReturn',
-  'Returned',
-  'Completed',
-  'ReturnedDefective'
-]
-
 export default function OrdersTab() {
   const [page, setPage] = useState(1)
-  const [selectedStatus, setSelectedStatus] = useState<'all' | ManagerOrderStatusFilter>('all')
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'InDelivery' | ManagerOrderStatusFilter>('InDelivery')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [orders, setOrders] = useState<ManagerOrderItem[]>([])
@@ -453,6 +432,16 @@ export default function OrdersTab() {
   const [detailPostSaleContext, setDetailPostSaleContext] = useState<OrderDetailPostSaleContext | null>(null)
   const [postSaleListRefreshKey, setPostSaleListRefreshKey] = useState(0)
   const pageSize = 6
+  const ORDER_STATUS_FILTERS: Array<{ value: 'all' | 'InDelivery' | ManagerOrderStatusFilter; label: string }> = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'Draft', label: 'Đợi duyệt' },
+    { value: 'InDelivery', label: 'Đang giao' },
+    { value: 'Completed', label: 'Hoàn thành' },
+    { value: 'Cancelled', label: 'Đã hủy' },
+    { value: 'PendingReturn', label: 'Chờ trả hàng' },
+    { value: 'Returned', label: 'Đã trả' },
+    { value: 'ReturnedDefective', label: 'Xã hàng lỗi' }
+  ]
 
   const openOrderDetailById = async (orderId: string, psr?: OrderDetailPostSaleContext | null) => {
     if (!orderId) {
@@ -492,7 +481,11 @@ export default function OrdersTab() {
       const response = await ManagerOrderApi.getOrders({
         pageNumber: page,
         pageSize,
-        orderStatuses: selectedStatus === 'all' ? NON_PENDING_STATUSES : [selectedStatus]
+        orderStatuses: selectedStatus === 'all'
+          ? undefined
+          : selectedStatus === 'InDelivery'
+            ? ['Pending', 'Shipped']
+            : [selectedStatus]
       })
       const items = response?.data?.items ?? []
       const pages = response?.data?.meta?.total_pages ?? 1
@@ -515,8 +508,12 @@ export default function OrdersTab() {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-[#003366] text-xl font-semibold">Quản lý đơn hàng</h2>
-            <p className="text-sm text-gray-500 mt-1">Theo dõi và xử lý đơn hàng</p>
+            <h2 className="text-[#003366] text-xl font-semibold">Đơn hàng giao</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Danh sách đơn hàng có trạng thái {
+                ORDER_STATUS_FILTERS.find((s) => s.value === selectedStatus)?.label ?? selectedStatus
+              }
+            </p>
           </div>
         </div>
 
