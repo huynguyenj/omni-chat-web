@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuthStore } from '../store/auth-store'
 import { useNavigate } from 'react-router'
-import { PRIVATE_PATH } from '@/router/path'
 import type { LoginResponseType } from '../types/login-types'
 import useApiCall from '@/config/useApiCall'
 import { toast } from 'react-toastify'
+import { ROLE_HOME } from '@/router/const/role-route'
 
 const LoginFormSchema = z.object({
   username: z.email(),
@@ -34,7 +34,7 @@ export default function useLogin() {
     const { accessToken, role, accountId, staffId, avatarUrl, staffName } = apiData.data
     toast.success('Đăng nhập thành công')
     addAuthStore(accessToken, accountId, staffId, role, staffName, avatarUrl)
-    navigate(PRIVATE_PATH.CHAT)
+    navigate(ROLE_HOME[role])
   }
   return { register, handleSubmit, onSubmit, errors, loading }
 }
