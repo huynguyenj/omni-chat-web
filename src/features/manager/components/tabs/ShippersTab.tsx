@@ -47,7 +47,8 @@ function normalizeOrder(raw: unknown): ManagerOrderItem {
     name: String(item.name ?? 'Đơn hàng'),
     status: String(item.status ?? 'Pending'),
     totalAmount: Number(item.totalAmount ?? 0),
-    deliveryStatus: String(item.deliveryStatus ?? 'Pending'),
+    // Keep null/undefined as empty so unassigned orders still show shipper picker.
+    deliveryStatus: item.deliveryStatus == null ? '' : String(item.deliveryStatus),
     code: String(item.code ?? ''),
     orderItems: orderItems.length ? orderItems : undefined
   }
