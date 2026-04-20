@@ -9,11 +9,18 @@ import { BsPlusLg } from 'react-icons/bs'
 import { CLAIM_TYPE } from '../const/claim-type'
 import { Controller } from 'react-hook-form'
 import useCreateClaim from '@/features/claim/hooks/useCreateClaim'
+import useGetListConversationByStaffId from '../hooks/useGetListConversationByStaffId'
+import { ScrollArea } from '@/components/ui/scrollbar/ScrollArea'
+import Card from '@/components/ui/card/Card'
+import PaginationBar from '@/components/ui/pagination/PaginationBar'
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 
 export default function ClaimInfoSection() {
   const [isOpen, setIsOpen] = useState(false)
   const { claimCategories } = useGetAllClaimType()
-  const { control, handleSubmit, register, onSubmit, errors } = useCreateClaim()
+  const [isChangeTaskSelected, setIsChangeTaskSelected] = useState(false)
+  const { control, handleSubmit, register, onSubmit, errors, loading, setConversationId, conversationId } = useCreateClaim()
+  const { listConversation, loading: loadingConversation, setCurrentPage, currentPage } = useGetListConversationByStaffId({ isChangeTaskTypeSelected: isChangeTaskSelected })
   const handleOpen = () => {
     setIsOpen((state) => !state)
   }
@@ -35,7 +42,11 @@ export default function ClaimInfoSection() {
                           render={({ field }) => (
                             <AdvSelect
                               value={field.value}
-                              onValueChange={field.onChange}
+                              onValueChange={(value) => {
+                                field.onChange(value)
+                                const selectedCategory = claimCategories?.find((c) => c.id === value)
+                                setIsChangeTaskSelected(selectedCategory?.typeName === 'CHANGETASK')
+                              }}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder='Chọn loại claim'/>
@@ -58,13 +69,42 @@ export default function ClaimInfoSection() {
                         <label htmlFor="description" className='font-medium'>Mô tả</label>
                         <Input {...register('description')} id='description' variant='gray' placeholder='Mô tả chi tiết về yêu cầu của bạn...' type='text' className='pb-6'/>
                       </div>
+                      { loadingConversation ?
+                        <div className='flex justify-center items-center w-full'>
+                          <LoadingSpinner/>
+                        </div>
+                        :
+                        <>
+                          { isChangeTaskSelected && listConversation && listConversation.items.length > 0 &&
+                        <ScrollArea className='h-50 px-3'>
+                          <p className='text-primary font-medium my-2'>Danh sách cuộc trò chuyện</p>
+                          { listConversation.items.map((conversation) => (
+                            <Card variant={conversationId === conversation.conversationId ? 'primary' : 'default'} key={conversation.conversationId} className='text-sm-body-desktop my-2 rounded-xl' onClick={() => setConversationId(conversation.conversationId)}>
+                              <p className='text-primary font-medium'>Cuộc trò chuyện với khách: {conversation.customerName}</p>
+                            </Card>
+                          )) }
+                          <PaginationBar
+                            currentPage={currentPage}
+                            setPage={setCurrentPage}
+                            totalPage={listConversation.meta.total_pages}
+                          />
+                        </ScrollArea>
+                          }
+                        </>
+                      }
                       <div className='flex items-center justify-end gap-2 mt-4'>
-                        <Button variant='outline' className='border border-border-primary text-black px-5 hover:bg-gray-200' onClick={handleOpen}>
-                              Hủy
-                        </Button>
-                        <Button onClick={handleSubmit(onSubmit)}>
-                              Gửi Claim
-                        </Button>
+                        { loading ?
+                          <LoadingSpinner size='sm'/>
+                          :
+                          <>
+                            <Button variant='outline' className='border border-border-primary text-black px-5 hover:bg-gray-200' onClick={handleOpen}>
+                                  Hủy
+                            </Button>
+                            <Button onClick={handleSubmit(onSubmit)}>
+                                  Gửi Claim
+                            </Button>
+                          </>
+                        }
                       </div>
                     </PopupBasic>
         }
