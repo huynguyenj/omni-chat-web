@@ -125,17 +125,23 @@ function extractRevenueRowsFromResponse(response: unknown): TotalRevenue[] {
   return []
 }
 
+type RevenueOrderStatusFilter = 'all' | 'InDelivery' | ManagerOrderStatusFilter
+
 /** Hiển thị trạng thái đơn (API thường trả tiếng Anh) — pill + viền card */
 /** Lọc đơn theo status API (chuỗi như Draft, Completed, …) */
-function revenueOrderMatchesStatus(filter: ManagerOrderStatusFilter | 'all', apiStatus: string): boolean {
+function revenueOrderMatchesStatus(filter: RevenueOrderStatusFilter, apiStatus: string): boolean {
   if (filter === 'all') return true
+  if (filter === 'InDelivery') {
+    const s = apiStatus.trim().toLowerCase()
+    return s === 'pending' || s === 'shipped'
+  }
   return apiStatus.trim().toLowerCase() === filter.toLowerCase()
 }
 
-const REVENUE_ORDER_STATUS_FILTERS: Array<{ value: 'all' | ManagerOrderStatusFilter; label: string }> = [
+const REVENUE_ORDER_STATUS_FILTERS: Array<{ value: RevenueOrderStatusFilter; label: string }> = [
   { value: 'all', label: 'Tất cả' },
+  { value: 'InDelivery', label: 'Đang giao' },
   { value: 'Draft', label: 'Đợi duyệt' },
-  { value: 'Shipped', label: 'Đang giao' },
   { value: 'Completed', label: 'Hoàn thành' },
   { value: 'Cancelled', label: 'Đã hủy' },
   { value: 'PendingReturn', label: 'Chờ trả hàng' },
@@ -194,7 +200,7 @@ function sumOrderStatus(rows: OrderDashboardMonthRow[], statusLabel: string): nu
 
 export default function RevenueTab() {
   const ORDERS_PER_PAGE = 9
-  const [revenueOrderStatusFilter, setRevenueOrderStatusFilter] = useState<'all' | ManagerOrderStatusFilter>('all')
+  const [revenueOrderStatusFilter, setRevenueOrderStatusFilter] = useState<RevenueOrderStatusFilter>('InDelivery')
   const [revenueChartInput, setRevenueChartInput] = useState('2026')
   const [totalRevenueAmount, setTotalRevenueAmount] = useState(0)
   const [totalRevenueLoading, setTotalRevenueLoading] = useState(false)
@@ -791,18 +797,6 @@ export default function RevenueTab() {
               const dateText = orderDate.toLocaleDateString('vi-VN')
               const timeText = orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
               const statusUi = adminOrderStatusUi(order.status)
-              const badgeClass =
-                  order.deliveryStatus === 'Delivered'
-                    ? 'bg-[#1F9D55]'
-                    : order.deliveryStatus === 'Cancelled'
-                      ? 'bg-[#C62828]'
-                      : 'bg-[#EF6C00]'
-              const badgeText =
-                  order.deliveryStatus === 'Delivered'
-                    ? 'Đã giao'
-                    : order.deliveryStatus === 'Cancelled'
-                      ? 'Đã hủy'
-                      : 'Đang xử lý'
 
               return (
                 <Card
@@ -812,9 +806,6 @@ export default function RevenueTab() {
                   <div>
                     <div className="flex items-center justify-between mb-3 gap-2">
                       <h3 className="font-bold text-[#003366] text-lg">{order.code}</h3>
-                      <span className={`shrink-0 px-2 py-1 rounded-full text-[10px] font-semibold text-white ${badgeClass}`}>
-                        {badgeText}
-                      </span>
                     </div>
                     <div className="space-y-3 mb-4">
                       <div className="flex flex-col gap-1">
@@ -905,9 +896,7 @@ export default function RevenueTab() {
             Trước
           </Button>
           <p className="text-xs text-gray-500 text-center flex-1 min-w-0">
-            Trang {ordersPage}/{totalOrderPages} - Hiển thị {activeOrderCount === 0 ? 0 : (ordersPage - 1) * ORDERS_PER_PAGE + 1}
-            -
-            {Math.min(ordersPage * ORDERS_PER_PAGE, activeOrderCount)} / {activeOrderCount}
+            Trang {ordersPage}/{totalOrderPages}
           </p>
           <Button variant="outline" size="sm" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage((p) => Math.min(totalOrderPages, p + 1))}>
             Sau

@@ -17,6 +17,7 @@ import {
 import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
+import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerOrderApi } from '../../api/order-api'
 import { PostSaleRequestApi } from '../../api/post-sale-request-api'
 import PostSaleRequestsSection from './PostSaleRequestsSection'
@@ -562,16 +563,12 @@ export default function OrdersTab() {
           ))}
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="outline" size="sm" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-            Prev
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {page}/{totalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages || isLoading} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-            Next
-          </Button>
+        <div className="mt-6">
+          <PaginationBar
+            currentPage={page}
+            setPage={setPage}
+            totalPage={totalPages}
+          />
         </div>
       </Card>
 

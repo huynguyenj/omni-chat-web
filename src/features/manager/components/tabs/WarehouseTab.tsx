@@ -3,6 +3,7 @@ import { AlertTriangle, Package, Warehouse as WarehouseIcon, X, Boxes, Thermomet
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
+import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerInventoryApi } from '../../api/inventory-api'
 import type { InventoryDashboardData } from '../../types/inventory-type'
 import type { ManagerProductItem } from '../../types/product-type'
@@ -203,26 +204,12 @@ export default function WarehouseTab() {
           )}
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={productPage <= 1 || isLoadingProducts}
-            onClick={() => setProductPage(prev => Math.max(1, prev - 1))}
-          >
-            Prev
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {productPage}/{productTotalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={productPage >= productTotalPages || isLoadingProducts}
-            onClick={() => setProductPage(prev => Math.min(productTotalPages, prev + 1))}
-          >
-            Next
-          </Button>
+        <div className="mt-6">
+          <PaginationBar
+            currentPage={productPage}
+            setPage={setProductPage}
+            totalPage={productTotalPages}
+          />
         </div>
       </Card>
 

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
+import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerShipperApi } from '../../api/shipper-api'
 import { ManagerOrderApi } from '../../api/order-api'
 import type { ManagerOrderItem, ManagerOrderLineItem } from '../../types/order-type'
@@ -501,16 +502,12 @@ export default function ShippersTab() {
           ))}
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="outline" size="sm" disabled={shipperPage <= 1 || shipperLoading} onClick={() => setShipperPage((p) => Math.max(1, p - 1))}>
-            Prev
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {shipperPage}/{shipperTotalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={shipperPage >= shipperTotalPages || shipperLoading} onClick={() => setShipperPage((p) => Math.min(shipperTotalPages, p + 1))}>
-            Next
-          </Button>
+        <div className="mt-6">
+          <PaginationBar
+            currentPage={shipperPage}
+            setPage={setShipperPage}
+            totalPage={shipperTotalPages}
+          />
         </div>
       </Card>
 
@@ -634,14 +631,12 @@ export default function ShippersTab() {
           })}
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="outline" size="sm" disabled={ordersPage <= 1 || ordersLoading} onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}>
-            Prev
-          </Button>
-          <span className="text-sm text-gray-600">Page {ordersPage}/{totalOrderPages}</span>
-          <Button variant="outline" size="sm" disabled={ordersPage >= totalOrderPages || ordersLoading} onClick={() => setOrdersPage((p) => Math.min(totalOrderPages, p + 1))}>
-            Next
-          </Button>
+        <div className="mt-6">
+          <PaginationBar
+            currentPage={ordersPage}
+            setPage={setOrdersPage}
+            totalPage={totalOrderPages}
+          />
         </div>
       </Card>
 

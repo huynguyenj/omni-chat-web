@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Eye, Loader2 } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
+import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { PostSaleRequestApi } from '../../api/post-sale-request-api'
 import type { PostSaleRequestItem } from '../../types/post-sale-request-type'
 
@@ -225,21 +226,12 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
         })}
       </div>
 
-      <div className="flex items-center justify-between mt-6">
-        <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-          Prev
-        </Button>
-        <span className="text-sm text-gray-600">
-          Page {page}/{totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page >= totalPages || loading}
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-        >
-          Next
-        </Button>
+      <div className="mt-6">
+        <PaginationBar
+          currentPage={page}
+          setPage={setPage}
+          totalPage={totalPages}
+        />
       </div>
     </Card>
   )
