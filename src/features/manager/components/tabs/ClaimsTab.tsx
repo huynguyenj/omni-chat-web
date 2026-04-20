@@ -248,7 +248,7 @@ export default function ClaimsTab() {
                 <div className="pt-3 border-t mt-4 grid grid-cols-2 gap-2">
                   <Button
                     size="sm"
-                    className="bg-[#2ECC71] hover:bg-[#27AE60] text-white"
+                    className="bg-[#6FDFA0] hover:bg-[#5BCB8C] text-white"
                     onClick={() => handleApproveClaim(claim.id)}
                     disabled={!!processingClaimId || isLoading}
                   >
@@ -256,7 +256,7 @@ export default function ClaimsTab() {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-[#EF4444] hover:bg-[#DC2626] text-white"
+                    className="bg-[#F87171] hover:bg-[#F25F5F] text-white"
                     onClick={() => handleRejectClaim(claim.id)}
                     disabled={!!processingClaimId || isLoading}
                   >
