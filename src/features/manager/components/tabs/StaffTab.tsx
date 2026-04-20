@@ -18,10 +18,12 @@ import useUpdateStaffInfo from '../../hooks/useUpdateStaffInfo'
 import { AnimatePresence } from 'motion/react'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 import useDeleteStaff from '../../hooks/useDeleteStaff'
+import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
+import { STAFF_LIST_SORT_BY } from '../../const/staff'
 
 
 export default function StaffTab() {
-  const { listStaffs, loading, setCurrentPage, setSearchText, currentPage, setOnRefresh } = useGetListStaff()
+  const { listStaffs, loading, setCurrentPage, setSearchText, currentPage, setOnRefresh, setSortBy, setSortType, sortBy, sortType } = useGetListStaff()
   const [isOpenEdit, setIsOpenEdit] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
   const { checkedIntentType, errors, handleSubmit, loading: editLoading, onSubmit, register, setCheckIntentType, setStaffInfoEdit, reset } = useUpdateStaffInfo({ onRefresh: setOnRefresh })
@@ -79,6 +81,35 @@ export default function StaffTab() {
           <StaffCardSkeleton count={3}/>
           :
           <>
+            <div className='flex gap-2 items-center w-full mb-3'>
+              <p className='text-nowrap'>Sắp xếp:</p>
+              <AdvSelect
+                value={sortBy}
+                onValueChange={setSortBy}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Chức năng'/>
+                </SelectTrigger>
+                <SelectContent>
+                  { STAFF_LIST_SORT_BY.map((sort, i) => (
+                    <SelectItem key={i} value={sort.value}>{sort.name}</SelectItem>
+                  )) }
+                </SelectContent>
+              </AdvSelect>
+              <AdvSelect
+                onValueChange={setSortType}
+                defaultValue='false'
+                value={sortType}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Thứ tự'/>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='true'>{ sortBy !== 'createdate' ? 'Giảm dần' : 'Mới nhất' }</SelectItem>
+                  <SelectItem value='false'>{ sortBy !== 'createdate' ? 'Tăng dần' : 'Cũ nhất' }</SelectItem>
+                </SelectContent>
+              </AdvSelect>
+            </div>
             {listStaffs && listStaffs.items.length > 0 ?
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3">

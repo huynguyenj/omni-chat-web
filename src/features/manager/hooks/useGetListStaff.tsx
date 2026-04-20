@@ -8,12 +8,21 @@ export default function useGetListStaff() {
   const [searchText, setSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [listStaffs, setListStaffs] = useState<PaginationStructure<StaffDetailType>>()
+  const [sortBy, setSortBy] = useState('createdate')
+  const [sortType, setSortType] = useState('false')
   const { execute, loading } = useApiCall<PaginationStructure<StaffDetailType>>()
   const [onRefresh, setOnRefresh] = useState(false)
   useEffect(() => {
     const fetchStaffList = async () => {
+      const params = new URLSearchParams()
+      params.append('pageNumber', currentPage.toString())
+      params.append('pageSize', '6')
+      params.append('sortBy', sortBy.toString())
+      params.append('descending', sortType.toString())
+      if (searchText) params.append('search', searchText.toString())
+      const apiUrl = `/staff/get?${params.toString()}`
       const apiData = await execute({
-        apiUrl: `/staff/get?pageNumber=${currentPage}&pageSize=6&search=${searchText}&descending=false`,
+        apiUrl: apiUrl,
         method: 'get',
         type: 'private'
       })
@@ -25,6 +34,6 @@ export default function useGetListStaff() {
       setListStaffs(data)
     }
     fetchStaffList()
-  }, [searchText, currentPage, onRefresh])
-  return { setCurrentPage, setSearchText, listStaffs, loading, currentPage, setOnRefresh }
+  }, [searchText, currentPage, onRefresh, sortBy, sortType])
+  return { setCurrentPage, setSearchText, listStaffs, loading, currentPage, setOnRefresh, setSortBy, setSortType, sortBy, sortType }
 }
