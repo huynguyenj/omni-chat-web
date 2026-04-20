@@ -146,7 +146,7 @@ function OrderDetailModal({
             <p className="text-sm text-gray-600">Đang tải chi tiết đơn hàng...</p>
           </div>
         ) : (
-          <OrderDetailModalBody order={order} onClose={onClose} onOrderActionSuccess={onOrderActionSuccess} />
+          <OrderDetailModalBody order={order} onOrderActionSuccess={onOrderActionSuccess} />
         )}
       </div>
     </div>
@@ -155,11 +155,9 @@ function OrderDetailModal({
 
 function OrderDetailModalBody({
   order,
-  onClose,
   onOrderActionSuccess
 }: {
   order: ManagerOrderItem
-  onClose: () => void
   onOrderActionSuccess: () => void
 }) {
   const [pendingAction, setPendingAction] = useState<'cancel' | 'confirm' | null>(null)
@@ -280,9 +278,6 @@ function OrderDetailModalBody({
       </div>
 
       <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white px-5 py-4">
-        <Button type="button" variant="outline" className="flex-1 min-w-[100px]" onClick={onClose}>
-          Đóng
-        </Button>
         <Button
           type="button"
           disabled={!canCancelOrConfirm || pendingAction !== null}

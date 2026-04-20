@@ -11,9 +11,17 @@ function Modal({ open, onClose, title, children }: { open: boolean; onClose: () 
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4" onMouseDown={onClose}>
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto" onMouseDown={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold text-[#003366] mb-4">{title}</h3>
-        {children}
+      <div
+        className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-gray-100 bg-white px-6 py-4">
+          <h3 className="text-lg font-semibold text-[#003366] pr-2">{title}</h3>
+          <Button type="button" variant="outline" size="sm" className="h-9 w-9 shrink-0 p-0" onClick={onClose} aria-label="Đóng">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   )
@@ -288,17 +296,6 @@ export default function WarehouseTab() {
                 <p className="text-sm text-gray-500">Mô tả sản phẩm:</p>
                 <p className="text-xl font-semibold text-[#003366] whitespace-pre-wrap">{selectedProduct.description || '-'}</p>
               </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <Button
-                size="sm"
-                className="bg-[#3366CC] hover:bg-[#2952A3] text-white border-[#3366CC]"
-                onClick={() => setDetailOpen(false)}
-              >
-                <X className="h-4 w-4 mr-1" />
-                Đóng
-              </Button>
             </div>
           </div>
         )}

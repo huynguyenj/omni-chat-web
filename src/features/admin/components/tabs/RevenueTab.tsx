@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
 import { REVENUE_ORDERS } from '@/components/admin/admin-dashboard-data'
-import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, RotateCcw, XCircle } from 'lucide-react'
+import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, RotateCcw, X, XCircle } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'react-toastify'
 import { isAxiosError } from 'axios'
@@ -917,13 +917,20 @@ export default function RevenueTab() {
 
       {orderDetailModalOpen && (
         <ModalShell onClose={closeOrderDetailModal}>
-          <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-start justify-between gap-3 mb-4 border-b border-gray-100 pb-4">
             <div>
               <h3 className="text-lg font-semibold text-[#003366]">Chi tiết đơn hàng</h3>
               <p className="text-sm text-gray-500">{orderDetail?.code ? `Đơn ${orderDetail.code}` : 'Đang tải thông tin đơn...'}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={closeOrderDetailModal}>
-              Đóng
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 w-9 shrink-0 p-0"
+              onClick={closeOrderDetailModal}
+              aria-label="Đóng"
+            >
+              <X className="h-4 w-4" />
             </Button>
           </div>
           {orderDetailLoading && <p className="text-sm text-gray-600 py-6 text-center">Đang tải…</p>}

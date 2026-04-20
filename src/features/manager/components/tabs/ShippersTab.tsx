@@ -209,9 +209,6 @@ function ViewOrderModal({
             </div>
 
             <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white px-5 py-4">
-              <Button type="button" variant="outline" className="flex-1 min-w-[100px]" onClick={onClose}>
-                Đóng
-              </Button>
               <Button
                 type="button"
                 className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0"
