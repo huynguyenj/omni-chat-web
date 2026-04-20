@@ -36,5 +36,5 @@ export function countRestDay (targetDate: Date) {
   end.setHours(0, 0, 0, 0)
 
   const leftDay = Math.ceil((end.getTime() - start.getTime())/ msPerDay)
-  return leftDay
+  return leftDay > 0 ? leftDay : 0
 }

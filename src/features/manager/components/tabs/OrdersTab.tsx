@@ -18,6 +18,7 @@ import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import { ManagerOrderApi } from '../../api/order-api'
+import { PostSaleRequestApi } from '../../api/post-sale-request-api'
 import PostSaleRequestsSection from './PostSaleRequestsSection'
 import type { ManagerOrderItem, ManagerOrderLineItem, ManagerOrderStatus, ManagerOrderStatusFilter } from '../../types/order-type'
 
@@ -107,18 +108,26 @@ function formatDateShort(iso: string) {
   return d.toLocaleDateString('vi-VN')
 }
 
+type OrderDetailPostSaleContext = {
+  id: string
+  status: string
+  type?: string
+}
+
 function OrderDetailModal({
   order,
   open,
   loading,
   onClose,
-  onOrderActionSuccess
+  onOrderActionSuccess,
+  postSaleRequest
 }: {
   order: ManagerOrderItem | null
   open: boolean
   loading: boolean
   onClose: () => void
   onOrderActionSuccess: () => void
+  postSaleRequest?: OrderDetailPostSaleContext | null
 }) {
   if (!open) return null
 
@@ -146,7 +155,11 @@ function OrderDetailModal({
             <p className="text-sm text-gray-600">Đang tải chi tiết đơn hàng...</p>
           </div>
         ) : (
-          <OrderDetailModalBody order={order} onClose={onClose} onOrderActionSuccess={onOrderActionSuccess} />
+          <OrderDetailModalBody
+            order={order}
+            postSaleRequest={postSaleRequest ?? null}
+            onOrderActionSuccess={onOrderActionSuccess}
+          />
         )}
       </div>
     </div>
@@ -155,27 +168,35 @@ function OrderDetailModal({
 
 function OrderDetailModalBody({
   order,
-  onClose,
+  postSaleRequest,
   onOrderActionSuccess
 }: {
   order: ManagerOrderItem
-  onClose: () => void
+  postSaleRequest: OrderDetailPostSaleContext | null
   onOrderActionSuccess: () => void
 }) {
-  const [pendingAction, setPendingAction] = useState<'cancel' | 'confirm' | null>(null)
+  const [pendingAction, setPendingAction] = useState<'reject' | 'confirm' | null>(null)
   const lines = getLineItems(order)
   const totalQty = lines.reduce((s, l) => s + l.quantity, 0)
   const pill = orderStatusPill(String(order.status))
-  const canCancelOrConfirm = order.status === 'Draft' || order.status === 'Pending'
+  const fromPostSaleList = Boolean(postSaleRequest?.id)
+  const canActPostSale = fromPostSaleList && postSaleRequest?.status === 'Pending'
+  const canSubmitDraft = !fromPostSaleList && order.status === 'Draft'
+  const canRejectPostSale = canActPostSale
 
-  const handleCancelOrder = async () => {
-    setPendingAction('cancel')
+  const rejectDisabled = pendingAction !== null || !canRejectPostSale
+  const confirmDisabled = pendingAction !== null || !(canActPostSale || canSubmitDraft)
+  const showActionBar = canSubmitDraft || canActPostSale
+
+  const handleRejectPostSale = async () => {
+    if (!postSaleRequest) return
+    setPendingAction('reject')
     try {
-      const msg = await ManagerOrderApi.cancelOrder(order.id)
+      const msg = await PostSaleRequestApi.rejectPostSaleRequest(postSaleRequest.id)
       toast.success(msg)
       onOrderActionSuccess()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Không thể hủy đơn hàng.')
+      toast.error(e instanceof Error ? e.message : 'Không thể từ chối yêu cầu.')
     } finally {
       setPendingAction(null)
     }
@@ -184,11 +205,20 @@ function OrderDetailModalBody({
   const handleConfirmOrder = async () => {
     setPendingAction('confirm')
     try {
-      const msg = await ManagerOrderApi.confirmOrder(order.id)
+      const msg =
+        canActPostSale && postSaleRequest
+          ? await PostSaleRequestApi.approvePostSaleRequest(postSaleRequest.id)
+          : await ManagerOrderApi.submitDraftOrder(order.id)
       toast.success(msg)
       onOrderActionSuccess()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Không thể xác nhận đơn hàng.')
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : canActPostSale
+            ? 'Không thể duyệt yêu cầu.'
+            : 'Không thể gửi đơn nháp.'
+      )
     } finally {
       setPendingAction(null)
     }
@@ -279,37 +309,38 @@ function OrderDetailModalBody({
         </div>
       </div>
 
-      <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white px-5 py-4">
-        <Button type="button" variant="outline" className="flex-1 min-w-[100px]" onClick={onClose}>
-          Đóng
-        </Button>
-        <Button
-          type="button"
-          disabled={!canCancelOrConfirm || pendingAction !== null}
-          className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0 disabled:opacity-60"
-          onClick={() => void handleCancelOrder()}
-        >
-          {pendingAction === 'cancel' ? (
-            <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
-          ) : (
-            <XCircle className="h-4 w-4 mr-1.5 inline" />
+      {showActionBar && (
+        <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white px-5 py-4">
+          {canRejectPostSale && (
+            <Button
+              type="button"
+              disabled={rejectDisabled}
+              className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0 disabled:opacity-60"
+              onClick={() => void handleRejectPostSale()}
+            >
+              {pendingAction === 'reject' ? (
+                <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
+              ) : (
+                <XCircle className="h-4 w-4 mr-1.5 inline" />
+              )}
+              Từ chối yêu cầu
+            </Button>
           )}
-          Hủy đơn
-        </Button>
-        <Button
-          type="button"
-          disabled={!canCancelOrConfirm || pendingAction !== null}
-          className="flex-1 min-w-[120px] bg-[#26C271] hover:bg-[#22b366] text-white border-0 disabled:opacity-60"
-          onClick={() => void handleConfirmOrder()}
-        >
-          {pendingAction === 'confirm' ? (
-            <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
-          ) : (
-            <CheckCircle2 className="h-4 w-4 mr-1.5 inline" />
-          )}
-          Xác nhận
-        </Button>
-      </div>
+          <Button
+            type="button"
+            disabled={confirmDisabled}
+            className="flex-1 min-w-[120px] bg-[#26C271] hover:bg-[#22b366] text-white border-0 disabled:opacity-60"
+            onClick={() => void handleConfirmOrder()}
+          >
+            {pendingAction === 'confirm' ? (
+              <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 mr-1.5 inline" />
+            )}
+            Xác nhận
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -388,30 +419,9 @@ function OrderCard({
   )
 }
 
-const ORDER_STATUS_FILTERS: Array<{ value: 'all' | ManagerOrderStatusFilter; label: string }> = [
-  { value: 'all', label: 'Tất cả' },
-  { value: 'Draft', label: 'Đợi duyệt' },
-  { value: 'Shipped', label: 'Đang giao' },
-  { value: 'Completed', label: 'Hoàn thành' },
-  { value: 'Cancelled', label: 'Đã hủy' },
-  { value: 'PendingReturn', label: 'Chờ trả hàng' },
-  { value: 'Returned', label: 'Đã trả' },
-  { value: 'ReturnedDefective', label: 'Xã hàng lỗi' }
-]
-
-const NON_PENDING_STATUSES: ManagerOrderStatusFilter[] = [
-  'Draft',
-  'Cancelled',
-  'Shipped',
-  'PendingReturn',
-  'Returned',
-  'Completed',
-  'ReturnedDefective'
-]
-
 export default function OrdersTab() {
   const [page, setPage] = useState(1)
-  const [selectedStatus, setSelectedStatus] = useState<'all' | ManagerOrderStatusFilter>('all')
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'InDelivery' | ManagerOrderStatusFilter>('InDelivery')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [orders, setOrders] = useState<ManagerOrderItem[]>([])
@@ -419,13 +429,26 @@ export default function OrdersTab() {
   const [detailOrder, setDetailOrder] = useState<ManagerOrderItem | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailPostSaleContext, setDetailPostSaleContext] = useState<OrderDetailPostSaleContext | null>(null)
+  const [postSaleListRefreshKey, setPostSaleListRefreshKey] = useState(0)
   const pageSize = 6
+  const ORDER_STATUS_FILTERS: Array<{ value: 'all' | 'InDelivery' | ManagerOrderStatusFilter; label: string }> = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'Draft', label: 'Đợi duyệt' },
+    { value: 'InDelivery', label: 'Đang giao' },
+    { value: 'Completed', label: 'Hoàn thành' },
+    { value: 'Cancelled', label: 'Đã hủy' },
+    { value: 'PendingReturn', label: 'Chờ trả hàng' },
+    { value: 'Returned', label: 'Đã trả' },
+    { value: 'ReturnedDefective', label: 'Xã hàng lỗi' }
+  ]
 
-  const openOrderDetailById = async (orderId: string) => {
+  const openOrderDetailById = async (orderId: string, psr?: OrderDetailPostSaleContext | null) => {
     if (!orderId) {
       toast.error('Không có mã đơn để tải chi tiết.')
       return
     }
+    setDetailPostSaleContext(psr ?? null)
     setDetailOpen(true)
     setDetailOrder(null)
     setDetailLoading(true)
@@ -441,13 +464,14 @@ export default function OrdersTab() {
   }
 
   const openOrderDetail = async (order: ManagerOrderItem) => {
-    await openOrderDetailById(order.id)
+    await openOrderDetailById(order.id, null)
   }
 
   const closeOrderDetail = () => {
     setDetailOpen(false)
     setDetailOrder(null)
     setDetailLoading(false)
+    setDetailPostSaleContext(null)
   }
 
   const fetchOrders = useCallback(async () => {
@@ -457,7 +481,11 @@ export default function OrdersTab() {
       const response = await ManagerOrderApi.getOrders({
         pageNumber: page,
         pageSize,
-        orderStatuses: selectedStatus === 'all' ? NON_PENDING_STATUSES : [selectedStatus]
+        orderStatuses: selectedStatus === 'all'
+          ? undefined
+          : selectedStatus === 'InDelivery'
+            ? ['Pending', 'Shipped']
+            : [selectedStatus]
       })
       const items = response?.data?.items ?? []
       const pages = response?.data?.meta?.total_pages ?? 1
@@ -480,8 +508,12 @@ export default function OrdersTab() {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-[#003366] text-xl font-semibold">Quản lý đơn hàng</h2>
-            <p className="text-sm text-gray-500 mt-1">Theo dõi và xử lý đơn hàng</p>
+            <h2 className="text-[#003366] text-xl font-semibold">Đơn hàng giao</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Danh sách đơn hàng có trạng thái {
+                ORDER_STATUS_FILTERS.find((s) => s.value === selectedStatus)?.label ?? selectedStatus
+              }
+            </p>
           </div>
         </div>
 
@@ -543,16 +575,27 @@ export default function OrdersTab() {
         </div>
       </Card>
 
-      <PostSaleRequestsSection onViewOrder={(orderId) => void openOrderDetailById(orderId)} />
+      <PostSaleRequestsSection
+        listRefreshKey={postSaleListRefreshKey}
+        onViewOrder={(orderId, req) =>
+          void openOrderDetailById(orderId, {
+            id: req.id,
+            status: String(req.status),
+            type: String(req.type)
+          })
+        }
+      />
 
       <OrderDetailModal
         order={detailOrder}
         open={detailOpen}
         loading={detailLoading}
         onClose={closeOrderDetail}
+        postSaleRequest={detailPostSaleContext}
         onOrderActionSuccess={() => {
           closeOrderDetail()
           void fetchOrders()
+          setPostSaleListRefreshKey((k) => k + 1)
         }}
       />
     </div>

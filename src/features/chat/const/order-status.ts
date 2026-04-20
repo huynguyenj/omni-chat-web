@@ -5,43 +5,47 @@ type OrderStatusType = {
 
 export const ORDER_STATUS: Record<string, OrderStatusType> = {
   Draft: {
-    name: 'Bản mẫu',
+    name: 'Bản nháp',
     tagVariant: 'gray'
   },
   Pending: {
-    name: 'Đang xét duyệt',
+    name: 'Chờ xử lí',
     tagVariant: 'primary'
   },
   Cancelled: {
-    name: 'Bị hủy',
+    name: 'Đã hủy',
     tagVariant: 'danger'
   },
   Shipped: {
-    name: 'Đã vận chuyển',
+    name: 'Đã giao hàng',
     tagVariant: 'default'
   },
-  Returned: {
-    name: 'Trả hàng',
+  PendingReturned: {
+    name: 'Chờ trả hàng',
     tagVariant: 'warn'
   },
+  Returned: {
+    name: 'Đã trả hàng',
+    tagVariant: 'danger'
+  },
   Completed: {
-    name: 'Thành công',
+    name: 'Hoàn thành',
     tagVariant: 'success'
   },
   ReturnDefective: {
-    name: 'Hoàn trả lại hàng',
+    name: 'Đã trả hàng do lỗi',
     tagVariant: 'danger'
   }
 }
 
 export const DELIVERY_STATUS: Record<string, OrderStatusType> = {
   Pending: {
-    name: 'Đang chờ giao',
+    name: 'Đang vận chuyển',
     tagVariant: 'primary'
   },
 
   Completed: {
-    name: 'Giao thành công',
+    name: 'Đã chuyển xong',
     tagVariant: 'success'
   }
 }

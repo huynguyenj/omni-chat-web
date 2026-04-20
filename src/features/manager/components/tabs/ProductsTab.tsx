@@ -37,6 +37,7 @@ export default function ProductsTab() {
   const [isOpenCreateProduct, setIsOpenCreateProduct] = useState(false)
   const [isOpenProductInfoEdit, setIsOpenProductInfoEdit] = useState(false)
   const [isOpenProductImageEdit, setIsOpenProductImageEdit] = useState(false)
+  const [batchDetailOpen, setBatchDetailOpen] = useState(false)
 
   const { handleCreateBatch, listBatchItems, loading: loadingCreateBatch, productChoseForBatch, setListBatchItems, setProductChoseForBatch, handleAddBatch, handleDeleteBatch, handleSubmit, register } = useCreateBatchProduct()
   const { handleDelete, loading: deleteLoading, setProductId } = useDeleteProduct({ onRefresh: setOnRefresh, onCloseModalDelete: setIsAlertOpen })
@@ -44,13 +45,11 @@ export default function ProductsTab() {
   const { listBrand } = useGetAllBrand()
   const { loading:batchLoading, productBatchList, setBatchCurrentPage, setProductForBatchId, productForBatchId, batchCurrentPage } = useGetProductBatchManager()
   const { errors: errorUpdate, handleSubmitImage, handleSubmitProductInfo, loading: loadingUpdate, newImagePreview, onProductImageSubmit, onProductInfoSubmit, resetImage, resetProductInfo, setProductUpdateSelected, registerProductInfoUpdate, setNewImagePreview, controlProductUpdateImage, productUpdateSelected } = useUpdateProduct({ onRefresh: setOnRefresh })
+
   const handleSearch = (text: string) => {
     setSearchText(text)
   }
   const debounce = useDebounce(handleSearch, 500)
-  // const handleOpenEdit = () => {
-
-  // }
 
   const handleOpenAlert = (productId: string) => {
     setIsAlertOpen((prev) => !prev)
@@ -89,6 +88,15 @@ export default function ProductsTab() {
     resetImage({
       Image: undefined
     })
+  }
+
+  const handleBatchShowSelect = (productId: string) => {
+    if (productForBatchId === productId && batchDetailOpen === true) {
+      setBatchDetailOpen(false)
+      return
+    }
+    setProductForBatchId(productId)
+    setBatchDetailOpen(true)
   }
   return (
     <div className="space-y-4">
@@ -169,11 +177,11 @@ export default function ProductsTab() {
                           <Trash2 className="size-4" />
                         </Button>
                       </div>
-                      <Button variant="basic" className='' onClick={() => setProductForBatchId(product.id)}>
+                      <Button variant="basic" className='' onClick={() => handleBatchShowSelect(product.id)}>
                         <LuPackageSearch />
                           Xem lô hàng
                       </Button>
-                      { productForBatchId === product.id &&
+                      { productForBatchId === product.id && batchDetailOpen &&
                         <>
                           { batchLoading ?
                             <CardSkeleton count={3}/>
@@ -189,7 +197,9 @@ export default function ProductsTab() {
                                           <p className='text-primary font-medium'>{batch.quantity} sp</p>
                                         </div>
                                         <p className='text-[0.85rem] text-soft-gray'>EXP: {formatDate(batch.expiryDate)}</p>
-                                        <p className={`${countRestDay(batch.expiryDate) <= 30 ? 'text-red-500 font-medium' : 'text-soft-gray text-[0.85rem]'}`}>Còn {countRestDay(batch.expiryDate)} ngày</p>
+                                        <p className={`${countRestDay(batch.expiryDate) <= 30 ? 'text-red-500 font-medium' : 'text-soft-gray text-[0.85rem]'}`}>
+                                          {countRestDay(batch.expiryDate) > 0 ? `Còn lại ${countRestDay(batch.expiryDate)} ngày` : 'Hết hạn'}
+                                        </p>
                                       </Card>
                                     )) }
                                   </ScrollArea>

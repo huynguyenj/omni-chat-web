@@ -8,12 +8,21 @@ export default function useGetKeywords() {
   const [searchText, setSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [keyWordList, setKeyWordList] = useState<PaginationStructure<KeywordDetailType>>()
+  const [filterIntent, setFilterIntent] = useState('')
+  const [sortType, setSortType] = useState('false')
   const { execute, loading } = useApiCall<PaginationStructure<KeywordDetailType>>()
   const [onRefresh, setOnRefresh] = useState(false)
   useEffect(() => {
-    const fetchStaffList = async () => {
+    const fetchKeywordList = async () => {
+      const params = new URLSearchParams()
+      params.append('pageNumber', currentPage.toString())
+      params.append('pageSize', '6')
+      params.append('descending', sortType.toString())
+      if (filterIntent || filterIntent !== 'all') params.append('intentTypeId', filterIntent.toString())
+      if (searchText) params.append('search', searchText.toString())
+      const apiUrl = `/keywords/get?${params.toString()}`
       const apiData = await execute({
-        apiUrl: `/keywords/get?pageNumber=${currentPage}&pageSize=6`,
+        apiUrl: apiUrl,
         method: 'get',
         type: 'private'
       })
@@ -24,7 +33,15 @@ export default function useGetKeywords() {
       }
       setKeyWordList(data)
     }
-    fetchStaffList()
-  }, [searchText, currentPage, onRefresh])
-  return { setCurrentPage, setSearchText, keyWordList, loading, currentPage, setOnRefresh }
+    fetchKeywordList()
+  }, [searchText, currentPage, onRefresh, sortType, filterIntent])
+
+  const handleSelectIntent = (intentValue: string) => {
+    if (intentValue === 'all') {
+      setFilterIntent('')
+      return
+    }
+    setFilterIntent(intentValue)
+  }
+  return { setCurrentPage, setSearchText, keyWordList, loading, currentPage, setOnRefresh, setSortType, sortType, filterIntent, handleSelectIntent }
 }

@@ -32,7 +32,7 @@ export default function TaskList() {
                       <Checkbox id='task' checked={task.status === 'Done'} onCheckedChange={() => handleUpdateTask(task.id)}/>
                       <label htmlFor="task" className={`text-sm-body-desktop font-bold text-primary ${task.status === 'Done' && 'line-through'}`}>{task.intentTypeName}</label>
                     </div>
-                    <Tag variant={TASK_STATUS[task.status].tagVariant} className='py-1 px-2'>
+                    <Tag variant={TASK_STATUS[task.status].tagVariant} className='py-0.5 px-2'>
                       {TASK_STATUS[task.status].name}
                     </Tag>
                   </div>

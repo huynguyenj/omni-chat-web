@@ -5,13 +5,6 @@ import Button from '@/components/ui/button/Button'
 import { PostSaleRequestApi } from '../../api/post-sale-request-api'
 import type { PostSaleRequestItem } from '../../types/post-sale-request-type'
 
-const SORT_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'requestedTime', label: 'Thời gian yêu cầu' },
-  { value: 'status', label: 'Trạng thái' },
-  { value: 'type', label: 'Loại yêu cầu' },
-  { value: 'refundAmount', label: 'Số tiền hoàn' }
-]
-
 function formatMoney(n: number | null | undefined) {
   if (n == null || Number.isNaN(Number(n))) return '—'
   return `${Number(n).toLocaleString('vi-VN')}đ`
@@ -67,18 +60,27 @@ function requestTypeLabel(t: string) {
 }
 
 type PostSaleRequestsSectionProps = {
-  onViewOrder: (orderId: string) => void
+  onViewOrder: (orderId: string, postSaleRequest: PostSaleRequestItem) => void
+  listRefreshKey?: number
 }
 
-export default function PostSaleRequestsSection({ onViewOrder }: PostSaleRequestsSectionProps) {
+type PostSaleFilterStatus = 'all' | 'Pending' | 'Approved' | 'Rejected'
+
+const STATUS_FILTERS: Array<{ value: PostSaleFilterStatus; label: string }> = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'Pending', label: 'Chờ duyệt' },
+  { value: 'Approved', label: 'Đã duyệt' },
+  { value: 'Rejected', label: 'Đã từ chối' }
+]
+
+export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 0 }: PostSaleRequestsSectionProps) {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(9)
-  const [sortBy, setSortBy] = useState('requestedTime')
-  const [descending, setDescending] = useState<boolean | ''>(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<PostSaleRequestItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
+  const [statusFilter, setStatusFilter] = useState<PostSaleFilterStatus>('all')
 
   const fetchList = useCallback(async () => {
     setLoading(true)
@@ -86,11 +88,7 @@ export default function PostSaleRequestsSection({ onViewOrder }: PostSaleRequest
     try {
       const params: Parameters<typeof PostSaleRequestApi.getPostSaleRequests>[0] = {
         pageNumber: page,
-        pageSize,
-        sortBy
-      }
-      if (descending === true || descending === false) {
-        params.descending = descending
+        pageSize
       }
       const res = await PostSaleRequestApi.getPostSaleRequests(params)
       if (res.is_success === false || res.data == null) {
@@ -106,21 +104,16 @@ export default function PostSaleRequestsSection({ onViewOrder }: PostSaleRequest
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, sortBy, descending])
+  }, [page, pageSize])
 
   useEffect(() => {
     void fetchList()
-  }, [fetchList])
+  }, [fetchList, listRefreshKey])
 
-  const counts = useMemo(() => {
-    let pending = 0
-    let approved = 0
-    for (const r of items) {
-      if (r.status === 'Pending') pending += 1
-      else if (r.status === 'Approved') approved += 1
-    }
-    return { pending, approved }
-  }, [items])
+  const filteredItems = useMemo(() => {
+    if (statusFilter === 'all') return items
+    return items.filter((r) => String(r.status) === statusFilter)
+  }, [items, statusFilter])
 
   return (
     <Card className="p-6">
@@ -130,51 +123,21 @@ export default function PostSaleRequestsSection({ onViewOrder }: PostSaleRequest
           <p className="text-sm text-gray-500 mt-1">Các yêu cầu hoàn tiền từ nhân viên cần xử lý</p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
-          <span className="inline-flex items-center rounded-full bg-[#FF9800] px-3 py-1 text-xs font-semibold text-white">
-            {counts.pending} Chờ duyệt
-          </span>
-          <span className="inline-flex items-center rounded-full bg-[#26C271] px-3 py-1 text-xs font-semibold text-white">
-            {counts.approved} Đã duyệt
-          </span>
-        </div>
-      </div>
-
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <div className="flex flex-col gap-1 min-w-[180px]">
-          <label className="text-xs font-semibold text-gray-600">Sắp xếp theo</label>
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value)
-              setPage(1)
-            }}
-            disabled={loading}
-            className="py-2 px-3 rounded-[6px] bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30 text-sm"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1 min-w-[160px]">
-          <label className="text-xs font-semibold text-gray-600">Thứ tự</label>
-          <select
-            value={descending === '' ? '' : descending ? 'desc' : 'asc'}
-            onChange={(e) => {
-              const v = e.target.value
-              if (v === '') setDescending('')
-              else setDescending(v === 'desc')
-              setPage(1)
-            }}
-            disabled={loading}
-            className="py-2 px-3 rounded-[6px] bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30 text-sm"
-          >
-            <option value="">Mặc định (API)</option>
-            <option value="desc">Giảm dần</option>
-            <option value="asc">Tăng dần</option>
-          </select>
+          {STATUS_FILTERS.map((option) => {
+            const active = statusFilter === option.value
+            return (
+              <Button
+                key={option.value}
+                size="sm"
+                variant={active ? 'default' : 'outline'}
+                className={active ? 'bg-[#3366CC] hover:bg-[#2952A3]' : ''}
+                onClick={() => setStatusFilter(option.value)}
+                disabled={loading}
+              >
+                {option.label}
+              </Button>
+            )
+          })}
         </div>
       </div>
 
@@ -190,13 +153,13 @@ export default function PostSaleRequestsSection({ onViewOrder }: PostSaleRequest
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {!loading && items.length === 0 && (
+        {!loading && filteredItems.length === 0 && (
           <div className="col-span-full rounded-md border border-gray-200 bg-gray-50 px-3 py-8 text-center text-sm text-gray-600">
-            Chưa có yêu cầu sau bán hàng.
+            Không có yêu cầu phù hợp với bộ lọc.
           </div>
         )}
 
-        {items.map((req, idx) => {
+        {filteredItems.map((req, idx) => {
           const ui = requestStatusUi(String(req.status))
           const displayId = `PSR${String((page - 1) * pageSize + idx + 1).padStart(3, '0')}`
           return (
@@ -250,7 +213,7 @@ export default function PostSaleRequestsSection({ onViewOrder }: PostSaleRequest
                     size="sm"
                     className="w-full h-10 rounded-lg border-[#3366CC] text-[#3366CC] hover:bg-[#3366CC]/5 bg-transparent font-medium"
                     disabled={loading}
-                    onClick={() => onViewOrder(req.orderId)}
+                    onClick={() => onViewOrder(req.orderId, req)}
                   >
                     <Eye className="h-4 w-4 mr-2 inline" />
                     Xem &amp; Xử lý

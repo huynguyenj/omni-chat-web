@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, CheckCircle, CheckCircle2, Clock, Eye, Loader2, Mail, Package, MapPin, Phone, Truck, User, Users, X, XCircle } from 'lucide-react'
+import { Box, CheckCircle, Clock, Eye, Loader2, Mail, Package, MapPin, Phone, Truck, User, Users, X, XCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
@@ -88,18 +88,50 @@ function formatDateShort(iso: string) {
   return d.toLocaleDateString('vi-VN')
 }
 
+/** PATCH /orders/{id}/cancel — khi delivery còn pending (0 / Pending). */
+function isDeliveryPending(order: ManagerOrderItem): boolean {
+  const d = order.deliveryStatus
+  if (d === 0 || d === '0') return true
+  if (typeof d === 'string' && /pending/i.test(d)) return true
+  return false
+}
+
 function ViewOrderModal({
   open,
   loading,
   order,
-  onClose
+  onClose,
+  onCancelSuccess
 }: {
   open: boolean
   loading: boolean
   order: ManagerOrderItem | null
   onClose: () => void
+  onCancelSuccess: () => void
 }) {
+  const [canceling, setCanceling] = useState(false)
+
   if (!open) return null
+
+  const canCancelOrder =
+    order != null &&
+    String(order.status) !== 'Cancelled' &&
+    isDeliveryPending(order)
+
+  const handleCancelOrder = async () => {
+    if (!order || !canCancelOrder) return
+    setCanceling(true)
+    try {
+      const msg = await ManagerOrderApi.cancelOrder(order.id)
+      toast.success(msg)
+      onClose()
+      onCancelSuccess()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không thể hủy đơn hàng.')
+    } finally {
+      setCanceling(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4" onMouseDown={onClose}>
@@ -209,24 +241,18 @@ function ViewOrderModal({
             </div>
 
             <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white px-5 py-4">
-              <Button type="button" variant="outline" className="flex-1 min-w-[100px]" onClick={onClose}>
-                Đóng
-              </Button>
               <Button
                 type="button"
-                className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0"
-                onClick={() => toast.info('Tính năng hủy đơn đang được kết nối API.')}
+                disabled={!canCancelOrder || canceling}
+                className="w-full min-h-[44px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0 disabled:opacity-60"
+                onClick={() => void handleCancelOrder()}
               >
-                <XCircle className="h-4 w-4 mr-1.5 inline" />
+                {canceling ? (
+                  <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
+                ) : (
+                  <XCircle className="h-4 w-4 mr-1.5 inline" />
+                )}
                 Hủy đơn
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 min-w-[120px] bg-[#26C271] hover:bg-[#22b366] text-white border-0"
-                onClick={() => toast.info('Tính năng xác nhận đơn đang được kết nối API.')}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-1.5 inline" />
-                Xác nhận
               </Button>
             </div>
           </div>
@@ -239,6 +265,11 @@ function ViewOrderModal({
 function shippingOrderStatusTag(order: ManagerOrderItem) {
   if (String(order.status).toLowerCase() === 'pending') return <Tag variant="warn" size="sm" className="text-[10px] h-4 px-2">Chờ giao</Tag>
   return <Tag variant="gray" size="sm" className="text-[10px] h-4 px-2">{order.status}</Tag>
+}
+
+function isAssignedDeliveryStatus(deliveryStatus: ManagerOrderItem['deliveryStatus']): boolean {
+  const normalized = String(deliveryStatus ?? '').trim().toLowerCase()
+  return normalized === 'pending' || normalized === 'completed' || normalized === '0' || normalized === '1'
 }
 
 const SHIPPER_PAGE_SIZE = 9
@@ -260,6 +291,7 @@ export default function ShippersTab() {
   const [viewOrderOpen, setViewOrderOpen] = useState(false)
   const [viewOrderLoading, setViewOrderLoading] = useState(false)
   const [viewOrderDetail, setViewOrderDetail] = useState<ManagerOrderItem | null>(null)
+  const [ordersReload, setOrdersReload] = useState(0)
 
   const totalOrderPages = Math.max(1, ordersTotalPages)
 
@@ -315,7 +347,7 @@ export default function ShippersTab() {
     }
 
     void fetchPendingOrders()
-  }, [ordersPage])
+  }, [ordersPage, ordersReload])
 
   const handleAssignOrder = async (orderId: string) => {
     const shipperId = selectedShipperByOrder[orderId]
@@ -509,86 +541,97 @@ export default function ShippersTab() {
             </div>
           )}
 
-          {pendingOrders.map((order) => (
-            <div key={order.id} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full border-t-4 border-t-[#3366CC]">
-              <div className="p-4 flex flex-col flex-1">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <h3 className="text-xl font-bold text-[#003366] leading-tight">{order.code || order.id}</h3>
-                  {shippingOrderStatusTag(order)}
-                </div>
+          {pendingOrders.map((order) => {
+            const assignedDelivery = isAssignedDeliveryStatus(order.deliveryStatus)
+            return (
+              <div key={order.id} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full border-t-4 border-t-[#3366CC]">
+                <div className="p-4 flex flex-col flex-1">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <h3 className="text-xl font-bold text-[#003366] leading-tight">{order.code || order.id}</h3>
+                    {shippingOrderStatusTag(order)}
+                  </div>
 
-                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">Khách hàng</p>
-                <p className="text-sm font-semibold text-[#003366] mb-4 line-clamp-2">{order.customerName || 'Khách lẻ'}</p>
+                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">Khách hàng</p>
+                  <p className="text-sm font-semibold text-[#003366] mb-4 line-clamp-2">{order.customerName || 'Khách lẻ'}</p>
 
-                <div className="rounded-lg bg-[#F8FAFC] p-3 mb-4 flex-1">
-                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Đơn hàng</p>
-                  <ul className="space-y-2">
-                    {getOrderLineItems(order).slice(0, 4).map((line, idx) => (
-                      <li key={`${line.productName}-${idx}`} className="flex justify-between gap-2 text-xs">
-                        <span className="text-gray-700 min-w-0">
-                          <span className="line-clamp-2">{line.productName}</span>
-                          <span className="text-gray-400"> x{line.quantity}</span>
-                        </span>
-                        <span className="shrink-0 font-semibold text-[#16a34a]">{formatMoney(line.lineTotal)}</span>
-                      </li>
-                    ))}
-                    {getOrderLineItems(order).length > 4 && (
-                      <li className="text-[10px] text-gray-500">+{getOrderLineItems(order).length - 4} sản phẩm khác</li>
-                    )}
-                  </ul>
-                </div>
+                  <div className="rounded-lg bg-[#F8FAFC] p-3 mb-4 flex-1">
+                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Đơn hàng</p>
+                    <ul className="space-y-2">
+                      {getOrderLineItems(order).slice(0, 4).map((line, idx) => (
+                        <li key={`${line.productName}-${idx}`} className="flex justify-between gap-2 text-xs">
+                          <span className="text-gray-700 min-w-0">
+                            <span className="line-clamp-2">{line.productName}</span>
+                            <span className="text-gray-400"> x{line.quantity}</span>
+                          </span>
+                          <span className="shrink-0 font-semibold text-[#16a34a]">{formatMoney(line.lineTotal)}</span>
+                        </li>
+                      ))}
+                      {getOrderLineItems(order).length > 4 && (
+                        <li className="text-[10px] text-gray-500">+{getOrderLineItems(order).length - 4} sản phẩm khác</li>
+                      )}
+                    </ul>
+                  </div>
 
-                <div className="flex items-end justify-between gap-2 mb-4">
-                  <div className="flex flex-col gap-1.5 text-xs text-gray-500">
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 shrink-0" />
-                      {formatDateShort(order.orderDate)}
-                    </span>
-                    {order.customerPhone && (
+                  <div className="flex items-end justify-between gap-2 mb-4">
+                    <div className="flex flex-col gap-1.5 text-xs text-gray-500">
                       <span className="flex items-center gap-1.5">
-                        <Phone className="h-3.5 w-3.5 shrink-0" />
-                        {order.customerPhone}
+                        <Clock className="h-3.5 w-3.5 shrink-0" />
+                        {formatDateShort(order.orderDate)}
                       </span>
+                      {order.customerPhone && (
+                        <span className="flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5 shrink-0" />
+                          {order.customerPhone}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xl font-bold text-[#16a34a] leading-none">{formatMoney(order.totalAmount)}</p>
+                  </div>
+
+                  <div className="pt-3 mt-auto border-t border-gray-100 space-y-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full h-10 rounded-lg border-[#3366CC] text-[#3366CC] hover:bg-[#3366CC]/5 bg-transparent font-medium"
+                      onClick={() => void handleViewOrder(order.id)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Xem đơn hàng
+                    </Button>
+                    {assignedDelivery ? (
+                      <div className="w-full rounded-md border border-[#BFD8FF] bg-[#EAF3FF] px-3 py-2 text-sm font-semibold text-[#1E5BB8] text-center">
+                        Shipper đã giao
+                      </div>
+                    ) : (
+                      <>
+                        <select
+                          className="w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-[#003366] focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30"
+                          value={selectedShipperByOrder[order.id] ?? ''}
+                          onChange={(event) => setSelectedShipperByOrder((prev) => ({ ...prev, [order.id]: event.target.value }))}
+                          disabled={assigningOrderId === order.id}
+                        >
+                          <option value="">Chọn shipper</option>
+                          {shippers.map((shipper) => (
+                            <option key={shipper.id} value={shipper.id}>
+                              {shipper.shipperName} - {shipper.shipperPhone}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          size="sm"
+                          className="w-full h-10 rounded-lg bg-[#3366CC] hover:bg-[#2952A3] text-white font-medium"
+                          onClick={() => void handleAssignOrder(order.id)}
+                          disabled={assigningOrderId === order.id}
+                        >
+                          {assigningOrderId === order.id ? 'Đang giao đơn...' : 'Chọn shipper'}
+                        </Button>
+                      </>
                     )}
                   </div>
-                  <p className="text-xl font-bold text-[#16a34a] leading-none">{formatMoney(order.totalAmount)}</p>
-                </div>
-
-                <div className="pt-3 mt-auto border-t border-gray-100 space-y-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full h-10 rounded-lg border-[#3366CC] text-[#3366CC] hover:bg-[#3366CC]/5 bg-transparent font-medium"
-                    onClick={() => void handleViewOrder(order.id)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Xem đơn hàng
-                  </Button>
-                  <select
-                    className="w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-[#003366] focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30"
-                    value={selectedShipperByOrder[order.id] ?? ''}
-                    onChange={(event) => setSelectedShipperByOrder((prev) => ({ ...prev, [order.id]: event.target.value }))}
-                    disabled={assigningOrderId === order.id}
-                  >
-                    <option value="">Chọn shipper</option>
-                    {shippers.map((shipper) => (
-                      <option key={shipper.id} value={shipper.id}>
-                        {shipper.shipperName} - {shipper.shipperPhone}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    size="sm"
-                    className="w-full h-10 rounded-lg bg-[#3366CC] hover:bg-[#2952A3] text-white font-medium"
-                    onClick={() => void handleAssignOrder(order.id)}
-                    disabled={assigningOrderId === order.id}
-                  >
-                    {assigningOrderId === order.id ? 'Đang giao đơn...' : 'Chọn shipper'}
-                  </Button>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         <div className="flex items-center justify-between mt-6">
@@ -611,6 +654,7 @@ export default function ShippersTab() {
           setViewOrderDetail(null)
           setViewOrderLoading(false)
         }}
+        onCancelSuccess={() => setOrdersReload((n) => n + 1)}
       />
     </div>
   )

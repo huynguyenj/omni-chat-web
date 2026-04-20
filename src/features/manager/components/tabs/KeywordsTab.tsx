@@ -1,4 +1,4 @@
-import { Edit2, Plus, Trash2 } from 'lucide-react'
+import { Edit2, Plus, Search, Trash2 } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
@@ -19,10 +19,11 @@ import useGetIntentType from '@/features/tasks/hooks/useGetIntentType'
 import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
 import useCreateKeyword from '../../hooks/useCreateKeyword'
 import { Controller } from 'react-hook-form'
+import useDebounce from '@/hooks/useDebounce'
 
 
 export default function KeywordsTab() {
-  const { currentPage, keyWordList, loading, setCurrentPage, setOnRefresh } = useGetKeywords()
+  const { currentPage, keyWordList, loading, setCurrentPage, setOnRefresh, setSearchText, setSortType, sortType, filterIntent, handleSelectIntent } = useGetKeywords()
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
   const [isCreateKeywordOpen, setIsCreateKeywordOpen] = useState(false)
@@ -30,7 +31,11 @@ export default function KeywordsTab() {
   const { intentType } = useGetIntentType()
   const { handleDelete, loading: deleteLoading, setKeywordId } = useDeleteKeyword({ onRefresh: setOnRefresh, onCloseModalDelete: setIsAlertOpen })
   const { control, errors, handleSubmit: handleSubmitCreate, loading:createLoading, onSubmit:onSubmitCreate, register:registerCreate, reset:resetCreate } = useCreateKeyword({ onRefresh: setOnRefresh })
-  // const debounce = useDebounce(handleSearch, 500)
+
+  const handleSearch = (value: string) => {
+    setSearchText(value)
+  }
+  const debounce = useDebounce(handleSearch, 500)
   const handleOpenEdit = (keyword: KeywordDetailType) => {
     setKeywordSelected(keyword)
     setIsEditOpen((prev) => !prev)
@@ -55,7 +60,7 @@ export default function KeywordsTab() {
   return (
     <div className="space-y-4">
       <Card className="p-6 text-sm-body-desktop">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mb-6">
           <div>
             <h2 className="text-[#003366] text-sm-title-desktop font-semibold">Quản lý Keywords</h2>
             <p className="text-sm-body-desktop text-soft-gray mt-1">Cấu hình từ khóa và độ ưu tiên</p>
@@ -66,24 +71,60 @@ export default function KeywordsTab() {
           </Button>
         </div>
 
-        {/* <div className="mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm kiếm keyword..."
-              className="w-full pl-10 pr-3 py-2 rounded-md border border-gray-200 bg-white outline-none focus:ring-2 focus:ring-[#3366CC]/30"
-            />
-          </div>
-        </div> */}
-
         { loading ?
           <StaffCardSkeleton count={3}/>
           :
           <>
+            <div className="mb-4">
+              <Input variant='gray' icon={Search} placeholder='Tìm kiếm theo tên...' onChange={(e) => debounce(e.target.value)}/>
+            </div>
             {keyWordList && keyWordList.items.length > 0 ?
-              <div>
+              <div className='flex flex-col gap-3'>
+                <div className='flex flex-col 2xl:flex-row 2xl:items-center w-full gap-5'>
+                  <div className='flex items-center w-full gap-2'>
+                    <p className='text-nowrap'>Lọc keyword theo chức năng:</p>
+                    <AdvSelect
+                      value={filterIntent}
+                      onValueChange={(e) => handleSelectIntent(e)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Tất cả'/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='all'>Tất cả</SelectItem>
+                        { intentType?.map((intent) => (
+                          <SelectItem key={intent.id} value={intent.id}>{intent.typeName}</SelectItem>
+                        )) }
+                      </SelectContent>
+                    </AdvSelect>
+                  </div>
+                  <div className='flex gap-2 items-center w-full'>
+                    <p className='text-nowrap'>Sắp xếp:</p>
+                    <AdvSelect>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Chức năng'/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        { intentType?.map((intent) => (
+                          <SelectItem key={intent.id} value={intent.id}>{intent.typeName}</SelectItem>
+                        )) }
+                      </SelectContent>
+                    </AdvSelect>
+                    <AdvSelect
+                      onValueChange={setSortType}
+                      defaultValue='false'
+                      value={sortType}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Thứ tự'/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='true'>Tăng dần</SelectItem>
+                        <SelectItem value='false'>Giảm dần</SelectItem>
+                      </SelectContent>
+                    </AdvSelect>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {keyWordList.items.map((keyword) => (
                     <Card
