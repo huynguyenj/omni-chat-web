@@ -8,6 +8,7 @@ import ClaimsTab from './tabs/ClaimsTab'
 import WarningsTab from './tabs/WarningsTab'
 import ShippersTab from './tabs/ShippersTab'
 import InvoicesTab from './tabs/InvoicesTab'
+import WalletTab from './tabs/WalletTab.tsx'
 
 export default function ManagerDashboardContent() {
   const { activeTab } = useManagerDashboard()
@@ -21,6 +22,7 @@ export default function ManagerDashboardContent() {
   if (activeTab === 'warnings') return <WarningsTab />
   if (activeTab === 'shippers') return <ShippersTab />
   if (activeTab === 'invoice') return <InvoicesTab />
+  if (activeTab === 'wallet') return <WalletTab />
 
   return (
     <div className="p-6 bg-white rounded-[20px] border border-gray-200">

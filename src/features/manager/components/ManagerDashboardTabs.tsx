@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { AlertTriangle, ClipboardCheck, FileText, Package, ShoppingCart, Tag, Truck, Users, Warehouse } from 'lucide-react'
+import { AlertTriangle, ClipboardCheck, FileText, Package, ShoppingCart, Tag, Truck, Users, Wallet, Warehouse } from 'lucide-react'
 import { useManagerDashboard } from '../hooks/useManagerDashboard'
 import type { ManagerDashboardTab } from '../context/ManagerDashboardProvider'
 import Card from '@/components/ui/card/Card'
@@ -7,14 +7,15 @@ import Button from '@/components/ui/button/Button'
 
 const tabs: Array<{ value: ManagerDashboardTab; label: string; Icon: ComponentType<{ className?: string }> }> = [
   { value: 'staff', label: 'Nhân viên', Icon: Users },
-  { value: 'keywords', label: 'Keywords', Icon: Tag },
+  { value: 'keywords', label: 'Từ khóa', Icon: Tag },
   { value: 'products', label: 'Sản phẩm', Icon: Package },
   { value: 'orders', label: 'Đơn hàng', Icon: ShoppingCart },
   { value: 'warehouse', label: 'Kho hàng', Icon: Warehouse },
-  { value: 'claims', label: 'Claims', Icon: ClipboardCheck },
+  { value: 'claims', label: 'Yêu cầu', Icon: ClipboardCheck },
   { value: 'warnings', label: 'Cảnh báo', Icon: AlertTriangle },
-  { value: 'shippers', label: 'Shipper', Icon: Truck },
-  { value: 'invoice', label: 'Hóa đơn', Icon: FileText }
+  { value: 'shippers', label: 'Vận chuyển', Icon: Truck },
+  { value: 'invoice', label: 'Hóa đơn', Icon: FileText },
+  { value: 'wallet', label: 'Ví tiền', Icon: Wallet }
 ]
 
 function TabButton({
