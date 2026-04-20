@@ -33,8 +33,11 @@ export default function OrderStepOne({ onNextStep, setListProductSelected, listP
   })
   const handleSelectedProduct = (product: ProductDetailType) => {
     const newListProductId = new Map(listProductChose)
+    const previousProductSelected: ProductDetailType[] = listProductSelected
     if (listProductChose.has(product.id)) {
       newListProductId.delete(product.id)
+      const newListProductSelected = previousProductSelected.filter(prevProduct => prevProduct.id !== product.id)
+      setListProductSelected(newListProductSelected)
       setListProductChose(newListProductId)
       return
     }
@@ -44,12 +47,12 @@ export default function OrderStepOne({ onNextStep, setListProductSelected, listP
   }
 
   return (
-    <div id='index#1'>
+    <div id='index#1' className='overflow-x-hidden'>
       <div className='mt-7'>
         <TutorialBox step='Bước 1: Chọn sản phẩm sữa' description='Hãy chọn sản phẩm khách hàng muốn đặt'/>
         <p className='text-primary font-medium'>Sản phẩm đã chọn</p>
         { listProductChose.size > 0 &&
-        <ScrollArea className='w-160 mb-5 h-18'>
+        <ScrollArea className='w-full mb-5 h-18'>
           <div className='flex gap-2'>
             { Array.from(listProductChose.values()).map((product) => (
               <Button key={product.id} className='flex items-center justify-between gap-3 border border-secondary rounded-3xl bg-[#EFF6FF] text-primary mt-2 whitespace-nowrap hover:bg-[#EFF6FF]'>

@@ -105,8 +105,6 @@ export default function OrderStepTwo({
     if (listProductWithOrderItems.get(productId)?.orderItems.length) return true
   }
 
-  console.log(listProductWithOrderItems);
-  
   return (
     <div id='index#2'>
       <div className='mt-7'>
@@ -118,7 +116,7 @@ export default function OrderStepTwo({
                 <ScrollArea className='h-120 px-4'>
                   {listProductSelected.map((product) => (
                     <>
-                      <SelectionBox isChosen={productChecked?.id === product.id} className={`justify-start px-5 py-4 rounded-xl my-3 hover:border-2 hover:border-gray-300 ${productChecked?.id !== product.id && handleCheckProductHasOrderItems(product.id) && 'border-green-accent bg-[#F0FDF4]'}`} onClick={() => handleCheckProduct(product)}>
+                      <SelectionBox key={product.id} isChosen={productChecked?.id === product.id} className={`justify-start px-5 py-4 rounded-xl my-3 hover:border-2 hover:border-gray-300 ${productChecked?.id !== product.id && handleCheckProductHasOrderItems(product.id) && 'border-green-accent bg-[#F0FDF4]'}`} onClick={() => handleCheckProduct(product)}>
                         <div className='flex gap-3 items-center'>
                           { handleCheckProductHasOrderItems(product.id) &&
                           <Tag variant='success' className='w-6 aspect-square rounded-full px-0 py-0'><FiCheckCircle className='size-5'/></Tag>

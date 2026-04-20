@@ -1,7 +1,7 @@
 import Button from '@/components/ui/button/Button'
 import PopupBasic from '@/components/ui/popup/PopupBasic'
 import { AnimatePresence } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MdOutlineShoppingCart } from 'react-icons/md'
 import OrderStepOne from './order-process/OrderStepOne'
 import type { ProductDetailType } from '../../types/product-type'
@@ -27,7 +27,17 @@ export default function CreateOrderSection() {
     if (index == 4) return
     setIndex((page) => page + 1)
   }
-
+  useEffect(() => {
+    const updateListProductWithOrderItems = () => {
+      const newListProductWithOrderItems = new Map(listProductsWithOrderItems)
+      Array.from(listProductsWithOrderItems.keys()).forEach(key => {
+        const isExistedInProductSelected = listProductSelected.find(product => product.id === key)
+        if (!isExistedInProductSelected) newListProductWithOrderItems.delete(key)
+      })
+      setListProductsWithOrderItems(newListProductWithOrderItems)
+    }
+    updateListProductWithOrderItems()
+  }, [listProductSelected])
   return (
     <>
       <Button variant='outline' className='rounded-2xl py-2 border border-border-secondary hover:bg-secondary hover:text-white hover:border-none gap-2' onClick={handleOpen}>

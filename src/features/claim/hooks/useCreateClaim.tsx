@@ -9,7 +9,8 @@ import useApiCall from '@/config/useApiCall'
 const ClaimFormSchema = z.object({
   claimTypeId: z.string({ error: 'Hãy chọn loại đơn bạn muốn tạo' }),
   reason: z.string({ error: 'Xin hãy viết lí do mà bạn viết đơn' }),
-  description: z.string()
+  description: z.string(),
+  conversationId: z.string().optional()
 })
 
 type ClaimFormType = z.infer<typeof ClaimFormSchema>
@@ -27,7 +28,8 @@ export default function useCreateClaim() {
       staffId: staffId,
       claimTypeId: formData.claimTypeId,
       description: formData.description,
-      reason: formData.reason
+      reason: formData.reason,
+      conversationId: formData.conversationId ?? null
     }
 
     const apiData = await execute({
