@@ -360,13 +360,19 @@ export default function ShippersTab() {
     setAssigningOrderId(orderId)
     try {
       await ManagerShipperApi.assignOrderToShipper(shipperId, orderId)
-      setPendingOrders((prev) => prev.filter((order) => order.id !== orderId))
+      // Keep order visible immediately after assign; mark as assigned locally.
+      setPendingOrders((prev) => prev.map((order) => (
+        order.id === orderId
+          ? { ...order, deliveryStatus: 'Pending' }
+          : order
+      )))
       setSelectedShipperByOrder((prev) => {
         const next = { ...prev }
         delete next[orderId]
         return next
       })
       setShipperReload((n) => n + 1)
+      setOrdersReload((n) => n + 1)
       toast.success('Đã chọn shipper thành công.')
     } catch {
       toast.error('Không thể giao đơn cho shipper. Vui lòng thử lại.')
