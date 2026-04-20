@@ -63,10 +63,9 @@ function invoiceStatusUi(statusRaw: string): { label: string; className: string 
 
 export default function InvoicesTab() {
   const [invoicePage, setInvoicePage] = useState(1)
-  const [invoiceTotalPages, setInvoiceTotalPages] = useState(1)
   const [invoiceLoading, setInvoiceLoading] = useState(false)
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
-  const [invoices, setInvoices] = useState<ManagerInvoiceItem[]>([])
+  const [allInvoices, setAllInvoices] = useState<ManagerInvoiceItem[]>([])
   const [statusFilter, setStatusFilter] = useState<InvoiceStatusFilter>('all')
   const [searchText, setSearchText] = useState('')
 
@@ -75,74 +74,106 @@ export default function InvoicesTab() {
       setInvoiceLoading(true)
       setInvoiceError(null)
       try {
-        const response = await ManagerInvoiceApi.getInvoices({
-          pageNumber: invoicePage,
-          pageSize: INVOICE_PAGE_SIZE,
-          status: statusFilter === 'all' ? undefined : statusFilter,
-          sortBy: 'startedDate',
-          descending: true
-        })
-        const body = response
-        if (body.is_success === false || body.data == null) {
-          throw new Error(body.message || 'Không thể tải danh sách hóa đơn.')
+        const mergedItems: ManagerInvoiceItem[] = []
+        let pageNumber = 1
+        let totalPages = 1
+
+        while (pageNumber <= totalPages) {
+          const response = await ManagerInvoiceApi.getInvoices({
+            pageNumber,
+            pageSize: 100,
+            sortBy: 'startedDate',
+            descending: true
+          })
+          const body = response
+          if (body.is_success === false || body.data == null) {
+            throw new Error(body.message || 'Không thể tải danh sách hóa đơn.')
+          }
+          const items = Array.isArray(body.data.items) ? body.data.items.map((item) => normalizeInvoice(item)) : []
+          mergedItems.push(...items)
+          totalPages = Math.max(1, Number(body.data.meta?.total_pages ?? 1))
+          pageNumber += 1
         }
-        const items = Array.isArray(body.data.items) ? body.data.items.map((item) => normalizeInvoice(item)) : []
-        const pages = body.data.meta?.total_pages ?? 1
-        setInvoices(items)
-        setInvoiceTotalPages(Math.max(1, pages))
+
+        setAllInvoices(mergedItems)
       } catch {
         setInvoiceError('Không thể tải danh sách hóa đơn.')
-        setInvoices([])
-        setInvoiceTotalPages(1)
+        setAllInvoices([])
       } finally {
         setInvoiceLoading(false)
       }
     }
     void fetchInvoices()
-  }, [invoicePage, statusFilter])
+  }, [])
 
   useEffect(() => {
     setInvoicePage(1)
-  }, [statusFilter])
+  }, [statusFilter, searchText])
 
   const totalRevenue = useMemo(
-    () => invoices.reduce((sum, invoice) => sum + invoice.total, 0),
-    [invoices]
+    () => allInvoices.reduce((sum, invoice) => sum + invoice.total, 0),
+    [allInvoices]
   )
-  const totalPaid = useMemo(
-    () => invoices.reduce((sum, invoice) => sum + invoice.paidAmount, 0),
-    [invoices]
-  )
+  const totalPaid = useMemo(() => {
+    return allInvoices.reduce((sum, invoice) => {
+      const status = String(invoice.invoiceStatus).toLowerCase()
+      if (status !== 'completed') return sum
+
+      // Some API responses (especially "all" status) return paidAmount as 0.
+      // Fallback to invoice total so paid KPI remains accurate for completed invoices.
+      const paidAmount = Number(invoice.paidAmount ?? 0)
+      const totalAmount = Number(invoice.total ?? 0)
+      const safePaid = paidAmount > 0 ? paidAmount : totalAmount
+      return sum + safePaid
+    }, 0)
+  }, [allInvoices])
   const totalPending = useMemo(
-    () => invoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'pending').reduce((sum, invoice) => sum + invoice.total, 0),
-    [invoices]
+    () => allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'pending').reduce((sum, invoice) => sum + invoice.total, 0),
+    [allInvoices]
   )
   const totalOverdue = useMemo(
-    () => invoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'pendingrefund').reduce((sum, invoice) => sum + invoice.total, 0),
-    [invoices]
+    () => allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'pendingrefund').reduce((sum, invoice) => sum + invoice.total, 0),
+    [allInvoices]
   )
   const totalRefunded = useMemo(
-    () => invoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'refunded').reduce((sum, invoice) => sum + invoice.total, 0),
-    [invoices]
+    () => allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'refunded').reduce((sum, invoice) => sum + invoice.total, 0),
+    [allInvoices]
   )
   const visibleInvoices = useMemo(() => {
+    const byStatus = statusFilter === 'all'
+      ? allInvoices
+      : allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === statusFilter.toLowerCase())
     const keyword = searchText.trim().toLowerCase()
-    if (!keyword) return invoices
-    return invoices.filter((invoice) => {
+    if (!keyword) return byStatus
+    return byStatus.filter((invoice) => {
       return (
         invoice.id.toLowerCase().includes(keyword) ||
         invoice.customerId.toLowerCase().includes(keyword) ||
         invoice.customerName.toLowerCase().includes(keyword)
       )
     })
-  }, [invoices, searchText])
+  }, [allInvoices, searchText, statusFilter])
+
+  const invoiceTotalPages = useMemo(
+    () => Math.max(1, Math.ceil(visibleInvoices.length / INVOICE_PAGE_SIZE)),
+    [visibleInvoices]
+  )
+
+  useEffect(() => {
+    if (invoicePage > invoiceTotalPages) setInvoicePage(invoiceTotalPages)
+  }, [invoicePage, invoiceTotalPages])
+
+  const pagedInvoices = useMemo(() => {
+    const start = (invoicePage - 1) * INVOICE_PAGE_SIZE
+    return visibleInvoices.slice(start, start + INVOICE_PAGE_SIZE)
+  }, [visibleInvoices, invoicePage])
 
   return (
     <div className="space-y-4">
       <Card className="p-6">
         <div className="mb-6">
-          <h2 className="text-[#003366] text-2xl font-semibold">Hóa đơn B2B theo tuần</h2>
-          <p className="text-sm text-gray-500 mt-1">Quản lý hóa đơn tổng hợp đơn hàng theo tuần cho khách hàng  </p>
+          <h2 className="text-[#003366] text-2xl font-semibold">Hóa đơn</h2>
+          <p className="text-sm text-gray-500 mt-1">Quản lý hóa đơn tổng hợp đơn hàng cho khách hàng  </p>
         </div>
         {invoiceError && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -243,7 +274,7 @@ export default function InvoicesTab() {
               Chưa có dữ liệu hóa đơn.
             </div>
           )}
-          {visibleInvoices.map((invoice) => {
+          {pagedInvoices.map((invoice) => {
             const statusUi = invoiceStatusUi(invoice.invoiceStatus)
             return (
               <Card key={invoice.id} className="p-4 hover:shadow-md transition-shadow flex flex-col h-full border-t-4 border-t-[#3366CC]">

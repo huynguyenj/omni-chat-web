@@ -87,13 +87,13 @@ function orderStatusPill(status: string): { label: string; className: string } {
   const s = String(status)
   const map: Record<string, { label: string; className: string }> = {
     Pending: { label: 'Chờ xử lý', className: 'bg-[#facc15] text-white' },
-    Draft: { label: 'Đợi duyệt', className: 'bg-gray-400 text-white' },
+    Draft: { label: 'Bản nháp', className: 'bg-gray-400 text-white' },
     Cancelled: { label: 'Đã hủy', className: 'bg-[#FB2C36] text-white' },
-    Shipped: { label: 'Đang giao', className: 'bg-[#3366CC] text-white' },
-    Completed: { label: 'Hoàn thành', className: 'bg-[#26C271] text-white' },
+    Shipped: { label: 'Đã giao hàng', className: 'bg-[#3366CC] text-white' },
+    Completed: { label: 'Đã hoàn thành', className: 'bg-[#26C271] text-white' },
     PendingReturn: { label: 'Chờ trả hàng', className: 'bg-[#FF9800] text-white' },
-    Returned: { label: 'Đã trả', className: 'bg-gray-500 text-white' },
-    ReturnedDefective: { label: 'Xã hàng lỗi', className: 'bg-amber-700 text-white' }
+    Returned: { label: 'Đã trả hàng', className: 'bg-gray-500 text-white' },
+    ReturnedDefective: { label: 'Đã trả hàng do lỗi', className: 'bg-amber-700 text-white' }
   }
   return map[s] ?? { label: s || '—', className: 'bg-gray-400 text-white' }
 }
@@ -422,7 +422,7 @@ function OrderCard({
 
 export default function OrdersTab() {
   const [page, setPage] = useState(1)
-  const [selectedStatus, setSelectedStatus] = useState<'all' | 'InDelivery' | ManagerOrderStatusFilter>('InDelivery')
+  const [selectedStatus, setSelectedStatus] = useState<'all' | ManagerOrderStatusFilter>('Pending')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [orders, setOrders] = useState<ManagerOrderItem[]>([])
@@ -433,15 +433,16 @@ export default function OrdersTab() {
   const [detailPostSaleContext, setDetailPostSaleContext] = useState<OrderDetailPostSaleContext | null>(null)
   const [postSaleListRefreshKey, setPostSaleListRefreshKey] = useState(0)
   const pageSize = 6
-  const ORDER_STATUS_FILTERS: Array<{ value: 'all' | 'InDelivery' | ManagerOrderStatusFilter; label: string }> = [
+  const ORDER_STATUS_FILTERS: Array<{ value: 'all' | ManagerOrderStatusFilter; label: string }> = [
     { value: 'all', label: 'Tất cả' },
-    { value: 'Draft', label: 'Đợi duyệt' },
-    { value: 'InDelivery', label: 'Đang giao' },
-    { value: 'Completed', label: 'Hoàn thành' },
+    { value: 'Draft', label: 'Bản nháp' },
+    { value: 'Pending', label: 'Chờ xử lý' },
+    { value: 'Shipped', label: 'Đã giao hàng' },
+    { value: 'Completed', label: 'Đã hoàn thành' },
     { value: 'Cancelled', label: 'Đã hủy' },
     { value: 'PendingReturn', label: 'Chờ trả hàng' },
-    { value: 'Returned', label: 'Đã trả' },
-    { value: 'ReturnedDefective', label: 'Xã hàng lỗi' }
+    { value: 'Returned', label: 'Đã trả hàng' },
+    { value: 'ReturnedDefective', label: 'Đã trả hàng do lỗi' }
   ]
 
   const openOrderDetailById = async (orderId: string, psr?: OrderDetailPostSaleContext | null) => {
@@ -484,9 +485,7 @@ export default function OrdersTab() {
         pageSize,
         orderStatuses: selectedStatus === 'all'
           ? undefined
-          : selectedStatus === 'InDelivery'
-            ? ['Pending', 'Shipped']
-            : [selectedStatus]
+          : [selectedStatus]
       })
       const items = response?.data?.items ?? []
       const pages = response?.data?.meta?.total_pages ?? 1
