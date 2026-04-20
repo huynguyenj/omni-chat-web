@@ -5,13 +5,6 @@ import Button from '@/components/ui/button/Button'
 import { PostSaleRequestApi } from '../../api/post-sale-request-api'
 import type { PostSaleRequestItem } from '../../types/post-sale-request-type'
 
-const SORT_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'requestedTime', label: 'Thời gian yêu cầu' },
-  { value: 'status', label: 'Trạng thái' },
-  { value: 'type', label: 'Loại yêu cầu' },
-  { value: 'refundAmount', label: 'Số tiền hoàn' }
-]
-
 function formatMoney(n: number | null | undefined) {
   if (n == null || Number.isNaN(Number(n))) return '—'
   return `${Number(n).toLocaleString('vi-VN')}đ`
@@ -74,8 +67,6 @@ type PostSaleRequestsSectionProps = {
 export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 0 }: PostSaleRequestsSectionProps) {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(9)
-  const [sortBy, setSortBy] = useState('requestedTime')
-  const [descending, setDescending] = useState<boolean | ''>(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<PostSaleRequestItem[]>([])
@@ -87,11 +78,7 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
     try {
       const params: Parameters<typeof PostSaleRequestApi.getPostSaleRequests>[0] = {
         pageNumber: page,
-        pageSize,
-        sortBy
-      }
-      if (descending === true || descending === false) {
-        params.descending = descending
+        pageSize
       }
       const res = await PostSaleRequestApi.getPostSaleRequests(params)
       if (res.is_success === false || res.data == null) {
@@ -107,7 +94,7 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, sortBy, descending])
+  }, [page, pageSize])
 
   useEffect(() => {
     void fetchList()
@@ -137,45 +124,6 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
           <span className="inline-flex items-center rounded-full bg-[#26C271] px-3 py-1 text-xs font-semibold text-white">
             {counts.approved} Đã duyệt
           </span>
-        </div>
-      </div>
-
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <div className="flex flex-col gap-1 min-w-[180px]">
-          <label className="text-xs font-semibold text-gray-600">Sắp xếp theo</label>
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value)
-              setPage(1)
-            }}
-            disabled={loading}
-            className="py-2 px-3 rounded-[6px] bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30 text-sm"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1 min-w-[160px]">
-          <label className="text-xs font-semibold text-gray-600">Thứ tự</label>
-          <select
-            value={descending === '' ? '' : descending ? 'desc' : 'asc'}
-            onChange={(e) => {
-              const v = e.target.value
-              if (v === '') setDescending('')
-              else setDescending(v === 'desc')
-              setPage(1)
-            }}
-            disabled={loading}
-            className="py-2 px-3 rounded-[6px] bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3366CC]/30 text-sm"
-          >
-            <option value="">Mặc định (API)</option>
-            <option value="desc">Giảm dần</option>
-            <option value="asc">Tăng dần</option>
-          </select>
         </div>
       </div>
 

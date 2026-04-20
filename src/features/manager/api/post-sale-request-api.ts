@@ -37,18 +37,18 @@ export const PostSaleRequestApi = {
     return response as unknown as ApiResponseStructure<PostSaleRequestListResponse>
   },
 
-  /** PATCH /api/v1/post-sale-requests/{id}/approve */
+  /** POST /api/v1/post-sale-requests/{id}/approve */
   approvePostSaleRequest: async (id: string): Promise<string> => {
-    const body = (await apiPublic.patch(resolvePostSaleActionEndpoint(id, 'approve'))) as unknown as ApiResponseStructure<unknown>
+    const body = (await apiPublic.post(resolvePostSaleActionEndpoint(id, 'approve'))) as unknown as ApiResponseStructure<unknown>
     if (body.is_success === false) {
       throw new Error(body.message || 'Không thể duyệt yêu cầu.')
     }
     return body.message?.trim() ? body.message : 'Đã duyệt yêu cầu.'
   },
 
-  /** PATCH /api/v1/post-sale-requests/{id}/reject */
+  /** POST /api/v1/post-sale-requests/{id}/reject */
   rejectPostSaleRequest: async (id: string): Promise<string> => {
-    const body = (await apiPublic.patch(resolvePostSaleActionEndpoint(id, 'reject'))) as unknown as ApiResponseStructure<unknown>
+    const body = (await apiPublic.post(resolvePostSaleActionEndpoint(id, 'reject'))) as unknown as ApiResponseStructure<unknown>
     if (body.is_success === false) {
       throw new Error(body.message || 'Không thể từ chối yêu cầu.')
     }

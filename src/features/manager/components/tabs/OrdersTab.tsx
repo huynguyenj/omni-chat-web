@@ -175,32 +175,28 @@ function OrderDetailModalBody({
   postSaleRequest: OrderDetailPostSaleContext | null
   onOrderActionSuccess: () => void
 }) {
-  const [pendingAction, setPendingAction] = useState<'cancel' | 'confirm' | null>(null)
+  const [pendingAction, setPendingAction] = useState<'reject' | 'confirm' | null>(null)
   const lines = getLineItems(order)
   const totalQty = lines.reduce((s, l) => s + l.quantity, 0)
   const pill = orderStatusPill(String(order.status))
   const fromPostSaleList = Boolean(postSaleRequest?.id)
   const canActPostSale = fromPostSaleList && postSaleRequest?.status === 'Pending'
-  const canActOrder = !fromPostSaleList && (order.status === 'Draft' || order.status === 'Pending')
-  const canCancelOrConfirm = canActPostSale || canActOrder
+  const canSubmitDraft = !fromPostSaleList && order.status === 'Draft'
+  const canRejectPostSale = canActPostSale
 
-  const handleCancelOrder = async () => {
-    setPendingAction('cancel')
+  const rejectDisabled = pendingAction !== null || !canRejectPostSale
+  const confirmDisabled = pendingAction !== null || !(canActPostSale || canSubmitDraft)
+  const showActionBar = canSubmitDraft || canActPostSale
+
+  const handleRejectPostSale = async () => {
+    if (!postSaleRequest) return
+    setPendingAction('reject')
     try {
-      const msg =
-        canActPostSale && postSaleRequest
-          ? await PostSaleRequestApi.rejectPostSaleRequest(postSaleRequest.id)
-          : await ManagerOrderApi.cancelOrder(order.id)
+      const msg = await PostSaleRequestApi.rejectPostSaleRequest(postSaleRequest.id)
       toast.success(msg)
       onOrderActionSuccess()
     } catch (e) {
-      toast.error(
-        e instanceof Error
-          ? e.message
-          : canActPostSale
-            ? 'Không thể từ chối yêu cầu.'
-            : 'Không thể hủy đơn hàng.'
-      )
+      toast.error(e instanceof Error ? e.message : 'Không thể từ chối yêu cầu.')
     } finally {
       setPendingAction(null)
     }
@@ -212,7 +208,7 @@ function OrderDetailModalBody({
       const msg =
         canActPostSale && postSaleRequest
           ? await PostSaleRequestApi.approvePostSaleRequest(postSaleRequest.id)
-          : await ManagerOrderApi.confirmOrder(order.id)
+          : await ManagerOrderApi.submitDraftOrder(order.id)
       toast.success(msg)
       onOrderActionSuccess()
     } catch (e) {
@@ -221,7 +217,7 @@ function OrderDetailModalBody({
           ? e.message
           : canActPostSale
             ? 'Không thể duyệt yêu cầu.'
-            : 'Không thể xác nhận đơn hàng.'
+            : 'Không thể gửi đơn nháp.'
       )
     } finally {
       setPendingAction(null)
@@ -313,34 +309,38 @@ function OrderDetailModalBody({
         </div>
       </div>
 
-      <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white px-5 py-4">
-        <Button
-          type="button"
-          disabled={!canCancelOrConfirm || pendingAction !== null}
-          className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0 disabled:opacity-60"
-          onClick={() => void handleCancelOrder()}
-        >
-          {pendingAction === 'cancel' ? (
-            <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
-          ) : (
-            <XCircle className="h-4 w-4 mr-1.5 inline" />
+      {showActionBar && (
+        <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white px-5 py-4">
+          {canRejectPostSale && (
+            <Button
+              type="button"
+              disabled={rejectDisabled}
+              className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0 disabled:opacity-60"
+              onClick={() => void handleRejectPostSale()}
+            >
+              {pendingAction === 'reject' ? (
+                <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
+              ) : (
+                <XCircle className="h-4 w-4 mr-1.5 inline" />
+              )}
+              Từ chối yêu cầu
+            </Button>
           )}
-          Hủy đơn
-        </Button>
-        <Button
-          type="button"
-          disabled={!canCancelOrConfirm || pendingAction !== null}
-          className="flex-1 min-w-[120px] bg-[#26C271] hover:bg-[#22b366] text-white border-0 disabled:opacity-60"
-          onClick={() => void handleConfirmOrder()}
-        >
-          {pendingAction === 'confirm' ? (
-            <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
-          ) : (
-            <CheckCircle2 className="h-4 w-4 mr-1.5 inline" />
-          )}
-          Xác nhận
-        </Button>
-      </div>
+          <Button
+            type="button"
+            disabled={confirmDisabled}
+            className="flex-1 min-w-[120px] bg-[#26C271] hover:bg-[#22b366] text-white border-0 disabled:opacity-60"
+            onClick={() => void handleConfirmOrder()}
+          >
+            {pendingAction === 'confirm' ? (
+              <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 mr-1.5 inline" />
+            )}
+            Xác nhận
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
