@@ -11,6 +11,7 @@ export type ManagerDashboardTab =
   | 'claims'
   | 'warnings'
   | 'shippers'
+  | 'invoice'
 
 export type ManagerDashboardContextValue = {
   activeTab: ManagerDashboardTab

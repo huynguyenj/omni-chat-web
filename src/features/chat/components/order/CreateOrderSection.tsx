@@ -56,6 +56,7 @@ export default function CreateOrderSection() {
             { index == 1 &&
             <OrderStepOne
               onNextStep={handleNext}
+              listProductSelected={listProductSelected}
               setListProductSelected={setListProductSelected}
             />
             }

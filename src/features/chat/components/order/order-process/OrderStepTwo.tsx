@@ -105,7 +105,8 @@ export default function OrderStepTwo({
     if (listProductWithOrderItems.get(productId)?.orderItems.length) return true
   }
 
-
+  console.log(listProductWithOrderItems);
+  
   return (
     <div id='index#2'>
       <div className='mt-7'>

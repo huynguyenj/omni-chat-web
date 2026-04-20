@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { AlertTriangle, ClipboardCheck, Package, ShoppingCart, Tag, Truck, Users, Warehouse } from 'lucide-react'
+import { AlertTriangle, ClipboardCheck, FileText, Package, ShoppingCart, Tag, Truck, Users, Warehouse } from 'lucide-react'
 import { useManagerDashboard } from '../hooks/useManagerDashboard'
 import type { ManagerDashboardTab } from '../context/ManagerDashboardProvider'
 import Card from '@/components/ui/card/Card'
@@ -13,7 +13,8 @@ const tabs: Array<{ value: ManagerDashboardTab; label: string; Icon: ComponentTy
   { value: 'warehouse', label: 'Kho hàng', Icon: Warehouse },
   { value: 'claims', label: 'Claims', Icon: ClipboardCheck },
   { value: 'warnings', label: 'Cảnh báo', Icon: AlertTriangle },
-  { value: 'shippers', label: 'Shipper', Icon: Truck }
+  { value: 'shippers', label: 'Shipper', Icon: Truck },
+  { value: 'invoice', label: 'Hóa đơn', Icon: FileText }
 ]
 
 function TabButton({

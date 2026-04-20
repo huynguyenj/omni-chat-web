@@ -3,6 +3,7 @@ import { AlertTriangle, Clock, X } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
+import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { toast } from 'react-toastify'
 import { WarningApi } from '../../api/warning-api'
 import type { ManagerWarningDetailResponse, ManagerWarningItem } from '../../types/warning-type'
@@ -195,14 +196,12 @@ export default function WarningsTab() {
           ))}
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="outline" size="sm" disabled={page <= 1 || isLoading} onClick={() => setPage(p => Math.max(1, p - 1))}>
-            Prev
-          </Button>
-          <span className="text-sm text-gray-600">Page {page}/{totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages || isLoading} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
-            Next
-          </Button>
+        <div className="mt-6">
+          <PaginationBar
+            currentPage={page}
+            setPage={setPage}
+            totalPage={totalPages}
+          />
         </div>
       </Card>
 

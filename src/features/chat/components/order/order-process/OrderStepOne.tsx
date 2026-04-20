@@ -17,13 +17,20 @@ import { FaMinus, FaPlus } from 'react-icons/fa6'
 
 type OrderStepOneProps = {
    onNextStep: () => void
+   listProductSelected: ProductDetailType[]
    setListProductSelected: Dispatch<SetStateAction<ProductDetailType[]>>
 }
 
-export default function OrderStepOne({ onNextStep, setListProductSelected }: OrderStepOneProps) {
+export default function OrderStepOne({ onNextStep, setListProductSelected, listProductSelected }: OrderStepOneProps) {
   const { listBrand } = useGetAllBrand()
   const { loading, productList, productKind, productVolume, setProductBrand, setProductKind, setProductVolume } = useGetProductForOrderProcess()
-  const [listProductChose, setListProductChose] = useState<Map<string, ProductDetailType>>(new Map())
+  const [listProductChose, setListProductChose] = useState<Map<string, ProductDetailType>>(() => {
+    const map = new Map<string, ProductDetailType>()
+    listProductSelected.forEach(product => {
+      map.set(product.id, product)
+    })
+    return map
+  })
   const handleSelectedProduct = (product: ProductDetailType) => {
     const newListProductId = new Map(listProductChose)
     if (listProductChose.has(product.id)) {
@@ -35,6 +42,7 @@ export default function OrderStepOne({ onNextStep, setListProductSelected }: Ord
     setListProductChose(newListProductId)
     setListProductSelected(Array.from(newListProductId.values()))
   }
+
   return (
     <div id='index#1'>
       <div className='mt-7'>
