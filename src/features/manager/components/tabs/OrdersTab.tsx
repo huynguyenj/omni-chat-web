@@ -11,15 +11,13 @@ import {
   Phone,
   User,
   Users,
-  X,
-  XCircle
+  X
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerOrderApi } from '../../api/order-api'
-import { PostSaleRequestApi } from '../../api/post-sale-request-api'
 import PostSaleRequestsSection from './PostSaleRequestsSection'
 import type { ManagerOrderItem, ManagerOrderLineItem, ManagerOrderStatus, ManagerOrderStatusFilter } from '../../types/order-type'
 
@@ -181,45 +179,19 @@ function OrderDetailModalBody({
   const totalQty = lines.reduce((s, l) => s + l.quantity, 0)
   const pill = orderStatusPill(String(order.status))
   const fromPostSaleList = Boolean(postSaleRequest?.id)
-  const canActPostSale = fromPostSaleList && postSaleRequest?.status === 'Pending'
   const canSubmitDraft = !fromPostSaleList && order.status === 'Draft'
-  const canRejectPostSale = canActPostSale
 
-  const rejectDisabled = pendingAction !== null || !canRejectPostSale
-  const confirmDisabled = pendingAction !== null || !(canActPostSale || canSubmitDraft)
-  const showActionBar = canSubmitDraft || canActPostSale
-
-  const handleRejectPostSale = async () => {
-    if (!postSaleRequest) return
-    setPendingAction('reject')
-    try {
-      const msg = await PostSaleRequestApi.rejectPostSaleRequest(postSaleRequest.id)
-      toast.success(msg)
-      onOrderActionSuccess()
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Không thể từ chối yêu cầu.')
-    } finally {
-      setPendingAction(null)
-    }
-  }
+  const confirmDisabled = pendingAction !== null || !canSubmitDraft
+  const showActionBar = canSubmitDraft
 
   const handleConfirmOrder = async () => {
     setPendingAction('confirm')
     try {
-      const msg =
-        canActPostSale && postSaleRequest
-          ? await PostSaleRequestApi.approvePostSaleRequest(postSaleRequest.id)
-          : await ManagerOrderApi.submitDraftOrder(order.id)
+      const msg = await ManagerOrderApi.submitDraftOrder(order.id)
       toast.success(msg)
       onOrderActionSuccess()
     } catch (e) {
-      toast.error(
-        e instanceof Error
-          ? e.message
-          : canActPostSale
-            ? 'Không thể duyệt yêu cầu.'
-            : 'Không thể gửi đơn nháp.'
-      )
+      toast.error(e instanceof Error ? e.message : 'Không thể gửi đơn nháp.')
     } finally {
       setPendingAction(null)
     }
@@ -312,21 +284,6 @@ function OrderDetailModalBody({
 
       {showActionBar && (
         <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white px-5 py-4">
-          {canRejectPostSale && (
-            <Button
-              type="button"
-              disabled={rejectDisabled}
-              className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0 disabled:opacity-60"
-              onClick={() => void handleRejectPostSale()}
-            >
-              {pendingAction === 'reject' ? (
-                <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
-              ) : (
-                <XCircle className="h-4 w-4 mr-1.5 inline" />
-              )}
-              Từ chối yêu cầu
-            </Button>
-          )}
           <Button
             type="button"
             disabled={confirmDisabled}
@@ -573,6 +530,10 @@ export default function OrdersTab() {
 
       <PostSaleRequestsSection
         listRefreshKey={postSaleListRefreshKey}
+        onStatusActionSuccess={() => {
+          void fetchOrders()
+          setPostSaleListRefreshKey((k) => k + 1)
+        }}
         onViewOrder={(orderId, req) =>
           void openOrderDetailById(orderId, {
             id: req.id,
