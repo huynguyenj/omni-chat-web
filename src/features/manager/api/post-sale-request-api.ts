@@ -8,6 +8,12 @@ function resolvePostSaleRequestsEndpoint() {
   return '/api/v1/post-sale-requests/get'
 }
 
+function resolvePostSaleActionEndpoint(id: string, action: 'approve' | 'reject') {
+  const baseUrl = (apiPublic.defaults.baseURL ?? '').toLowerCase()
+  if (baseUrl.includes('/api/v1')) return `/post-sale-requests/${id}/${action}`
+  return `/api/v1/post-sale-requests/${id}/${action}`
+}
+
 export const PostSaleRequestApi = {
   /** GET /api/v1/post-sale-requests/get */
   getPostSaleRequests: async (
@@ -29,5 +35,23 @@ export const PostSaleRequestApi = {
       { params }
     )
     return response as unknown as ApiResponseStructure<PostSaleRequestListResponse>
+  },
+
+  /** POST /api/v1/post-sale-requests/{id}/approve */
+  approvePostSaleRequest: async (id: string): Promise<string> => {
+    const body = (await apiPublic.post(resolvePostSaleActionEndpoint(id, 'approve'))) as unknown as ApiResponseStructure<unknown>
+    if (body.is_success === false) {
+      throw new Error(body.message || 'Không thể duyệt yêu cầu.')
+    }
+    return body.message?.trim() ? body.message : 'Đã duyệt yêu cầu.'
+  },
+
+  /** POST /api/v1/post-sale-requests/{id}/reject */
+  rejectPostSaleRequest: async (id: string): Promise<string> => {
+    const body = (await apiPublic.post(resolvePostSaleActionEndpoint(id, 'reject'))) as unknown as ApiResponseStructure<unknown>
+    if (body.is_success === false) {
+      throw new Error(body.message || 'Không thể từ chối yêu cầu.')
+    }
+    return body.message?.trim() ? body.message : 'Đã từ chối yêu cầu.'
   }
 }

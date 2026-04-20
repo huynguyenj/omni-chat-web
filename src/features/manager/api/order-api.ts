@@ -8,10 +8,16 @@ function resolveOrderByIdEndpoint(id: string) {
   return `/api/v1/orders/get/${id}`
 }
 
-function resolveOrderActionEndpoint(id: string, action: 'cancel' | 'confirm') {
+function resolveOrderActionEndpoint(id: string, action: 'cancel') {
   const baseUrl = (apiPublic.defaults.baseURL ?? '').toLowerCase()
   if (baseUrl.includes('/api/v1')) return `/orders/${id}/${action}`
   return `/api/v1/orders/${id}/${action}`
+}
+
+function resolveSubmitDraftEndpoint(id: string) {
+  const baseUrl = (apiPublic.defaults.baseURL ?? '').toLowerCase()
+  if (baseUrl.includes('/api/v1')) return `/orders/${id}/submit-draft`
+  return `/api/v1/orders/${id}/submit-draft`
 }
 
 export const ManagerOrderApi = {
@@ -69,7 +75,7 @@ export const ManagerOrderApi = {
     return body.data
   },
 
-  /** PATCH /api/v1/orders/{id}/cancel */
+  /** PATCH /api/v1/orders/{id}/cancel — hủy đơn (delivery pending), hoàn kho */
   cancelOrder: async (id: string): Promise<string> => {
     const body = (await apiPublic.patch(resolveOrderActionEndpoint(id, 'cancel'))) as unknown as ApiResponseStructure<unknown>
     if (body.is_success === false) {
@@ -78,12 +84,12 @@ export const ManagerOrderApi = {
     return body.message?.trim() ? body.message : 'Đã hủy đơn hàng thành công.'
   },
 
-  /** PATCH /api/v1/orders/{id}/confirm */
-  confirmOrder: async (id: string): Promise<string> => {
-    const body = (await apiPublic.patch(resolveOrderActionEndpoint(id, 'confirm'))) as unknown as ApiResponseStructure<unknown>
+  /** POST /api/v1/orders/{id}/submit-draft — Draft → Pending */
+  submitDraftOrder: async (id: string): Promise<string> => {
+    const body = (await apiPublic.post(resolveSubmitDraftEndpoint(id))) as unknown as ApiResponseStructure<unknown>
     if (body.is_success === false) {
-      throw new Error(body.message || 'Không thể xác nhận đơn hàng.')
+      throw new Error(body.message || 'Không thể gửi duyệt đơn nháp.')
     }
-    return body.message?.trim() ? body.message : 'Đã xác nhận đơn hàng thành công.'
+    return body.message?.trim() ? body.message : 'Đã gửi đơn nháp (chờ xử lý).'
   }
 }
