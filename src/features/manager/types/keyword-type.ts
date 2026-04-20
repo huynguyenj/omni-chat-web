@@ -4,4 +4,5 @@ export interface KeywordDetailType {
       intentTypeId: string
       intentTypeName: string
       weight: number
+      createDate: Date
 }

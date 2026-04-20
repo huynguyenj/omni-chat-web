@@ -12,7 +12,7 @@ import { useState } from 'react'
 import useDebounce from '@/hooks/useDebounce'
 import ProductCardSkeleton from '@/components/ui/skeleton/ProductCardSkeleton'
 import { PRODUCT_TYPE } from '@/features/chat/const/product-type'
-import { PRODUCT_PACKAGE_TYPE } from '../../const/product'
+import { PRODUCT_LIST_SORT_BY, PRODUCT_PACKAGE_TYPE } from '../../const/product'
 import { LuPackageSearch } from 'react-icons/lu'
 import type { ProductDetailType } from '@/features/chat/types/product-type'
 import useCreateBatchProduct from '../../hooks/useCreateBatchProduct'
@@ -31,7 +31,7 @@ import useUpdateProduct from '../../hooks/useUpdateProduct'
 
 
 export default function ProductsTab() {
-  const { currentPage, listProducts, loading, setCurrentPage, setOnRefresh, setSearchText } = useGetProductListManager()
+  const { currentPage, listProducts, loading, setCurrentPage, setOnRefresh, setSearchText, setSortBy, setSortType, sortBy, sortType } = useGetProductListManager()
   const [isOpenCreateBatch, setIsOpenCreateBatch] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
   const [isOpenCreateProduct, setIsOpenCreateProduct] = useState(false)
@@ -118,6 +118,35 @@ export default function ProductsTab() {
           <ProductCardSkeleton count={3}/>
           :
           <>
+            <div className='flex gap-2 items-center w-full mb-3'>
+              <p className='text-nowrap'>Sắp xếp:</p>
+              <AdvSelect
+                value={sortBy}
+                onValueChange={setSortBy}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Chức năng'/>
+                </SelectTrigger>
+                <SelectContent>
+                  { PRODUCT_LIST_SORT_BY.map((sort, i) => (
+                    <SelectItem key={i} value={sort.value}>{sort.name}</SelectItem>
+                  )) }
+                </SelectContent>
+              </AdvSelect>
+              <AdvSelect
+                onValueChange={setSortType}
+                defaultValue='false'
+                value={sortType}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Thứ tự'/>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='true'>{ sortBy !== 'createdate' ? 'Giảm dần' : 'Mới nhất' }</SelectItem>
+                  <SelectItem value='false'>{ sortBy !== 'createdate' ? 'Tăng dần' : 'Cũ nhất' }</SelectItem>
+                </SelectContent>
+              </AdvSelect>
+            </div>
             {listProducts && listProducts.items.length > 0 ?
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -136,7 +165,7 @@ export default function ProductsTab() {
                             </div>
                           }
                           <Button className='absolute top-2 left-2 bg-transparent text-black hover:bg-gray-200' onClick={() => handleUpdateProductImage(product)}>
-                            <Edit2/>
+                            <Edit2 className='size-4'/>
                           </Button>
                         </div>
                         <div className='flex flex-col gap-1'>
@@ -159,10 +188,7 @@ export default function ProductsTab() {
                             <p className='text-sm-body-desktop font-medium'>Dung tích: <span className='text-primary text-m-body-desktop'>{product.volumeMl}ml</span></p>
                             <p className='text-sm-body-desktop font-medium'>Hãng: <span className='text-primary text-m-body-desktop'>{product.brand}</span></p>
                           </div>
-                          <div className='flex justify-between'>
-                            <Button variant='basic' className='py-1 hover:bg-gray-200 w-fit' onClick={() => handleUpdateProductInfo(product)}>
-                              <Edit2 className="size-4" />
-                            </Button>
+                          <div className='flex justify-end'>
                             <p className='text-xl-body-desktop text-green-accent font-medium'>{product.price.toLocaleString()}đ</p>
                           </div>
                         </div>
@@ -175,6 +201,9 @@ export default function ProductsTab() {
                         <Button variant="danger" className="py-3 px-3 text-white hover:text-red-500 border-border-primary hover:bg-gray-200 w-full flex-1" onClick={() => handleOpenAlert(product.id)}
                         >
                           <Trash2 className="size-4" />
+                        </Button>
+                        <Button variant='basic' className='py-3 px-3 hover:bg-gray-200 w-fit' onClick={() => handleUpdateProductInfo(product)}>
+                          <Edit2 className="size-4" />
                         </Button>
                       </div>
                       <Button variant="basic" className='' onClick={() => handleBatchShowSelect(product.id)}>

@@ -9,14 +9,14 @@ function ProductCardSkeletonItem () {
       </div>
       <div className='w-1/3 h-8 bg-gray-200 my-2 rounded-sm'></div>
       <div className='w-1/3 h-8 bg-gray-200 my-2 rounded-sm'></div>
-      <div className='flex gap-2 items-center justify-between my-3'>
-        <div className='w-[10%] h-10 bg-gray-200 rounded-sm'></div>
+      <div className='flex gap-2 items-center justify-end my-3'>
         <div className='w-[20%] h-10 bg-gray-200 rounded-sm'></div>
       </div>
       <div className='flex flex-col gap-2 items-center'>
-        <div className="flex items-center gap-3 w-full">
+        <div className="flex items-center gap-2 w-full">
           <div className='w-full flex-9 h-10 bg-gray-200 rounded-lg'></div>
-          <div className='w-full flex-1 h-10 bg-gray-200 rounded-lg'></div>
+          <div className='w-full flex-2 h-10 bg-gray-200 rounded-lg'></div>
+          <div className='w-full flex-2 h-10 bg-gray-200 rounded-lg'></div>
         </div>
         <div className='w-full h-10 bg-gray-200 rounded-lg'></div>
       </div>

@@ -20,10 +20,12 @@ import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from
 import useCreateKeyword from '../../hooks/useCreateKeyword'
 import { Controller } from 'react-hook-form'
 import useDebounce from '@/hooks/useDebounce'
+import { LIST_SORT_BY } from '../../const/keyword'
+import { formatDate } from '@/utils/date-resolver'
 
 
 export default function KeywordsTab() {
-  const { currentPage, keyWordList, loading, setCurrentPage, setOnRefresh, setSearchText, setSortType, sortType, filterIntent, handleSelectIntent } = useGetKeywords()
+  const { currentPage, keyWordList, loading, setCurrentPage, setOnRefresh, setSearchText, setSortType, sortType, filterIntent, handleSelectIntent, setSortBy, sortBy } = useGetKeywords()
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
   const [isCreateKeywordOpen, setIsCreateKeywordOpen] = useState(false)
@@ -70,14 +72,14 @@ export default function KeywordsTab() {
             Thêm keyword
           </Button>
         </div>
+        <div className="mb-4">
+          <Input variant='gray' icon={Search} placeholder='Tìm kiếm theo tên...' onChange={(e) => debounce(e.target.value)}/>
+        </div>
 
         { loading ?
           <StaffCardSkeleton count={3}/>
           :
           <>
-            <div className="mb-4">
-              <Input variant='gray' icon={Search} placeholder='Tìm kiếm theo tên...' onChange={(e) => debounce(e.target.value)}/>
-            </div>
             {keyWordList && keyWordList.items.length > 0 ?
               <div className='flex flex-col gap-3'>
                 <div className='flex flex-col 2xl:flex-row 2xl:items-center w-full gap-5'>
@@ -100,13 +102,16 @@ export default function KeywordsTab() {
                   </div>
                   <div className='flex gap-2 items-center w-full'>
                     <p className='text-nowrap'>Sắp xếp:</p>
-                    <AdvSelect>
+                    <AdvSelect
+                      value={sortBy}
+                      onValueChange={setSortBy}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder='Chức năng'/>
                       </SelectTrigger>
                       <SelectContent>
-                        { intentType?.map((intent) => (
-                          <SelectItem key={intent.id} value={intent.id}>{intent.typeName}</SelectItem>
+                        { LIST_SORT_BY.map((sort, i) => (
+                          <SelectItem key={i} value={sort.value}>{sort.name}</SelectItem>
                         )) }
                       </SelectContent>
                     </AdvSelect>
@@ -119,8 +124,8 @@ export default function KeywordsTab() {
                         <SelectValue placeholder='Thứ tự'/>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value='true'>Tăng dần</SelectItem>
-                        <SelectItem value='false'>Giảm dần</SelectItem>
+                        <SelectItem value='true'>{ sortBy !== 'createdate' ? 'Giảm dần' : 'Mới nhất' }</SelectItem>
+                        <SelectItem value='false'>{ sortBy !== 'createdate' ? 'Tăng dần' : 'Cũ nhất' }</SelectItem>
                       </SelectContent>
                     </AdvSelect>
                   </div>
@@ -146,8 +151,12 @@ export default function KeywordsTab() {
                           </Tag>
                         </div>
                         <div className="my-2">
-                          <span className="flex items-center gap-1 text-[0.85rem] text-soft-gray font-medium">Chức năng: {keyword.intentTypeName}</span>
+                          <p className="flex items-center gap-1 text-[0.85rem] text-soft-gray">Chức năng:
+                            <span className="font-medium text-secondary">{keyword.intentTypeName}</span>
+                          </p>
+
                         </div>
+                        <p className='text-[0.85rem] text-soft-gray'>Ngày tạo: <span className='font-medium text-black'>{formatDate(keyword.createDate)}</span></p>
                       </div>
                       <hr className='border border-border-primary my-3 rounded-sm'/>
                       <div className="flex items-center justify-center gap-2">
