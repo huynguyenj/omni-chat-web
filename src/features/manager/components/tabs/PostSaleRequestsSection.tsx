@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Eye, Loader2 } from 'lucide-react'
+import { CheckCircle2, Eye, Loader2, XCircle } from 'lucide-react'
+import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
@@ -60,9 +61,15 @@ function requestTypeLabel(t: string) {
   return map[t] ?? t ?? '—'
 }
 
+function totalRequestedQuantity(items: PostSaleRequestItem['postSaleItems']) {
+  if (!items?.length) return 0
+  return items.reduce((sum, item) => sum + Math.max(0, Number(item.quantity ?? 0)), 0)
+}
+
 type PostSaleRequestsSectionProps = {
   onViewOrder: (orderId: string, postSaleRequest: PostSaleRequestItem) => void
   listRefreshKey?: number
+  onStatusActionSuccess?: () => void
 }
 
 type PostSaleFilterStatus = 'all' | 'Pending' | 'Approved' | 'Rejected'
@@ -74,7 +81,11 @@ const STATUS_FILTERS: Array<{ value: PostSaleFilterStatus; label: string }> = [
   { value: 'Rejected', label: 'Đã từ chối' }
 ]
 
-export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 0 }: PostSaleRequestsSectionProps) {
+export default function PostSaleRequestsSection({
+  onViewOrder,
+  listRefreshKey = 0,
+  onStatusActionSuccess
+}: PostSaleRequestsSectionProps) {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(9)
   const [loading, setLoading] = useState(false)
@@ -82,6 +93,7 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
   const [items, setItems] = useState<PostSaleRequestItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
   const [statusFilter, setStatusFilter] = useState<PostSaleFilterStatus>('all')
+  const [processingAction, setProcessingAction] = useState<{ id: string; type: 'approve' | 'reject' } | null>(null)
 
   const fetchList = useCallback(async () => {
     setLoading(true)
@@ -115,6 +127,36 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
     if (statusFilter === 'all') return items
     return items.filter((r) => String(r.status) === statusFilter)
   }, [items, statusFilter])
+
+  const handleApprove = async (req: PostSaleRequestItem) => {
+    if (!req.id) return
+    setProcessingAction({ id: req.id, type: 'approve' })
+    try {
+      const msg = await PostSaleRequestApi.approvePostSaleRequest(req.id)
+      toast.success(msg)
+      await fetchList()
+      onStatusActionSuccess?.()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không thể duyệt yêu cầu.')
+    } finally {
+      setProcessingAction(null)
+    }
+  }
+
+  const handleReject = async (req: PostSaleRequestItem) => {
+    if (!req.id) return
+    setProcessingAction({ id: req.id, type: 'reject' })
+    try {
+      const msg = await PostSaleRequestApi.rejectPostSaleRequest(req.id)
+      toast.success(msg)
+      await fetchList()
+      onStatusActionSuccess?.()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không thể từ chối yêu cầu.')
+    } finally {
+      setProcessingAction(null)
+    }
+  }
 
   return (
     <Card className="p-6">
@@ -162,6 +204,9 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
 
         {filteredItems.map((req, idx) => {
           const ui = requestStatusUi(String(req.status))
+          const isPending = String(req.status) === 'Pending'
+          const requestQty = totalRequestedQuantity(req.postSaleItems)
+          const isProcessingCurrent = processingAction?.id === req.id
           const displayId = `PSR${String((page - 1) * pageSize + idx + 1).padStart(3, '0')}`
           return (
             <div
@@ -202,12 +247,22 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
                   </div>
                 </div>
 
-                <div className="flex items-end justify-between gap-2 mb-4">
-                  <span className="text-xs text-gray-500">{formatDateTime(req.requestedTime)}</span>
-                  <span className="text-xl font-bold text-[#003366] tabular-nums">{formatMoney(req.refundAmount)}</span>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-0.5">Số lượng</p>
+                    <p className="text-base font-semibold text-[#003366] tabular-nums">{requestQty.toLocaleString('vi-VN')}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-0.5">Số tiền hoàn</p>
+                    <p className="text-base font-bold text-[#003366] tabular-nums">{formatMoney(req.refundAmount)}</p>
+                  </div>
                 </div>
 
-                <div className="pt-3 mt-auto border-t border-gray-100">
+                <div className="mb-4">
+                  <span className="text-xs text-gray-500">{formatDateTime(req.requestedTime)}</span>
+                </div>
+
+                <div className="pt-3 mt-auto border-t border-gray-100 space-y-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -217,8 +272,40 @@ export default function PostSaleRequestsSection({ onViewOrder, listRefreshKey = 
                     onClick={() => onViewOrder(req.orderId, req)}
                   >
                     <Eye className="h-4 w-4 mr-2 inline" />
-                    Xem &amp; Xử lý
+                    Chi tiết đơn hàng
                   </Button>
+                  {isPending && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0 disabled:opacity-60"
+                        disabled={loading || !!processingAction}
+                        onClick={() => void handleReject(req)}
+                      >
+                        {isProcessingCurrent && processingAction?.type === 'reject' ? (
+                          <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mr-1.5 inline" />
+                        )}
+                        Từ chối
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="bg-[#26C271] hover:bg-[#22b366] text-white border-0 disabled:opacity-60"
+                        disabled={loading || !!processingAction}
+                        onClick={() => void handleApprove(req)}
+                      >
+                        {isProcessingCurrent && processingAction?.type === 'approve' ? (
+                          <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4 mr-1.5 inline" />
+                        )}
+                        Duyệt
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

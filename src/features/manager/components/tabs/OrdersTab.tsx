@@ -11,15 +11,13 @@ import {
   Phone,
   User,
   Users,
-  X,
-  XCircle
+  X
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerOrderApi } from '../../api/order-api'
-import { PostSaleRequestApi } from '../../api/post-sale-request-api'
 import PostSaleRequestsSection from './PostSaleRequestsSection'
 import type { ManagerOrderItem, ManagerOrderLineItem, ManagerOrderStatus, ManagerOrderStatusFilter } from '../../types/order-type'
 
@@ -87,13 +85,13 @@ function orderStatusPill(status: string): { label: string; className: string } {
   const s = String(status)
   const map: Record<string, { label: string; className: string }> = {
     Pending: { label: 'Chờ xử lý', className: 'bg-[#facc15] text-white' },
-    Draft: { label: 'Đợi duyệt', className: 'bg-gray-400 text-white' },
+    Draft: { label: 'Bản nháp', className: 'bg-gray-400 text-white' },
     Cancelled: { label: 'Đã hủy', className: 'bg-[#FB2C36] text-white' },
-    Shipped: { label: 'Đang giao', className: 'bg-[#3366CC] text-white' },
-    Completed: { label: 'Hoàn thành', className: 'bg-[#26C271] text-white' },
+    Shipped: { label: 'Đã giao hàng', className: 'bg-[#3366CC] text-white' },
+    Completed: { label: 'Đã hoàn thành', className: 'bg-[#26C271] text-white' },
     PendingReturn: { label: 'Chờ trả hàng', className: 'bg-[#FF9800] text-white' },
-    Returned: { label: 'Đã trả', className: 'bg-gray-500 text-white' },
-    ReturnedDefective: { label: 'Xã hàng lỗi', className: 'bg-amber-700 text-white' }
+    Returned: { label: 'Đã trả hàng', className: 'bg-gray-500 text-white' },
+    ReturnedDefective: { label: 'Đã trả hàng do lỗi', className: 'bg-amber-700 text-white' }
   }
   return map[s] ?? { label: s || '—', className: 'bg-gray-400 text-white' }
 }
@@ -181,45 +179,19 @@ function OrderDetailModalBody({
   const totalQty = lines.reduce((s, l) => s + l.quantity, 0)
   const pill = orderStatusPill(String(order.status))
   const fromPostSaleList = Boolean(postSaleRequest?.id)
-  const canActPostSale = fromPostSaleList && postSaleRequest?.status === 'Pending'
   const canSubmitDraft = !fromPostSaleList && order.status === 'Draft'
-  const canRejectPostSale = canActPostSale
 
-  const rejectDisabled = pendingAction !== null || !canRejectPostSale
-  const confirmDisabled = pendingAction !== null || !(canActPostSale || canSubmitDraft)
-  const showActionBar = canSubmitDraft || canActPostSale
-
-  const handleRejectPostSale = async () => {
-    if (!postSaleRequest) return
-    setPendingAction('reject')
-    try {
-      const msg = await PostSaleRequestApi.rejectPostSaleRequest(postSaleRequest.id)
-      toast.success(msg)
-      onOrderActionSuccess()
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Không thể từ chối yêu cầu.')
-    } finally {
-      setPendingAction(null)
-    }
-  }
+  const confirmDisabled = pendingAction !== null || !canSubmitDraft
+  const showActionBar = canSubmitDraft
 
   const handleConfirmOrder = async () => {
     setPendingAction('confirm')
     try {
-      const msg =
-        canActPostSale && postSaleRequest
-          ? await PostSaleRequestApi.approvePostSaleRequest(postSaleRequest.id)
-          : await ManagerOrderApi.submitDraftOrder(order.id)
+      const msg = await ManagerOrderApi.submitDraftOrder(order.id)
       toast.success(msg)
       onOrderActionSuccess()
     } catch (e) {
-      toast.error(
-        e instanceof Error
-          ? e.message
-          : canActPostSale
-            ? 'Không thể duyệt yêu cầu.'
-            : 'Không thể gửi đơn nháp.'
-      )
+      toast.error(e instanceof Error ? e.message : 'Không thể gửi đơn nháp.')
     } finally {
       setPendingAction(null)
     }
@@ -312,21 +284,6 @@ function OrderDetailModalBody({
 
       {showActionBar && (
         <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white px-5 py-4">
-          {canRejectPostSale && (
-            <Button
-              type="button"
-              disabled={rejectDisabled}
-              className="flex-1 min-w-[120px] bg-[#F1B40E] hover:bg-[#e0a60d] text-white border-0 disabled:opacity-60"
-              onClick={() => void handleRejectPostSale()}
-            >
-              {pendingAction === 'reject' ? (
-                <Loader2 className="h-4 w-4 mr-1.5 inline animate-spin" />
-              ) : (
-                <XCircle className="h-4 w-4 mr-1.5 inline" />
-              )}
-              Từ chối yêu cầu
-            </Button>
-          )}
           <Button
             type="button"
             disabled={confirmDisabled}
@@ -422,7 +379,7 @@ function OrderCard({
 
 export default function OrdersTab() {
   const [page, setPage] = useState(1)
-  const [selectedStatus, setSelectedStatus] = useState<'all' | 'InDelivery' | ManagerOrderStatusFilter>('InDelivery')
+  const [selectedStatus, setSelectedStatus] = useState<'all' | ManagerOrderStatusFilter>('Pending')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [orders, setOrders] = useState<ManagerOrderItem[]>([])
@@ -433,15 +390,16 @@ export default function OrdersTab() {
   const [detailPostSaleContext, setDetailPostSaleContext] = useState<OrderDetailPostSaleContext | null>(null)
   const [postSaleListRefreshKey, setPostSaleListRefreshKey] = useState(0)
   const pageSize = 6
-  const ORDER_STATUS_FILTERS: Array<{ value: 'all' | 'InDelivery' | ManagerOrderStatusFilter; label: string }> = [
+  const ORDER_STATUS_FILTERS: Array<{ value: 'all' | ManagerOrderStatusFilter; label: string }> = [
     { value: 'all', label: 'Tất cả' },
-    { value: 'Draft', label: 'Đợi duyệt' },
-    { value: 'InDelivery', label: 'Đang giao' },
-    { value: 'Completed', label: 'Hoàn thành' },
+    { value: 'Draft', label: 'Bản nháp' },
+    { value: 'Pending', label: 'Chờ xử lý' },
+    { value: 'Shipped', label: 'Đã giao hàng' },
+    { value: 'Completed', label: 'Đã hoàn thành' },
     { value: 'Cancelled', label: 'Đã hủy' },
     { value: 'PendingReturn', label: 'Chờ trả hàng' },
-    { value: 'Returned', label: 'Đã trả' },
-    { value: 'ReturnedDefective', label: 'Xã hàng lỗi' }
+    { value: 'Returned', label: 'Đã trả hàng' },
+    { value: 'ReturnedDefective', label: 'Đã trả hàng do lỗi' }
   ]
 
   const openOrderDetailById = async (orderId: string, psr?: OrderDetailPostSaleContext | null) => {
@@ -484,9 +442,7 @@ export default function OrdersTab() {
         pageSize,
         orderStatuses: selectedStatus === 'all'
           ? undefined
-          : selectedStatus === 'InDelivery'
-            ? ['Pending', 'Shipped']
-            : [selectedStatus]
+          : [selectedStatus]
       })
       const items = response?.data?.items ?? []
       const pages = response?.data?.meta?.total_pages ?? 1
@@ -574,6 +530,10 @@ export default function OrdersTab() {
 
       <PostSaleRequestsSection
         listRefreshKey={postSaleListRefreshKey}
+        onStatusActionSuccess={() => {
+          void fetchOrders()
+          setPostSaleListRefreshKey((k) => k + 1)
+        }}
         onViewOrder={(orderId, req) =>
           void openOrderDetailById(orderId, {
             id: req.id,

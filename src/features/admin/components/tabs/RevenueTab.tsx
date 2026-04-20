@@ -125,42 +125,39 @@ function extractRevenueRowsFromResponse(response: unknown): TotalRevenue[] {
   return []
 }
 
-type RevenueOrderStatusFilter = 'all' | 'InDelivery' | ManagerOrderStatusFilter
+type RevenueOrderStatusFilter = 'all' | ManagerOrderStatusFilter
 
 /** Hiển thị trạng thái đơn (API thường trả tiếng Anh) — pill + viền card */
 /** Lọc đơn theo status API (chuỗi như Draft, Completed, …) */
 function revenueOrderMatchesStatus(filter: RevenueOrderStatusFilter, apiStatus: string): boolean {
   if (filter === 'all') return true
-  if (filter === 'InDelivery') {
-    const s = apiStatus.trim().toLowerCase()
-    return s === 'pending' || s === 'shipped'
-  }
   return apiStatus.trim().toLowerCase() === filter.toLowerCase()
 }
 
 const REVENUE_ORDER_STATUS_FILTERS: Array<{ value: RevenueOrderStatusFilter; label: string }> = [
   { value: 'all', label: 'Tất cả' },
-  { value: 'InDelivery', label: 'Đang giao' },
-  { value: 'Draft', label: 'Đợi duyệt' },
-  { value: 'Completed', label: 'Hoàn thành' },
+  { value: 'Draft', label: 'Bản nháp' },
+  { value: 'Pending', label: 'Chờ xử lý' },
+  { value: 'Shipped', label: 'Đã giao hàng' },
+  { value: 'Completed', label: 'Đã hoàn thành' },
   { value: 'Cancelled', label: 'Đã hủy' },
   { value: 'PendingReturn', label: 'Chờ trả hàng' },
-  { value: 'Returned', label: 'Đã trả' },
-  { value: 'ReturnedDefective', label: 'Xã hàng lỗi' }
+  { value: 'Returned', label: 'Đã trả hàng' },
+  { value: 'ReturnedDefective', label: 'Đã trả hàng do lỗi' }
 ]
 
 function adminOrderStatusUi(statusRaw: string): { labelVi: string; pillClass: string; cardBorderClass: string } {
   const normalized = String(statusRaw).trim().toLowerCase().replace(/\s+/g, '')
 
   const rows: Array<{ match: string; labelVi: string; pillClass: string; cardBorderClass: string }> = [
-    { match: 'draft', labelVi: 'Đợi duyệt', pillClass: 'bg-gray-500 text-white', cardBorderClass: 'border-t-gray-500' },
+    { match: 'draft', labelVi: 'Bản nháp', pillClass: 'bg-gray-500 text-white', cardBorderClass: 'border-t-gray-500' },
     { match: 'pending', labelVi: 'Chờ xử lý', pillClass: 'bg-amber-500 text-white', cardBorderClass: 'border-t-amber-500' },
-    { match: 'shipped', labelVi: 'Đang giao', pillClass: 'bg-[#3366CC] text-white', cardBorderClass: 'border-t-[#3366CC]' },
-    { match: 'completed', labelVi: 'Hoàn thành', pillClass: 'bg-[#26C271] text-white', cardBorderClass: 'border-t-[#26C271]' },
+    { match: 'shipped', labelVi: 'Đã giao hàng', pillClass: 'bg-[#3366CC] text-white', cardBorderClass: 'border-t-[#3366CC]' },
+    { match: 'completed', labelVi: 'Đã hoàn thành', pillClass: 'bg-[#26C271] text-white', cardBorderClass: 'border-t-[#26C271]' },
     { match: 'cancelled', labelVi: 'Đã hủy', pillClass: 'bg-[#FB2C36] text-white', cardBorderClass: 'border-t-[#FB2C36]' },
     { match: 'pendingreturn', labelVi: 'Chờ trả hàng', pillClass: 'bg-[#FF9800] text-white', cardBorderClass: 'border-t-[#FF9800]' },
-    { match: 'returned', labelVi: 'Đã trả', pillClass: 'bg-slate-600 text-white', cardBorderClass: 'border-t-slate-600' },
-    { match: 'returneddefective', labelVi: 'Xã hàng lỗi', pillClass: 'bg-amber-800 text-white', cardBorderClass: 'border-t-amber-800' }
+    { match: 'returned', labelVi: 'Đã trả hàng', pillClass: 'bg-slate-600 text-white', cardBorderClass: 'border-t-slate-600' },
+    { match: 'returneddefective', labelVi: 'Đã trả hàng do lỗi', pillClass: 'bg-amber-800 text-white', cardBorderClass: 'border-t-amber-800' }
   ]
 
   const hit = rows.find((r) => r.match === normalized)
@@ -200,7 +197,7 @@ function sumOrderStatus(rows: OrderDashboardMonthRow[], statusLabel: string): nu
 
 export default function RevenueTab() {
   const ORDERS_PER_PAGE = 9
-  const [revenueOrderStatusFilter, setRevenueOrderStatusFilter] = useState<RevenueOrderStatusFilter>('InDelivery')
+  const [revenueOrderStatusFilter, setRevenueOrderStatusFilter] = useState<RevenueOrderStatusFilter>('Pending')
   const [revenueChartInput, setRevenueChartInput] = useState('2026')
   const [totalRevenueAmount, setTotalRevenueAmount] = useState(0)
   const [totalRevenueLoading, setTotalRevenueLoading] = useState(false)
