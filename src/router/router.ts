@@ -78,5 +78,11 @@ export const router = createBrowserRouter([
     lazy: {
       Component: async () => (await import('@/pages/error/ForbiddenPage')).default
     }
+  },
+  {
+    path: PUBLIC_PATH.PRODUCT,
+    lazy: {
+      Component: async () => (await import('@/pages/global/ProductPage')).default
+    }
   }
 ])

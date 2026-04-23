@@ -1,5 +1,6 @@
 export const PUBLIC_PATH = {
-  LOGIN: '/'
+  LOGIN: '/',
+  PRODUCT: '/product'
 }
 export const PRIVATE_PATH = {
   CHAT: '/staff/chat',
