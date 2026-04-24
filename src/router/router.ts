@@ -78,5 +78,23 @@ export const router = createBrowserRouter([
     lazy: {
       Component: async () => (await import('@/pages/error/ForbiddenPage')).default
     }
+  },
+  {
+    path: PUBLIC_PATH.PRODUCT,
+    lazy: {
+      Component: async () => (await import('@/pages/global/ProductPage')).default
+    }
+  },
+  {
+    path: PUBLIC_PATH.CUSTOMER_FORM,
+    lazy: {
+      Component: async () => (await import('@/pages/global/CustomerFormPage')).default
+    }
+  },
+  {
+    path: PUBLIC_PATH.PAYMENT_STAtUS,
+    lazy: {
+      Component: async () => (await import('@/pages/global/PaymentPage')).default
+    }
   }
 ])
