@@ -6,8 +6,8 @@ import Boy from '@/assets/boy.png'
 import useCreateCustomerForm from '@/features/customer/hooks/useCreateCustomerForm'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 export default function CustomerFormPage() {
-  const { conversationId } = useParams()
-  const { errors, handleSubmit, loading, onSubmit, register } = useCreateCustomerForm({ conversationId: conversationId })
+  const { activeCustomerId } = useParams()
+  const { errors, handleSubmit, loading, onSubmit, register } = useCreateCustomerForm({ activeCustomerId: activeCustomerId })
   return (
     <div className='w-full h-screen bg-secondary flex items-center justify-center lg:justify- px-30'>
       <div className='hidden lg:flex w-fit h-[70%] mr-5 flex-col justify-center items-start'>
@@ -23,7 +23,7 @@ export default function CustomerFormPage() {
         </div>
         <h1 className='text-sm-title-desktop lg:text-m-title-desktop text-center font-medium text-primary'>Thông tin khách hàng</h1>
         <div className='flex flex-col gap-2 px-2 lg:px-10 mx-auto my-5'>
-          <Input {...register('name')} label='Tên' placeholder='nguyenvana' variant='gray' error={errors.name?.message}/>
+          <Input {...register('address')} label='Địa chỉ' placeholder='Thành phố HCM, quận 9' variant='gray' error={errors.address?.message}/>
           <Input {...register('phone')} label='Số điện thoại' placeholder='0979898929' variant='gray' error={errors.phone?.message}/>
           <Input {...register('email')} label='Email' placeholder='nguyenvana@gmail.com' variant='gray' error={errors.email?.message}/>
           { loading ?
