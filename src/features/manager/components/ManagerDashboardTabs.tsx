@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { AlertTriangle, ClipboardCheck, FileText, Package, ShoppingCart, Tag, Truck, Users, Wallet, Warehouse } from 'lucide-react'
+import { AlertTriangle, ClipboardCheck, FileText, MessageSquareText, Package, ShoppingCart, Tag, Truck, Users, Wallet, Warehouse } from 'lucide-react'
 import { useManagerDashboard } from '../hooks/useManagerDashboard'
 import type { ManagerDashboardTab } from '../context/ManagerDashboardProvider'
 import Card from '@/components/ui/card/Card'
@@ -8,6 +8,7 @@ import Button from '@/components/ui/button/Button'
 const tabs: Array<{ value: ManagerDashboardTab; label: string; Icon: ComponentType<{ className?: string }> }> = [
   { value: 'staff', label: 'Nhân viên', Icon: Users },
   { value: 'keywords', label: 'Từ khóa', Icon: Tag },
+  { value: 'chat-template', label: 'Mẫu chat', Icon: MessageSquareText },
   { value: 'products', label: 'Sản phẩm', Icon: Package },
   { value: 'orders', label: 'Đơn hàng', Icon: ShoppingCart },
   { value: 'warehouse', label: 'Kho hàng', Icon: Warehouse },
@@ -44,7 +45,7 @@ function TabButton({
 
 export default function ManagerDashboardTabs() {
   return (
-    <Card className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:flex xl:flex-row py-2 px-3 gap-2 w-fit mb-5'>
+    <Card className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9 py-2 px-3 gap-2 w-fit mb-5'>
       {tabs.map(t => (
         <TabButton key={t.value} value={t.value} label={t.label} Icon={t.Icon} />
       ))}
