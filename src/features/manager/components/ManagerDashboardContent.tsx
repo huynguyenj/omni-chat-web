@@ -9,12 +9,14 @@ import WarningsTab from './tabs/WarningsTab'
 import ShippersTab from './tabs/ShippersTab'
 import InvoicesTab from './tabs/InvoicesTab'
 import WalletTab from './tabs/WalletTab.tsx'
+import ChatTemplateTab from './tabs/ChatTemplateTab.tsx'
 
 export default function ManagerDashboardContent() {
   const { activeTab } = useManagerDashboard()
 
   if (activeTab === 'staff') return <StaffTab />
   if (activeTab === 'keywords') return <KeywordsTab />
+  if (activeTab === 'chat-template') return <ChatTemplateTab/>
   if (activeTab === 'products') return <ProductsTab />
   if (activeTab === 'orders') return <OrdersTab />
   if (activeTab === 'warehouse') return <WarehouseTab />

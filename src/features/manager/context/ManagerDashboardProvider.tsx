@@ -13,6 +13,7 @@ export type ManagerDashboardTab =
   | 'shippers'
   | 'invoice'
   | 'wallet'
+  | 'chat-template'
 
 export type ManagerDashboardContextValue = {
   activeTab: ManagerDashboardTab
