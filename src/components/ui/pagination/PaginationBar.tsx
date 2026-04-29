@@ -42,8 +42,8 @@ export default function PaginationBar({ currentPage, totalPage, setPage }: Pagin
   return (
     <div className='flex justify-center gap-10'>
       <div className='flex gap-2 items-center'>
-        <Button variant={currentPage == 1 ? 'outline' : 'default'} className='w-10 h-10 rounded-full' onClick={handleGoToFirstPage}><MdKeyboardDoubleArrowLeft /></Button>
-        <Button variant={currentPage == 1 ? 'outline' : 'default'} className='w-10 h-10 rounded-full' onClick={handleGoToPreviousPage}><MdKeyboardArrowLeft /></Button>
+        <Button variant={currentPage == 1 ? 'outline' : 'default'} className='rounded-full p-1.5' onClick={handleGoToFirstPage}><MdKeyboardDoubleArrowLeft className='size-4'/></Button>
+        <Button variant={currentPage == 1 ? 'outline' : 'default'} className='rounded-full p-1.5' onClick={handleGoToPreviousPage}><MdKeyboardArrowLeft className='size-4'/></Button>
       </div>
       <div className='flex items-center'>
         <div className="w-full justify-center items-center">
@@ -55,8 +55,8 @@ export default function PaginationBar({ currentPage, totalPage, setPage }: Pagin
         </div>
       </div>
       <div className='flex gap-2 items-center'>
-        <Button variant={currentPage == totalPage ? 'outline' : 'default'} className='w-10 h-10 rounded-full' onClick={handleGoToNextPage}><MdKeyboardArrowRight /></Button>
-        <Button variant={currentPage == totalPage ? 'outline' : 'default'} className='w-10 h-10 rounded-full' onClick={handleGoToFinalPage}><MdKeyboardDoubleArrowRight /></Button>
+        <Button variant={currentPage == totalPage ? 'outline' : 'default'} className='rounded-full p-1.5' onClick={handleGoToNextPage}><MdKeyboardArrowRight className='size-4'/></Button>
+        <Button variant={currentPage == totalPage ? 'outline' : 'default'} className='rounded-full p-1.5' onClick={handleGoToFinalPage}><MdKeyboardDoubleArrowRight className='size-4'/></Button>
       </div>
     </div>
   )
