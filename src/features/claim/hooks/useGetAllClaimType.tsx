@@ -18,7 +18,7 @@ export default function useGetAllClaimType() {
       const { data, error } = apiData
       setClaimCategories(data)
 
-      if (error) toast.error('Lấy loại đơn bị lỗi! Hãy thử lại.')
+      if (error) toast.error(error)
     }
     getClaimCategories()
   }, [])

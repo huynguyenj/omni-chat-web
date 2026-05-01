@@ -22,7 +22,7 @@ export default function useGetListConversationByStaffId({ isChangeTaskTypeSelect
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy danh sách cuộc trò chuyện thất bại!')
+        toast.error(error)
         return
       }
       setListConversation(data)

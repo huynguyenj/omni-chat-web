@@ -25,7 +25,10 @@ export default function useCreateChatTemplate({ onRefresh }: UseCreateChatTempla
       type: 'private',
       body: formData
     })
-    if (apiData.error) return
+    if (apiData.error) {
+      toast.error(apiData.error)
+      return
+    }
     toast.success('Tạo từ mẫu thành công')
     onRefresh()
   }

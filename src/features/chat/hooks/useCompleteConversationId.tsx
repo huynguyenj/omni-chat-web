@@ -17,7 +17,7 @@ export default function useCompleteConversationId() {
       type: 'private'
     })
     const { error } = apiData
-    if (error) toast.error('Hoàn thành cuộc trò chuyện thất bại!')
+    if (error) toast.error(error)
   }
   return { handleCompleteConversation, loading }
 }

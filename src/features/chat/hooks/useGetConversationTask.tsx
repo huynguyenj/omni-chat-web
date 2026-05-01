@@ -35,7 +35,7 @@ export default function useGetConversationTask() {
       return
     }
     if (error) {
-      toast.error('Cập nhật task bị lỗi!')
+      toast.error(error)
       return
     }
   }

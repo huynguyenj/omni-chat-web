@@ -12,7 +12,7 @@ export default function useCheckedConversationTask() {
     if (!apiData.error) {
       toast.success('Hoàn thành task')
     } else {
-      toast.error('Hoàn thành task thất bại!')
+      toast.error(apiData.error)
     }
 
   }

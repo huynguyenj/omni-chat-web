@@ -30,7 +30,7 @@ export default function useGetKeywords() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy danh sách keywords thất bại')
+        toast.error(error)
         return
       }
       setKeyWordList(data)

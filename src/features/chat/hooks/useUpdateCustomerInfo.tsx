@@ -34,7 +34,7 @@ export default function useUpdateCustomerInfo({ customerId, setIsRefetch }: { cu
       return
     }
     if (error)
-      toast.error('Cập nhật thông tin khách hàng thất bại!')
+      toast.error(error)
   }
   return { register, errors, loading, onSubmit, handleSubmit, reset }
 }

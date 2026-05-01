@@ -19,7 +19,7 @@ export default function useGetProductForOrderProcess() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy thông tin danh sách sản phẩm thất bại!')
+        toast.error(error)
         return
       }
       setProductList(data)

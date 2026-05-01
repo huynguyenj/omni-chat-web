@@ -29,7 +29,7 @@ export default function useCreateKeyword({ onRefresh }: UseCreateKeywordProps) {
     })
     const { error } = apiData
     if (error) {
-      toast.error('Tạo keyword thất bại')
+      toast.error(error)
       return
     }
     toast.success('Tạo keyword thành công')
