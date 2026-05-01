@@ -28,7 +28,10 @@ export default function useUpdateChatTemplate({ onRefresh, id }: UseUpdateChatTe
       type: 'private',
       body: formData
     })
-    if (apiData.error) return
+    if (apiData.error) {
+      toast.error(apiData.error)
+      return
+    }
     toast.success('Cập nhật từ mẫu thành công')
     onRefresh()
   }

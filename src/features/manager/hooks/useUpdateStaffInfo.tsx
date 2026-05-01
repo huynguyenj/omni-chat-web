@@ -38,7 +38,7 @@ export default function useUpdateStaffInfo({ onRefresh }: UseUpdateStaffInfoProp
     })
     const { error } = apiData
     if (error) {
-      toast.error('Cập nhật thông tin của nhân viên thất bại')
+      toast.error(error)
       return
     }
     toast.success('Cập nhật thông tin của nhân viên thành công')

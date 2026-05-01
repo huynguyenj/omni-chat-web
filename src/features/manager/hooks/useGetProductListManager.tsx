@@ -28,7 +28,7 @@ export default function useGetProductListManager() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy danh sách sản phẩm thất bại')
+        toast.error(error)
         return
       }
       setListProducts(data)

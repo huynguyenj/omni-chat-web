@@ -28,7 +28,7 @@ export default function useGetListStaff() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy danh sách nhân viên thất bại')
+        toast.error(error)
         return
       }
       setListStaffs(data)

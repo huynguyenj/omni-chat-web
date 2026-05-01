@@ -39,7 +39,7 @@ export default function useUpdateProduct({ onRefresh }: UseUpdateProductProps) {
       body: formData
     })
     if (apiData.error) {
-      toast.error('Cập nhật thông tin sản phẩm thất bại')
+      toast.error(apiData.error)
       return
     }
     toast.success('Cập nhật thông tin sản phẩm thành công')
@@ -57,7 +57,7 @@ export default function useUpdateProduct({ onRefresh }: UseUpdateProductProps) {
       body: form
     })
     if (apiData.error) {
-      toast.error('Cập nhật thông tin sản phẩm thất bại')
+      toast.error(apiData.error)
       return
     }
     toast.success('Cập nhật thông tin sản phẩm thành công')

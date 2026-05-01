@@ -19,7 +19,7 @@ export default function useAutoCreateOrder() {
       body: data
     })
     if (apiData.error) {
-      toast.error('Tự động tạo đơn thất bại')
+      toast.error(apiData.error)
       return
     }
     toast.success('Tự động tạo đơn thành công')

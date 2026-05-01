@@ -34,7 +34,7 @@ export default function useCreateBatchProduct() {
     })
     const { error } = apiData
     if (error) {
-      toast.error('Tạo lô sản phẩm thất bại')
+      toast.error(error)
       return
     }
     toast.success('Thêm lô sản phẩm thành công')

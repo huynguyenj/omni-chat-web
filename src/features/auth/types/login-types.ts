@@ -7,3 +7,7 @@ export type LoginResponseType = {
   avatarUrl: string | null
   staffName: string
 }
+
+export type RefreshTokenType = {
+  accessToken: string
+}

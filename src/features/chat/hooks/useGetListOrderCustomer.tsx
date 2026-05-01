@@ -29,7 +29,7 @@ export default function useGetListOrderCustomer({ currentPage }: UseGetListOrder
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy danh sách đặt đơn lỗi!')
+        toast.error(error)
         return
       }
       setListOrders(data)

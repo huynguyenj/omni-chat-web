@@ -16,7 +16,7 @@ const LoginFormSchema = z.object({
 export type LoginFormType = z.infer<typeof LoginFormSchema>
 export default function useLogin() {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormType>({ resolver: zodResolver(LoginFormSchema) })
-  const addAuthStore = useAuthStore((state) => state.setAccessToken)
+  const addAuthStore = useAuthStore((state) => state.setAuthInfo)
   const navigate = useNavigate()
   const { execute, loading } = useApiCall<LoginResponseType>()
   const onSubmit = async (formData: LoginFormType) => {
@@ -28,12 +28,12 @@ export default function useLogin() {
     })
     const error = apiData.error
     if (error) {
-      toast.error('Tài khoản hoặc mật khẩu sai!')
+      toast.error(error)
       return
     }
-    const { accessToken, role, accountId, staffId, avatarUrl, staffName } = apiData.data
+    const { accessToken, refreshToken, role, accountId, staffId, avatarUrl, staffName } = apiData.data
     toast.success('Đăng nhập thành công')
-    addAuthStore(accessToken, accountId, staffId, role, staffName, avatarUrl)
+    addAuthStore(accessToken, refreshToken, accountId, staffId, role, staffName, avatarUrl)
     navigate(ROLE_HOME[role])
   }
   return { register, handleSubmit, onSubmit, errors, loading }

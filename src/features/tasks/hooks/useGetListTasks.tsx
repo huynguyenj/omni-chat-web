@@ -70,7 +70,7 @@ export default function useGetListTasks({ currentPage }: { currentPage: number }
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy danh sách task thất bại!')
+        toast.error(error)
         return
       }
       setListTasks(data)

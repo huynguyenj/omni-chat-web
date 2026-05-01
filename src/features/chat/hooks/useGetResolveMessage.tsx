@@ -24,7 +24,7 @@ export default function useGetResolveMessage(staffId: string | null) {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy tin nhắn chờ thất bại!')
+        toast.error(error)
         return
       }
       setResolveMessageTab(data)
