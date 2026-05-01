@@ -20,7 +20,7 @@ export default function useGetProductBatchManager() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy danh sách lô thất bại')
+        toast.error(error)
         return
       }
       setProductBatchList(data)

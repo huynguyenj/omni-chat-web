@@ -16,7 +16,7 @@ export default function useCreateOrder() {
       toast.success('Đặt hàng cho sản phẩm thành công')
       return
     }
-    if (error) toast.error('Đặt hàng thất bại')
+    if (error) toast.error(error)
   }
   return { loading, handleOrder }
 }

@@ -15,7 +15,7 @@ export default function useGetAllBrand() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy danh sách hãng sữa thất bại!')
+        toast.error(error)
         return
       }
       setListBrand(data)

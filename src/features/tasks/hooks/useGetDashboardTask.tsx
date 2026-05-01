@@ -21,7 +21,7 @@ export default function useGetDashboardTask() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy thống kê task thất bại!')
+        toast.error(error)
         return
       }
       setDashBoardTask(data)

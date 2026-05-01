@@ -64,7 +64,7 @@ export default function useCreateProduct() {
     })
 
     if (res.error) {
-      toast.error('Tạo sản phẩm thất bại')
+      toast.error(res.error)
       return
     }
 

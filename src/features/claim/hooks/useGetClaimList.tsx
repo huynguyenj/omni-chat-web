@@ -21,7 +21,7 @@ export default function useGetClaimList({ currentPage }: { currentPage: number }
       })
       const { data, error } = apiData
       setListClaims(data)
-      if (error) toast.error('Xảy ra lỗi khi lấy danh sách!')
+      if (error) toast.error(error)
     }
     fetchListClaims()
   }, [currentPage])

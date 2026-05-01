@@ -22,7 +22,7 @@ export default function useGetTicket() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy danh sách ticket thất bại!')
+        toast.error(error)
         return
       }
       setListTickets(data)

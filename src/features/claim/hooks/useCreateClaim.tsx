@@ -41,7 +41,7 @@ export default function useCreateClaim() {
     })
 
     const { error } = apiData
-    if (error) toast.error('Tạo đơn thất bại! Xin hãy thử lại')
+    if (error) toast.error(error)
     else toast.success('Tạo đơn thành công')
   }
   return { onSubmit, loading, register, handleSubmit, errors, control, setConversationId, conversationId }

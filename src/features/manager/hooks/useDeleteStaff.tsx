@@ -18,7 +18,7 @@ export default function useDeleteStaff({ onRefresh, onCloseModalUpdate }: UseUpd
     })
     const { error } = apiData
     if (error) {
-      toast.error('Xóa nhân viên thất bại')
+      toast.error(error)
       return
     }
     toast.success('Xóa nhân viên thành công')

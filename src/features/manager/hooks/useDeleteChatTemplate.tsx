@@ -14,7 +14,7 @@ export default function useDeleteChatTemplate({ onRefresh }: UseDeleteChatTempla
       type: 'private'
     })
     if (apiData.error) {
-      toast.error('Xóa thất bại!')
+      toast.error(apiData.error)
       return
     }
     toast.success('Xóa thành công')
