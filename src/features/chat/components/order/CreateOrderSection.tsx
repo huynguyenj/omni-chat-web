@@ -40,9 +40,9 @@ export default function CreateOrderSection() {
   }, [listProductSelected])
   return (
     <>
-      <Button variant='outline' className='rounded-2xl py-2 border border-border-secondary hover:bg-secondary hover:text-white hover:border-none gap-2' onClick={handleOpen}>
-        <MdOutlineShoppingCart/>
-          Tạo đơn hàng mới
+      <Button className='bg-transparent text-black rounded-lg w-full justify-start p-2 hover:bg-secondary hover:text-white hover:border-none gap-2' onClick={handleOpen}>
+        <MdOutlineShoppingCart className='size-4'/>
+        <p className='text-nowrap'>Tạo đơn hàng</p>
       </Button>
       <AnimatePresence>
         {isOpen &&
