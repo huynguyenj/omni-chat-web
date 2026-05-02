@@ -1,7 +1,7 @@
 export const PUBLIC_PATH = {
   LOGIN: '/',
   PRODUCT: '/product',
-  CUSTOMER_FORM: '/customer/:conversationId',
+  CUSTOMER_FORM: '/customer/:activeCustomerId',
   PAYMENT_STAtUS: '/payment'
 }
 export const PRIVATE_PATH = {
