@@ -1,28 +1,130 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { AlertTriangle, Package, Warehouse as WarehouseIcon, X, Boxes, Thermometer } from 'lucide-react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Boxes,
+  CalendarDays,
+  CircleDollarSign,
+  Droplets,
+  Package,
+  Warehouse as WarehouseIcon,
+  X
+} from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
-import Tag from '@/components/ui/tag/Tag'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerInventoryApi } from '../../api/inventory-api'
 import type { InventoryDashboardData } from '../../types/inventory-type'
 import type { ManagerProductItem } from '../../types/product-type'
+
+const LOW_STOCK_MAX = 9
+const WARNING_STOCK_MAX = 49
+
+type StockLevel = { label: string; qtyClass: string; statusClass: string; sortRank: number }
+
+function stockLevelFromQuantity(q: number): StockLevel {
+  if (q <= LOW_STOCK_MAX) {
+    return {
+      label: 'Sắp hết hàng',
+      qtyClass: 'text-red-600 font-semibold',
+      statusClass: 'text-red-600 font-semibold',
+      sortRank: 0
+    }
+  }
+  if (q <= WARNING_STOCK_MAX) {
+    return {
+      label: 'Cảnh báo',
+      qtyClass: 'text-amber-600 font-semibold',
+      statusClass: 'text-amber-600 font-semibold',
+      sortRank: 1
+    }
+  }
+  return {
+    label: 'Đủ hàng',
+    qtyClass: 'text-emerald-600 font-semibold',
+    statusClass: 'text-emerald-600 font-semibold',
+    sortRank: 2
+  }
+}
+
+type SortKey = 'name' | 'code' | 'brand' | 'quantity' | 'status'
+type SortDir = 'asc' | 'desc'
+
+function formatProductDateTime(iso: string | null | undefined) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+function ProductDetailField({
+  label,
+  value,
+  valueClassName = 'text-[#003366]',
+  icon,
+  className
+}: {
+  label: string
+  value: string
+  valueClassName?: string
+  icon?: ReactNode
+  className?: string
+}) {
+  return (
+    <div className={['min-w-0', className].filter(Boolean).join(' ')}>
+      <p className="mb-1 flex items-center gap-2 text-sm text-gray-500">
+        {icon ? <span className="inline-flex shrink-0 text-gray-400 [&>svg]:h-4 [&>svg]:w-4">{icon}</span> : null}
+        <span>{label}</span>
+      </p>
+      <p className={`text-lg font-bold leading-snug break-words ${valueClassName}`}>{value}</p>
+    </div>
+  )
+}
+
+function InventorySortHeader({
+  label,
+  columnKey,
+  sortKey,
+  sortDir,
+  onSort
+}: {
+  label: string
+  columnKey: SortKey
+  sortKey: SortKey
+  sortDir: SortDir
+  onSort: (key: SortKey) => void
+}) {
+  const active = sortKey === columnKey
+  const Icon = !active ? ArrowUpDown : sortDir === 'asc' ? ArrowUp : ArrowDown
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(columnKey)}
+      className="inline-flex items-center justify-center gap-1 w-full min-h-[44px] px-2 py-2 font-semibold text-[#003366] hover:bg-[#BBDEFB]/60 transition-colors"
+    >
+      <span>{label}</span>
+      <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-[#1565C0]' : 'text-gray-500'}`} aria-hidden />
+    </button>
+  )
+}
 
 function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4" onMouseDown={onClose}>
       <div
-        className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col"
+        className="bg-white rounded-xl shadow-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto flex flex-col"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-gray-100 bg-white px-6 py-4">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-gray-200 bg-white px-6 py-4">
           <h3 className="text-lg font-semibold text-[#003366] pr-2">{title}</h3>
           <Button type="button" variant="outline" size="sm" className="h-9 w-9 shrink-0 p-0" onClick={onClose} aria-label="Đóng">
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 md:p-8">{children}</div>
       </div>
     </div>
   )
@@ -44,6 +146,8 @@ export default function WarehouseTab() {
   const [productsError, setProductsError] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<ManagerProductItem | null>(null)
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -85,6 +189,37 @@ export default function WarehouseTab() {
   const totalProductsValue = isLoadingDashboard ? '...' : dashboard.totalProducts
   const lowStockValue = isLoadingDashboard ? '...' : dashboard.lowStockProducts
   const totalBrandsValue = isLoadingDashboard ? '...' : dashboard.totalBrands
+
+  const sortedProducts = useMemo(() => {
+    const list = [...products]
+    const dir = sortDir === 'asc' ? 1 : -1
+    list.sort((a, b) => {
+      let cmp = 0
+      if (sortKey === 'name') {
+        cmp = (a.name || '').localeCompare(b.name || '', 'vi', { sensitivity: 'base' })
+      } else if (sortKey === 'code') {
+        cmp = (a.code || '').localeCompare(b.code || '', 'vi', { sensitivity: 'base' })
+      } else if (sortKey === 'brand') {
+        cmp = (a.brand || '').localeCompare(b.brand || '', 'vi', { sensitivity: 'base' })
+      } else if (sortKey === 'quantity') {
+        cmp = (a.quantity ?? 0) - (b.quantity ?? 0)
+      } else {
+        cmp =
+          stockLevelFromQuantity(a.quantity ?? 0).sortRank - stockLevelFromQuantity(b.quantity ?? 0).sortRank
+      }
+      return cmp * dir
+    })
+    return list
+  }, [products, sortKey, sortDir])
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -131,77 +266,125 @@ export default function WarehouseTab() {
       )}
 
       <Card className="p-6">
-        <h2 className="text-[#003366] text-xl font-semibold mb-4">Chi tiết tồn kho</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {!isLoadingProducts && products.length === 0 && (
-            <div className="col-span-full rounded-md border border-gray-200 bg-gray-50 px-3 py-8 text-center text-sm text-gray-600">
-              Chưa có dữ liệu sản phẩm.
-            </div>
-          )}
+        <div className="mb-6">
+          <h2 className="text-[#003366] text-xl font-semibold">Danh sách chi tiết tồn kho</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Theo dõi tồn kho, SKU và trạng thái theo từng sản phẩm
+          </p>
+        </div>
 
-          {products.map(product => {
-            return (
-              <Card
-                key={product.id}
-                className="p-4 md:p-5 hover:shadow-md transition-all duration-200 flex flex-col justify-between border-2 border-[#3366CC]/80 rounded-2xl bg-white"
-              >
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <div className="h-28 w-28 md:h-32 md:w-32 shrink-0 rounded-xl border-2 border-[#0B4EA2] bg-gray-50 overflow-hidden">
-                      {product.imageUrl ? (
-                        <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center text-xs text-gray-500">No image</div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-bold text-[#003366] text-lg leading-tight line-clamp-2">{product.name}</h3>
-                        <Tag variant="gray" size="sm" className="text-[10px] h-6 px-3 rounded-full shrink-0">
-                          {product.code}
-                        </Tag>
-                      </div>
-
-                      <div className="inline-flex items-center gap-2 rounded-full bg-[#EAF3FF] px-3 py-1.5 text-[#1E5BB8] text-sm font-semibold border border-[#BFD8FF]">
-                        <span>Hãng: {product.brand || 'Chưa có'}</span>
-                        <Thermometer className="h-4 w-4" />
-                      </div>
-
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Boxes className="h-5 w-5 text-gray-500" />
-                          <span className="text-gray-700 text-lg">Tổng tồn kho:</span>
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <table className="w-full min-w-[920px] border-collapse text-sm font-sans">
+            <thead>
+              <tr className="bg-[#E3F2FD]">
+                <th className="border border-gray-200 px-2 py-2 text-center text-[#003366] font-semibold w-14">STT</th>
+                <th className="border border-gray-200 px-2 py-2 text-left text-[#003366] font-semibold w-[100px]">Hình ảnh</th>
+                <th className="border border-gray-200 p-0 align-middle min-w-[180px]">
+                  <InventorySortHeader
+                    label="Tên sản phẩm"
+                    columnKey="name"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+                </th>
+                <th className="border border-gray-200 p-0 align-middle min-w-[120px]">
+                  <InventorySortHeader
+                    label="Mã SKU"
+                    columnKey="code"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+                </th>
+                <th className="border border-gray-200 p-0 align-middle min-w-[120px]">
+                  <InventorySortHeader
+                    label="Hãng"
+                    columnKey="brand"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+                </th>
+                <th className="border border-gray-200 p-0 align-middle min-w-[140px]">
+                  <InventorySortHeader
+                    label="Tổng tồn kho (sp)"
+                    columnKey="quantity"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+                </th>
+                <th className="border border-gray-200 p-0 align-middle min-w-[130px]">
+                  <InventorySortHeader
+                    label="Trạng thái"
+                    columnKey="status"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+                </th>
+                <th className="border border-gray-200 px-2 py-2 text-center text-[#003366] font-semibold min-w-[110px]">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoadingProducts && (
+                <tr>
+                  <td colSpan={8} className="border border-gray-200 px-3 py-10 text-center text-blue-700 bg-blue-50/50">
+                    Đang tải chi tiết tồn kho...
+                  </td>
+                </tr>
+              )}
+              {!isLoadingProducts && products.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="border border-gray-200 px-3 py-10 text-center text-gray-600 bg-gray-50">
+                    Chưa có dữ liệu sản phẩm.
+                  </td>
+                </tr>
+              )}
+              {!isLoadingProducts &&
+                sortedProducts.map((product, index) => {
+                  const level = stockLevelFromQuantity(product.quantity ?? 0)
+                  const stt = (productPage - 1) * productPageSize + index + 1
+                  return (
+                    <tr key={product.id} className="hover:bg-gray-50/80">
+                      <td className="border border-gray-200 px-2 py-2 text-center text-gray-900">{stt}</td>
+                      <td className="border border-gray-200 px-2 py-2">
+                        <div className="mx-auto h-12 w-12 overflow-hidden rounded border border-gray-200 bg-gray-50">
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-400">—</div>
+                          )}
                         </div>
-                        <span className="text-3xl font-bold text-[#2E9E4D] leading-none">
-                          {product.quantity} <span className="text-2xl">sp</span>
+                      </td>
+                      <td className="border border-gray-200 px-3 py-2 text-left font-medium text-gray-900">{product.name}</td>
+                      <td className="border border-gray-200 px-3 py-2 text-left text-gray-800">{product.code || '—'}</td>
+                      <td className="border border-gray-200 px-3 py-2 text-left text-gray-800">{product.brand || '—'}</td>
+                      <td className="border border-gray-200 px-3 py-2 text-center">
+                        <span className={`inline-flex items-center justify-center gap-1.5 tabular-nums ${level.qtyClass}`}>
+                          <Boxes className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+                          {product.quantity ?? 0}
                         </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-3 mt-1">
-                  <Button
-                    size="sm"
-                    className="w-full h-11 rounded-xl bg-[#EAF3FF] hover:bg-[#DCEBFF] text-[#1E5BB8] border border-[#BFD8FF] text-xl font-semibold"
-                    onClick={() => {
-                      setSelectedProduct(product)
-                      setDetailOpen(true)
-                    }}
-                  >
-                    Xem chi tiết
-                  </Button>
-                </div>
-              </Card>
-            )
-          })}
-
-          {isLoadingProducts && (
-            <div className="col-span-full rounded-md border border-blue-200 bg-blue-50 px-3 py-8 text-center text-sm text-blue-700">
-              Đang tải chi tiết tồn kho...
-            </div>
-          )}
+                      </td>
+                      <td className={`border border-gray-200 px-3 py-2 text-center ${level.statusClass}`}>{level.label}</td>
+                      <td className="border border-gray-200 px-3 py-2 text-center">
+                        <button
+                          type="button"
+                          className="text-[#3366CC] font-medium underline underline-offset-2 hover:text-[#003366]"
+                          onClick={() => {
+                            setSelectedProduct(product)
+                            setDetailOpen(true)
+                          }}
+                        >
+                          Xem chi tiết
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+            </tbody>
+          </table>
         </div>
 
         <div className="mt-6">
@@ -219,70 +402,86 @@ export default function WarehouseTab() {
         title={selectedProduct ? `Thông tin chi tiết sản phẩm: ${selectedProduct.name}` : 'Thông tin chi tiết sản phẩm'}
       >
         {selectedProduct && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-lg border border-gray-300 bg-gray-50 p-3">
-                {selectedProduct.imageUrl ? (
-                  <img
-                    src={selectedProduct.imageUrl}
-                    alt={selectedProduct.name}
-                    className="w-full h-52 object-contain rounded-md bg-white border border-gray-200"
-                  />
-                ) : (
-                  <div className="w-full h-52 rounded-md bg-white border border-gray-200 flex items-center justify-center text-sm text-gray-500">
-                    Không có ảnh
-                  </div>
-                )}
+          <div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+              <div className="flex justify-center md:justify-start">
+                <div className="flex aspect-square w-full max-w-[280px] items-center justify-center rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  {selectedProduct.imageUrl ? (
+                    <img
+                      src={selectedProduct.imageUrl}
+                      alt={selectedProduct.name}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 px-4 text-center text-sm text-gray-500">
+                      <Package className="h-14 w-14 text-gray-300" aria-hidden />
+                      <span className="font-medium text-gray-400">Chưa có ảnh sản phẩm</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="rounded-lg border border-gray-300 p-3 bg-white">
-                  <p className="text-sm text-gray-500">Tên sản phẩm:</p>
-                  <p className="text-2xl font-semibold text-[#003366] leading-tight">{selectedProduct.name || '-'}</p>
+              <div className="flex flex-col justify-center space-y-5">
+                <p className="text-2xl font-bold leading-tight text-[#003366] md:text-3xl">
+                  {selectedProduct.name || '—'}
+                </p>
+                <div>
+                  <p className="mb-1 text-sm text-gray-500">Thương hiệu</p>
+                  <p className="text-lg font-bold text-[#003366]">{selectedProduct.brand || '—'}</p>
                 </div>
-                <div className="rounded-lg border border-gray-300 p-3 bg-white">
-                  <p className="text-sm text-gray-500">Thương hiệu:</p>
-                  <p className="text-xl font-semibold text-[#003366]">{selectedProduct.brand || '-'}</p>
-                </div>
-                <div className="rounded-lg border border-gray-300 p-3 bg-white">
-                  <p className="text-sm text-gray-500">Loại:</p>
-                  <p className="text-xl font-semibold text-[#003366]">{selectedProduct.productKind || '-'}</p>
+                <div>
+                  <p className="mb-1 text-sm text-gray-500">Loại</p>
+                  <p className="text-lg font-bold text-[#003366]">{selectedProduct.productKind || '—'}</p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="rounded-lg border border-gray-300 p-3 bg-white">
-                <p className="text-sm text-gray-500">Dạng đóng gói:</p>
-                <p className="text-2xl font-semibold text-[#003366]">{selectedProduct.productPackagingType || '-'}</p>
-              </div>
-              <div className="rounded-lg border border-gray-300 p-3 bg-white">
-                <p className="text-sm text-gray-500">Dung tích:</p>
-                <p className="text-2xl font-semibold text-[#003366]">{selectedProduct.volumeMl ?? '-'} ml</p>
-              </div>
-              <div className="rounded-lg border border-gray-300 p-3 bg-white">
-                <p className="text-sm text-gray-500">Giá bán:</p>
-                <p className="text-2xl font-semibold text-[#D97706]">{selectedProduct.price.toLocaleString('vi-VN')} VNĐ</p>
-              </div>
-              <div className="rounded-lg border border-gray-300 p-3 bg-white">
-                <p className="text-sm text-gray-500">Đóng gói:</p>
-                <p className="text-2xl font-semibold text-[#003366]">
-                  {selectedProduct.productPackagingType || '-'}
-                  {selectedProduct.productPackagingType ? ` (${selectedProduct.productPackagingType})` : ''}
-                </p>
-              </div>
-              <div className="rounded-lg border border-gray-300 p-3 bg-white">
-                <p className="text-sm text-gray-500">Tồn kho:</p>
-                <p className="text-2xl font-semibold text-[#003366]">{selectedProduct.quantity ?? '-'} chai</p>
-              </div>
-              <div className="rounded-lg border border-gray-300 p-3 bg-white">
-                <p className="text-sm text-gray-500">Hạn sử dụng:</p>
-                <p className="text-2xl font-semibold text-[#003366]">{selectedProduct.lifeSpan ?? '-'} ngày</p>
-              </div>
-              <div className="rounded-lg border border-gray-300 p-3 md:col-span-2 bg-white">
-                <p className="text-sm text-gray-500">Mô tả sản phẩm:</p>
-                <p className="text-xl font-semibold text-[#003366] whitespace-pre-wrap">{selectedProduct.description || '-'}</p>
-              </div>
+            <div className="my-6 border-t border-gray-200" />
+
+            <div className="grid grid-cols-1 gap-x-10 gap-y-6 md:grid-cols-2">
+              <ProductDetailField
+                label="Dung tích:"
+                icon={<Droplets />}
+                value={
+                  selectedProduct.volumeMl != null && !Number.isNaN(Number(selectedProduct.volumeMl))
+                    ? `${selectedProduct.volumeMl} ml`
+                    : '—'
+                }
+              />
+              <ProductDetailField
+                label="Giá bán:"
+                icon={<CircleDollarSign />}
+                value={`${selectedProduct.price.toLocaleString('vi-VN')} VNĐ`}
+                valueClassName="text-[#D97706]"
+              />
+              <ProductDetailField
+                label="Quy cách:"
+                icon={<Package />}
+                value={selectedProduct.productPackagingType || '—'}
+              />
+              <ProductDetailField
+                label="Tồn kho:"
+                value={`${selectedProduct.quantity ?? '—'} chai`}
+              />
+              <ProductDetailField
+                label="Hạn dùng:"
+                icon={<CalendarDays />}
+                value={
+                  selectedProduct.lifeSpan != null && !Number.isNaN(Number(selectedProduct.lifeSpan))
+                    ? `${selectedProduct.lifeSpan} ngày`
+                    : '—'
+                }
+              />
+              <ProductDetailField
+                label="Mô tả:"
+                value={selectedProduct.description?.trim() ? selectedProduct.description : '—'}
+                valueClassName="text-[#003366] whitespace-pre-wrap"
+              />
+              <ProductDetailField
+                className="md:col-span-2"
+                label="Ngày tạo:"
+                value={formatProductDateTime(selectedProduct.createDate)}
+              />
             </div>
           </div>
         )}

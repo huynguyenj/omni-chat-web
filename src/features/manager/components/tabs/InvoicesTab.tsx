@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CheckCircle, Clock, Search, TrendingUp } from 'lucide-react'
+import { AlertCircle, CheckCircle, Clock, RefreshCcw, Search, TrendingUp } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerInvoiceApi } from '../../api/invoice-api'
@@ -52,13 +52,57 @@ function formatDateShort(iso: string) {
   return d.toLocaleDateString('vi-VN')
 }
 
-function invoiceStatusUi(statusRaw: string): { label: string; className: string } {
+function invoiceStatusVisual(statusRaw: string): {
+  label: string
+  badgeClass: string
+  borderTopClass: string
+  amountClass: string
+} {
   const key = String(statusRaw).trim().toLowerCase()
-  if (key === 'completed') return { label: 'Đã thanh toán', className: 'bg-[#26C271] text-white' }
-  if (key === 'pending') return { label: 'Chờ thanh toán', className: 'bg-[#F59E0B] text-white' }
-  if (key === 'pendingrefund') return { label: 'Quá hạn', className: 'bg-[#EF4444] text-white' }
-  if (key === 'refunded') return { label: 'Đã hoàn tiền', className: 'bg-[#3366CC] text-white' }
-  return { label: statusRaw || '—', className: 'bg-gray-400 text-white' }
+  if (key === 'completed') {
+    return {
+      label: 'Đã thanh toán',
+      badgeClass: 'bg-[#26C271] text-white',
+      borderTopClass: 'border-t-4 border-t-[#26C271]',
+      amountClass: 'text-[#16a34a]'
+    }
+  }
+  if (key === 'pending') {
+    return {
+      label: 'Chờ thanh toán',
+      badgeClass: 'bg-[#F59E0B] text-white',
+      borderTopClass: 'border-t-4 border-t-[#F59E0B]',
+      amountClass: 'text-[#d97706]'
+    }
+  }
+  if (key === 'pendingrefund') {
+    return {
+      label: 'Quá hạn',
+      badgeClass: 'bg-[#EF4444] text-white',
+      borderTopClass: 'border-t-4 border-t-[#EF4444]',
+      amountClass: 'text-[#dc2626]'
+    }
+  }
+  if (key === 'refunded') {
+    return {
+      label: 'Đã hoàn tiền',
+      badgeClass: 'bg-[#3366CC] text-white',
+      borderTopClass: 'border-t-4 border-t-[#3366CC]',
+      amountClass: 'text-[#3366CC]'
+    }
+  }
+  return {
+    label: statusRaw || '—',
+    badgeClass: 'bg-gray-400 text-white',
+    borderTopClass: 'border-t-4 border-t-gray-400',
+    amountClass: 'text-gray-700'
+  }
+}
+
+function customerInitial(name: string) {
+  const t = name.trim()
+  if (!t) return '?'
+  return t.charAt(0).toUpperCase()
 }
 
 export default function InvoicesTab() {
@@ -172,8 +216,8 @@ export default function InvoicesTab() {
     <div className="space-y-4">
       <Card className="p-6">
         <div className="mb-6">
-          <h2 className="text-[#003366] text-2xl font-semibold">Hóa đơn</h2>
-          <p className="text-sm text-gray-500 mt-1">Quản lý hóa đơn tổng hợp đơn hàng cho khách hàng  </p>
+          <h2 className="text-[#003366] text-2xl font-bold tracking-tight">Hóa đơn</h2>
+          <p className="text-sm text-gray-500 mt-1">Quản lý hóa đơn tổng hợp đơn hàng cho khách hàng</p>
         </div>
         {invoiceError && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -181,63 +225,73 @@ export default function InvoicesTab() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
-          <Card className="p-4 bg-gradient-to-br from-slate-100 to-slate-200 border-slate-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-600 mb-1 uppercase">Tổng tiền</p>
-                <p className="text-3xl font-bold text-[#003366]">{formatKpiMoney(totalRevenue)}</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6">
+          <Card className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1">Tổng tiền</p>
+                <p className="text-2xl font-bold tabular-nums text-[#003366] sm:text-3xl">{formatKpiMoney(totalRevenue)}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-slate-500" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
+                <TrendingUp className="h-6 w-6" aria-hidden />
+              </div>
             </div>
           </Card>
-          <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-600 mb-1 uppercase">Đã thanh toán</p>
-                <p className="text-3xl font-bold text-[#1f9d62]">{formatKpiMoney(totalPaid)}</p>
+          <Card className="rounded-2xl border border-green-100 bg-green-50/80 p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-green-800/80 mb-1">Đã thanh toán</p>
+                <p className="text-2xl font-bold tabular-nums text-[#15803d] sm:text-3xl">{formatKpiMoney(totalPaid)}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-[#2ECC71]/60" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#22c55e] shadow-sm">
+                <CheckCircle className="h-6 w-6" aria-hidden />
+              </div>
             </div>
           </Card>
-          <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-600 mb-1 uppercase">Chờ thanh toán</p>
-                <p className="text-3xl font-bold text-[#d97706]">{formatKpiMoney(totalPending)}</p>
+          <Card className="rounded-2xl border border-amber-100 bg-amber-50/80 p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900/70 mb-1">Chờ thanh toán</p>
+                <p className="text-2xl font-bold tabular-nums text-[#b45309] sm:text-3xl">{formatKpiMoney(totalPending)}</p>
               </div>
-              <Clock className="h-8 w-8 text-amber-500/60" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-amber-500 shadow-sm">
+                <Clock className="h-6 w-6" aria-hidden />
+              </div>
             </div>
           </Card>
-          <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-600 mb-1 uppercase">Quá hạn</p>
-                <p className="text-3xl font-bold text-[#dc2626]">{formatKpiMoney(totalOverdue)}</p>
+          <Card className="rounded-2xl border border-red-100 bg-red-50/80 p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-red-900/70 mb-1">Quá hạn</p>
+                <p className="text-2xl font-bold tabular-nums text-[#b91c1c] sm:text-3xl">{formatKpiMoney(totalOverdue)}</p>
               </div>
-              <AlertCircle className="h-8 w-8 text-red-500/60" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-red-500 shadow-sm">
+                <AlertCircle className="h-6 w-6" aria-hidden />
+              </div>
             </div>
           </Card>
-          <Card className="p-4 bg-gradient-to-br from-[#EAF3FF] to-[#DCEBFF] border-[#BFD8FF]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-600 mb-1 uppercase">Đã hoàn tiền</p>
-                <p className="text-3xl font-bold text-[#003366]">{formatKpiMoney(totalRefunded)}</p>
+          <Card className="rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#1e40af]/80 mb-1">Đã hoàn tiền</p>
+                <p className="text-2xl font-bold tabular-nums text-[#1d4ed8] sm:text-3xl">{formatKpiMoney(totalRefunded)}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-[#3366CC]/60" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#3366CC] shadow-sm">
+                <RefreshCcw className="h-5 w-5" aria-hidden />
+              </div>
             </div>
           </Card>
         </div>
 
-        <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="relative w-full xl:max-w-xl">
-            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="relative w-full xl:max-w-2xl">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="Tìm theo mã hóa đơn, tên hoặc mã khách hàng..."
-              className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-[#003366] outline-none focus:border-[#3366CC]"
+              className="h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 pl-11 pr-4 text-sm text-[#003366] outline-none transition-colors placeholder:text-gray-400 focus:border-[#3366CC] focus:bg-white focus:ring-2 focus:ring-[#3366CC]/15"
             />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -247,10 +301,10 @@ export default function InvoicesTab() {
                 <button
                   key={filter.value}
                   type="button"
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                  className={`rounded-xl px-3.5 py-2 text-xs font-semibold border transition-colors ${
                     isActive
-                      ? 'bg-[#3366CC] text-white border-[#3366CC]'
-                      : 'bg-white text-[#003366] border-gray-200 hover:border-[#3366CC]/40'
+                      ? 'bg-[#3366CC] text-white border-[#3366CC] shadow-sm'
+                      : 'bg-white text-[#003366] border-gray-200 hover:border-[#3366CC]/50 hover:bg-gray-50'
                   }`}
                   onClick={() => setStatusFilter(filter.value)}
                   disabled={invoiceLoading}
@@ -268,39 +322,50 @@ export default function InvoicesTab() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {!invoiceLoading && visibleInvoices.length === 0 && (
-            <div className="col-span-full rounded-md border border-gray-200 bg-gray-50 px-3 py-8 text-center text-sm text-gray-600">
+            <div className="col-span-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-10 text-center text-sm text-gray-600">
               Chưa có dữ liệu hóa đơn.
             </div>
           )}
           {pagedInvoices.map((invoice) => {
-            const statusUi = invoiceStatusUi(invoice.invoiceStatus)
+            const visual = invoiceStatusVisual(invoice.invoiceStatus)
             return (
-              <Card key={invoice.id} className="p-4 hover:shadow-md transition-shadow flex flex-col h-full border-t-4 border-t-[#3366CC]">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="min-w-0">
+              <Card
+                key={invoice.id}
+                className={`flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 border-t-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${visual.borderTopClass}`}
+              >
+                <div className="mb-4 flex items-start gap-3">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E8F0FC] text-sm font-bold text-[#3366CC]"
+                    aria-hidden
+                  >
+                    {customerInitial(invoice.customerName)}
+                  </div>
+                  <div className="min-w-0 flex-1">
                     <p className="font-semibold text-[#003366] line-clamp-1">{invoice.customerName}</p>
                     <p className="text-xs text-gray-500 line-clamp-1">{invoice.customerEmail || invoice.customerPhoneNumber || '—'}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusUi.className}`}>{statusUi.label}</span>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${visual.badgeClass}`}>
+                    {visual.label}
+                  </span>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between gap-2">
+                <div className="mt-auto space-y-2.5 text-sm">
+                  <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
                     <span className="text-gray-500">Phương thức</span>
-                    <span className="font-medium text-[#003366]">{invoice.invoiceMethod || '—'}</span>
+                    <span className="text-right font-medium text-[#003366]">{invoice.invoiceMethod || '—'}</span>
                   </div>
                   <div className="flex justify-between gap-2">
                     <span className="text-gray-500">Bắt đầu</span>
-                    <span className="font-medium text-[#003366]">{formatDateShort(invoice.startedDate)}</span>
+                    <span className="font-medium text-[#003366] tabular-nums">{formatDateShort(invoice.startedDate)}</span>
                   </div>
                   <div className="flex justify-between gap-2">
                     <span className="text-gray-500">Kết thúc</span>
-                    <span className="font-medium text-[#003366]">{formatDateShort(invoice.endedDate)}</span>
+                    <span className="font-medium text-[#003366] tabular-nums">{formatDateShort(invoice.endedDate)}</span>
                   </div>
-                  <div className="flex justify-between gap-2">
+                  <div className="flex justify-between gap-2 pt-1">
                     <span className="text-gray-500">Tổng hóa đơn</span>
-                    <span className="font-semibold text-[#16a34a]">{formatMoney(invoice.total)}</span>
+                    <span className={`font-bold tabular-nums ${visual.amountClass}`}>{formatMoney(invoice.total)}</span>
                   </div>
                 </div>
               </Card>
@@ -308,7 +373,10 @@ export default function InvoicesTab() {
           })}
         </div>
 
-        <div className="mt-6">
+        <div className="mt-8 space-y-4">
+          <p className="text-center text-sm font-medium text-gray-600">
+            Trang {invoicePage} / {invoiceTotalPages}
+          </p>
           <PaginationBar
             currentPage={invoicePage}
             setPage={setInvoicePage}

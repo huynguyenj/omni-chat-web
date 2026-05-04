@@ -15,7 +15,7 @@ const tabs: Array<{ value: ManagerDashboardTab; label: string; Icon: ComponentTy
   { value: 'claims', label: 'Yêu cầu', Icon: ClipboardCheck },
   { value: 'warnings', label: 'Cảnh báo', Icon: AlertTriangle },
   { value: 'shippers', label: 'Vận chuyển', Icon: Truck },
-  { value: 'invoice', label: 'Hóa đơn', Icon: FileText },
+  { value: 'invoice', label: 'Quản lý Thanh toán', Icon: FileText },
   { value: 'wallet', label: 'Ví tiền', Icon: Wallet }
 ]
 
