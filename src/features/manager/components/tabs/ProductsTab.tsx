@@ -389,8 +389,29 @@ export default function ProductsTab() {
               />
               { errors.productPackagingType?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.productPackagingType?.message}</p> }
             </div>
+            <p className='text-primary font-medium'>Dung tích</p>
+            <Controller
+              control={control}
+              name='volumeMl'
+              render={({ field }) => (
+                <AdvSelect
+                  value={field.value ? String(field.value) : undefined}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Chọn dung tích'/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='180'>180ml</SelectItem>
+                    <SelectItem value='490'>490ml</SelectItem>
+                    <SelectItem value='880'>880ml</SelectItem>
+                    <SelectItem value='1760'>1760ml</SelectItem>
+                  </SelectContent>
+                </AdvSelect>
+              )}
+            />
             <div className='flex items-center gap-2'>
-              <Input type='number' {...registerProduct('volumeMl', { valueAsNumber: true })} variant='gray' placeholder='1760' label='Dung tích' error={errors.volumeMl?.message}/>
+              { errors.productPackagingType?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.productPackagingType?.message}</p> }
               <Input type='number' {...registerProduct('lifeSpan', { valueAsNumber: true })} variant='gray' placeholder='14' label='Hạn sử dụng' error={errors.lifeSpan?.message}/>
               <Input {...registerProduct('price', { valueAsNumber: true })} type='number' variant='gray' label='Giá' placeholder='100000' error={errors.price?.message}/>
             </div>
