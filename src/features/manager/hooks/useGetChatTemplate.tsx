@@ -12,7 +12,7 @@ export default function useGetChatTemplate() {
   useEffect(() => {
     const fetchChatTemplateList = async () => {
       const param = new URLSearchParams()
-      param.append('pageNumber', String(1))
+      param.append('pageNumber', currentPage.toString())
       param.append('pageSize', '6')
       if (searchText) param.append('search', searchText)
       const apiUrl = `/chat-templates?${param.toString()}`

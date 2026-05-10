@@ -9,7 +9,7 @@ export default function useDeleteChatTemplate({ onRefresh }: UseDeleteChatTempla
   const { execute, loading } = useApiCall<null>()
   const handleDelete = async (id: string) => {
     const apiData = await execute({
-      apiUrl: `/chat-template/${id}`,
+      apiUrl: `/chat-templates/${id}`,
       method: 'del',
       type: 'private'
     })
