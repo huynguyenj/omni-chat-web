@@ -324,7 +324,6 @@ export default function WarehouseTab() {
                     onSort={toggleSort}
                   />
                 </th>
-                <th className="border border-gray-200 px-2 py-2 text-center text-[#003366] font-semibold min-w-[110px]">Thao tác</th>
               </tr>
             </thead>
             <tbody>
