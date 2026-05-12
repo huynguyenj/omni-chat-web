@@ -11,7 +11,7 @@ export const createProductSchema = z.object({
   productPackagingType: z.string({ error: 'Loại hộp không được để trống' }),
   productKind: z.string({ error: 'Loại sữa không được để trống' }),
 
-  volumeMl: z.number().min(1),
+  volumeMl: z.string(),
 
   description: z.string().optional(),
 
@@ -57,14 +57,14 @@ export default function useCreateProduct() {
     form.append('LifeSpan', String(formData.lifeSpan))
     form.append('Image', formData.image)
     const res = await execute({
-      apiUrl: '/products',
+      apiUrl: '/products/create',
       method: 'post',
       type: 'private',
       body: form
     })
 
     if (res.error) {
-      toast.error('Tạo sản phẩm thất bại')
+      toast.error(res.error)
       return
     }
 

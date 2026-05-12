@@ -28,7 +28,7 @@ export default function useCreateCustomerForm({ activeCustomerId }: { activeCust
       type: 'public',
       body: finalForm
     })
-    if (apiData.error) toast.error('Tạo thông tin thất bại')
+    if (apiData.error) toast.error(apiData.error)
   }
   return { errors, register, onSubmit, loading, handleSubmit }
 }

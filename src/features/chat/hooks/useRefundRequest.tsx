@@ -32,7 +32,7 @@ export default function useRefundRequest({ orderId }: UseRefundRequestProps) {
       type: 'private',
       body: refundData
     })
-    if (apiData.error) toast.error('Hoàn trả hàng thất bại!')
+    if (apiData.error) toast.error(apiData.error)
     else toast.success('Hoàn trả thành công! Chờ quản lí xét duyệt')
   }
 

@@ -18,7 +18,7 @@ export default function useDeleteKeyword({ onRefresh, onCloseModalDelete }: UseD
     })
     const { error } = apiData
     if (error) {
-      toast.error('Xóa keyword thất bại')
+      toast.error(error)
       return
     }
     toast.success('Xóa keyword thành công')

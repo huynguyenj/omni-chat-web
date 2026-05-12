@@ -30,7 +30,7 @@ export default function useUpdateKeyword({ onRefresh }: UseUpdateKeywordProps) {
     })
     const { error } = apiData
     if (error) {
-      toast.error('Cập nhật keyword thất bại!')
+      toast.error(error)
       return
     }
     toast.success('Cập nhật keyword thành công')

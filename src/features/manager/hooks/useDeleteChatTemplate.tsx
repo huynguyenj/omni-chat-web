@@ -9,12 +9,12 @@ export default function useDeleteChatTemplate({ onRefresh }: UseDeleteChatTempla
   const { execute, loading } = useApiCall<null>()
   const handleDelete = async (id: string) => {
     const apiData = await execute({
-      apiUrl: `/chat-template/${id}`,
+      apiUrl: `/chat-templates/${id}`,
       method: 'del',
       type: 'private'
     })
     if (apiData.error) {
-      toast.error('Xóa thất bại!')
+      toast.error(apiData.error)
       return
     }
     toast.success('Xóa thành công')

@@ -17,7 +17,7 @@ export default function useGetProductStorageByBrandId() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy kho sản phẩm theo hãng thất bại!')
+        toast.error(error)
         return
       }
       setProductStorage(data)

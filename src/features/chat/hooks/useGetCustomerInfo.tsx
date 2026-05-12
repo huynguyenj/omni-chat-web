@@ -19,7 +19,7 @@ export default function useGetCustomerInfo() {
       })
       const { data, error } = apiData
       if (error) {
-        toast.error('Lấy thông tin chi tiết của khách hàng thất bại!')
+        toast.error(error)
         return
       }
       setCustomerInfo(data)

@@ -18,7 +18,7 @@ export default function useDeleteProduct({ onRefresh, onCloseModalDelete }: UseD
     })
     const { error } = apiData
     if (error) {
-      toast.error('Xóa sản phẩm thất bại')
+      toast.error(error)
       return
     }
     toast.success('Xóa sản phẩm thành công')
