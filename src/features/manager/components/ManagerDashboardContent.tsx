@@ -10,6 +10,7 @@ import ShippersTab from './tabs/ShippersTab'
 import InvoicesTab from './tabs/InvoicesTab'
 import WalletTab from './tabs/WalletTab.tsx'
 import ChatTemplateTab from './tabs/ChatTemplateTab.tsx'
+import ProductBatchAuditTab from './tabs/ProductBatchAuditTab.tsx'
 
 export default function ManagerDashboardContent() {
   const { activeTab } = useManagerDashboard()
@@ -25,7 +26,7 @@ export default function ManagerDashboardContent() {
   if (activeTab === 'shippers') return <ShippersTab />
   if (activeTab === 'invoice') return <InvoicesTab />
   if (activeTab === 'wallet') return <WalletTab />
-
+  if (activeTab === 'product-batch-audit') return <ProductBatchAuditTab/>
   return (
     <div className="p-6 bg-white rounded-[20px] border border-gray-200">
       Tạm thời chưa port: <b>{activeTab}</b>
