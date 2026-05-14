@@ -379,7 +379,7 @@ function OrderCard({
 
 export default function OrdersTab() {
   const [page, setPage] = useState(1)
-  const [selectedStatus, setSelectedStatus] = useState<'all' | ManagerOrderStatusFilter>('Pending')
+  const [selectedStatus, setSelectedStatus] = useState<'all' | ManagerOrderStatusFilter>('all')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [orders, setOrders] = useState<ManagerOrderItem[]>([])
