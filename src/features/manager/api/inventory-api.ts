@@ -1,7 +1,7 @@
 import { apiPublic } from '@/config/axios'
 import type { ApiResponseStructure } from '@/types/api-response'
 import type { InventoryDashboardData } from '../types/inventory-type'
-import type { ManagerProductListResponse } from '../types/product-type'
+import type { ManagerProductItem, ManagerProductListResponse } from '../types/product-type'
 
 function resolveInventoryDashboardUrl(): string {
   const raw = apiPublic.defaults.baseURL?.trim() ?? ''
@@ -29,6 +29,15 @@ export const ManagerInventoryApi = {
         pageSize
       }
     })
-    return (response as unknown as ApiResponseStructure<ManagerProductListResponse>).data
+    const data = (response as unknown as ApiResponseStructure<ManagerProductListResponse>).data
+    const items = (data.items ?? []).map((raw): ManagerProductItem => {
+      const r = raw as Record<string, unknown>
+      const fromApi =
+        (typeof r.createDate === 'string' && r.createDate) ||
+        (typeof r.CreateDate === 'string' && r.CreateDate) ||
+        null
+      return { ...(raw as ManagerProductItem), createDate: fromApi }
+    })
+    return { ...data, items }
   }
 }

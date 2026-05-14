@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BadgeDollarSign, CircleDollarSign, Clock3, Search, UserRound, Wallet } from 'lucide-react'
+import {
+  BadgeDollarSign,
+  CircleDollarSign,
+  Clock3,
+  Search,
+  SlidersHorizontal,
+  Wallet,
+  X
+} from 'lucide-react'
 import Card from '@/components/ui/card/Card'
+import Button from '@/components/ui/button/Button'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerWalletApi } from '../../api/wallet-api'
 import type { ManagerCustomerWalletItem, ManagerWalletTransaction } from '../../types/wallet-type'
 
-const WALLET_PAGE_SIZE = 9
+const WALLET_PAGE_SIZE = 6
 
 function normalizeTransaction(raw: unknown): ManagerWalletTransaction {
   const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
@@ -65,12 +74,70 @@ function transactionTypeLabel(type: string) {
   return type || 'Khác'
 }
 
+function WalletTransactionModal({
+  open,
+  customer,
+  onClose
+}: {
+  open: boolean
+  customer: ManagerCustomerWalletItem | null
+  onClose: () => void
+}) {
+  if (!open || !customer) return null
+  const txs = customer.getWalletResponse.transactions
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
+      onMouseDown={onClose}
+      role="presentation"
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-lg"
+        onMouseDown={e => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-gray-100 bg-white px-5 py-4">
+          <h3 className="pr-2 text-lg font-semibold text-[#003366]">Lịch sử giao dịch — {customer.customerName}</h3>
+          <Button type="button" variant="outline" size="sm" className="h-9 w-9 shrink-0 p-0" onClick={onClose} aria-label="Đóng">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="p-5">
+          {txs.length === 0 ? (
+            <p className="text-sm text-gray-500">Chưa có giao dịch.</p>
+          ) : (
+            <div className="space-y-3">
+              {txs.map(tx => (
+                <div key={tx.id} className="rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm">
+                  <p className="font-medium text-[#003366]">{transactionTypeLabel(tx.transactionType)}</p>
+                  <p className="mt-0.5 flex items-center gap-1 text-gray-500">
+                    <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    {formatDateTime(tx.createDate)}
+                  </p>
+                  <p className="mt-1 font-semibold text-[#16a34a]">{formatMoney(tx.amount)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function customerInitial(name: string) {
+  const t = name.trim()
+  if (!t) return '?'
+  return t.charAt(0).toUpperCase()
+}
+
 export default function WalletTab() {
   const [walletPage, setWalletPage] = useState(1)
   const [walletLoading, setWalletLoading] = useState(false)
   const [walletError, setWalletError] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
   const [allCustomers, setAllCustomers] = useState<ManagerCustomerWalletItem[]>([])
+  const [historyCustomer, setHistoryCustomer] = useState<ManagerCustomerWalletItem | null>(null)
 
   useEffect(() => {
     const fetchAllCustomers = async () => {
@@ -160,11 +227,11 @@ export default function WalletTab() {
   )
 
   return (
-    <div className="space-y-4">
-      <Card className="p-6">
+    <div className="space-y-4 rounded-xl bg-[#F8F9FA] p-3 md:p-4">
+      <Card className="border border-gray-200/90 bg-white p-6 shadow-sm">
         <div className="mb-6">
-          <h2 className="text-[#003366] text-2xl font-semibold">Wallet khách hàng</h2>
-          <p className="text-sm text-gray-500 mt-1">Dữ liệu từ API customer profile paging</p>
+          <h2 className="text-xl font-semibold text-[#003366]">Wallet khách hàng</h2>
+          <p className="mt-1 text-sm text-gray-500">Quản lý ví và công nợ khách hàng</p>
         </div>
 
         {walletError && (
@@ -173,133 +240,167 @@ export default function WalletTab() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-          <Card className="p-4 bg-gradient-to-br from-[#EAF3FF] to-[#DCEBFF] border-[#BFD8FF]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-600 mb-1 uppercase">Tổng ví</p>
-                <p className="text-2xl font-bold text-[#003366]">{formatMoney(totalWalletAmount)}</p>
-              </div>
-              <Wallet className="h-8 w-8 text-[#3366CC]/70" />
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-sky-50 p-5">
+            <div className="min-w-0">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-sky-900/70">Tổng ví</p>
+              <p className="text-2xl font-bold tabular-nums text-[#003366] sm:text-3xl">{formatMoney(totalWalletAmount)}</p>
             </div>
-          </Card>
-          <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-600 mb-1 uppercase">Tổng công nợ</p>
-                <p className="text-2xl font-bold text-[#dc2626]">{formatMoney(totalDebtAmount)}</p>
-              </div>
-              <BadgeDollarSign className="h-8 w-8 text-red-500/70" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-[#3366CC] shadow-sm">
+              <Wallet className="h-7 w-7" aria-hidden />
             </div>
-          </Card>
-          <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-600 mb-1 uppercase">Số dư ròng</p>
-                <p className={`text-2xl font-bold ${totalNetAmount >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
-                  {formatMoney(totalNetAmount)}
-                </p>
-              </div>
-              <CircleDollarSign className="h-8 w-8 text-slate-500/70" />
+          </div>
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50 p-5">
+            <div className="min-w-0">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-rose-900/70">Tổng công nợ</p>
+              <p className="text-2xl font-bold tabular-nums text-[#dc2626] sm:text-3xl">{formatMoney(totalDebtAmount)}</p>
             </div>
-          </Card>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-rose-500 shadow-sm">
+              <BadgeDollarSign className="h-7 w-7" aria-hidden />
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+            <div className="min-w-0">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70">Số dư ròng</p>
+              <p
+                className={`text-2xl font-bold tabular-nums sm:text-3xl ${
+                  totalNetAmount >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'
+                }`}
+              >
+                {formatMoney(totalNetAmount)}
+              </p>
+            </div>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm">
+              <CircleDollarSign className="h-7 w-7" aria-hidden />
+            </div>
+          </div>
         </div>
 
-        <div className="mb-5">
-          <div className="relative w-full xl:max-w-xl">
-            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Tìm theo tên, email, số điện thoại hoặc customer id..."
-              className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-[#003366] outline-none focus:border-[#3366CC]"
+              placeholder="Tìm theo tên, email, SĐT hoặc ID..."
+              className="h-11 w-full rounded-2xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-[#003366] outline-none transition-colors placeholder:text-gray-400 focus:border-[#3366CC] focus:ring-2 focus:ring-[#3366CC]/15"
             />
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={walletLoading}
+            className="h-11 shrink-0 rounded-2xl border-gray-200 px-5 text-[#003366] hover:bg-gray-50"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Lọc
+          </Button>
         </div>
 
         {walletLoading && (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-2.5 text-sm text-blue-800">
             Đang tải danh sách ví khách hàng...
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="space-y-4">
           {!walletLoading && pagedCustomers.length === 0 && (
-            <div className="col-span-full rounded-md border border-gray-200 bg-gray-50 px-3 py-8 text-center text-sm text-gray-600">
+            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-3 py-12 text-center text-sm text-gray-600">
               Chưa có dữ liệu ví khách hàng.
             </div>
           )}
 
-          {pagedCustomers.map((customer) => (
-            <Card key={customer.id} className="p-4 hover:shadow-md transition-shadow border-t-4 border-t-[#3366CC]">
-              <div className="flex items-start gap-3 mb-3">
-                {customer.avatarUrl ? (
-                  <img src={customer.avatarUrl} alt={customer.customerName} className="h-12 w-12 rounded-full object-cover border border-gray-200" />
-                ) : (
-                  <div className="h-12 w-12 rounded-full bg-[#EAF3FF] border border-[#BFD8FF] flex items-center justify-center">
-                    <UserRound className="h-6 w-6 text-[#3366CC]" />
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="font-semibold text-[#003366] line-clamp-1">{customer.customerName}</p>
-                  <p className="text-xs text-gray-500 line-clamp-1">{customer.email || 'Không có email'}</p>
-                  <p className="text-xs text-gray-500 line-clamp-1">{customer.phoneNumber || 'Không có số điện thoại'}</p>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 text-xs mb-3">
-                <p><span className="text-gray-500">Customer ID:</span> <span className="text-[#003366]">{customer.id}</span></p>
-                <p><span className="text-gray-500">Provider:</span> <span className="text-[#003366]">{customer.currentProviderName || '—'}</span></p>
-                <p><span className="text-gray-500">Facebook Sender:</span> <span className="text-[#003366]">{customer.facebookSenderId || '—'}</span></p>
-                <p><span className="text-gray-500">Zalo Sender:</span> <span className="text-[#003366]">{customer.zaloSenderId || '—'}</span></p>
-                <p><span className="text-gray-500">Instagram Sender:</span> <span className="text-[#003366]">{customer.instagramSenderId || '—'}</span></p>
-                <p><span className="text-gray-500">Ngày tạo:</span> <span className="text-[#003366]">{formatDateTime(customer.customerDate)}</span></p>
-                <p><span className="text-gray-500">Tổng đơn:</span> <span className="text-[#003366]">{customer.totalOrder.toLocaleString('vi-VN')}</span></p>
-                <p><span className="text-gray-500">Tổng thanh toán:</span> <span className="text-[#16a34a] font-semibold">{formatMoney(customer.totalPayment)}</span></p>
-              </div>
-
-              <div className="rounded-lg bg-[#F8FAFC] border border-gray-100 p-3 mb-3">
-                <p className="text-[11px] font-semibold text-[#003366] mb-2">Thông tin ví</p>
-                <div className="space-y-1 text-xs">
-                  <p className="flex justify-between"><span className="text-gray-500">Số dư ví</span><span className="font-semibold text-[#003366]">{formatMoney(customer.getWalletResponse.amount)}</span></p>
-                  <p className="flex justify-between"><span className="text-gray-500">Tổng nợ</span><span className="font-semibold text-[#dc2626]">{formatMoney(customer.getWalletResponse.totalDebt)}</span></p>
-                  <p className="flex justify-between"><span className="text-gray-500">Số dư ròng</span><span className={`font-semibold ${customer.getWalletResponse.netAmount >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>{formatMoney(customer.getWalletResponse.netAmount)}</span></p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-[11px] font-semibold text-[#003366] mb-2">Giao dịch ({customer.getWalletResponse.transactions.length})</p>
-                {customer.getWalletResponse.transactions.length === 0 ? (
-                  <p className="text-xs text-gray-500">Chưa có giao dịch.</p>
-                ) : (
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                    {customer.getWalletResponse.transactions.map((tx) => (
-                      <div key={tx.id} className="rounded-md border border-gray-100 p-2 text-xs">
-                        <p className="font-medium text-[#003366]">{transactionTypeLabel(tx.transactionType)}</p>
-                        <p className="text-gray-500 flex items-center gap-1 mt-0.5">
-                          <Clock3 className="h-3 w-3" />
-                          {formatDateTime(tx.createDate)}
-                        </p>
-                        <p className="mt-1 font-semibold text-[#16a34a]">{formatMoney(tx.amount)}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{tx.id}</p>
+          {pagedCustomers.map(customer => {
+            const w = customer.getWalletResponse
+            return (
+              <Card
+                key={customer.id}
+                className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:justify-between lg:gap-8">
+                  <div className="flex shrink-0 gap-4 lg:max-w-sm">
+                    {customer.avatarUrl ? (
+                      <img
+                        src={customer.avatarUrl}
+                        alt={customer.customerName}
+                        className="h-14 w-14 shrink-0 rounded-full border border-gray-200 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50 text-base font-bold text-[#3366CC]">
+                        {customerInitial(customer.customerName)}
                       </div>
-                    ))}
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-lg font-bold leading-tight text-[#003366]">{customer.customerName}</p>
+                      <p className="mt-1 text-sm text-gray-500">{customer.email || '—'}</p>
+                      <p className="mt-0.5 text-sm text-gray-500">{customer.phoneNumber || '—'}</p>
+                    </div>
                   </div>
-                )}
-              </div>
-            </Card>
-          ))}
+
+                  <div className="min-w-0 flex-1 space-y-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="rounded-xl border border-sky-100 bg-sky-50/90 px-3 py-3">
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-sky-900/70">Số dư ví</p>
+                        <p className="mt-1 text-lg font-bold tabular-nums text-[#003366]">{formatMoney(w.amount)}</p>
+                      </div>
+                      <div className="rounded-xl border border-rose-100 bg-rose-50/90 px-3 py-3">
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-rose-900/70">Tổng nợ</p>
+                        <p className="mt-1 text-lg font-bold tabular-nums text-[#dc2626]">{formatMoney(w.totalDebt)}</p>
+                      </div>
+                      <div className="rounded-xl border border-emerald-100 bg-emerald-50/90 px-3 py-3">
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-900/70">Số dư ròng</p>
+                        <p
+                          className={`mt-1 text-lg font-bold tabular-nums ${
+                            w.netAmount >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'
+                          }`}
+                        >
+                          {formatMoney(w.netAmount)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-gray-100 bg-[#F8F9FA] px-4 py-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Hoạt động khác</p>
+                      <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">Tổng đơn: </span>
+                          <span className="font-bold text-[#003366] tabular-nums">
+                            {customer.totalOrder.toLocaleString('vi-VN')}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Tổng thanh toán: </span>
+                          <span className="font-bold tabular-nums text-[#003366]">{formatMoney(customer.totalPayment)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 flex-col items-stretch justify-center border-t border-gray-100 pt-4 lg:w-52 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                    <Button
+                      type="button"
+                      className="h-11 w-full rounded-xl border border-[#BFD8FF] bg-[#EAF3FF] font-semibold text-[#1E5BB8] hover:bg-[#DCEBFF] lg:w-auto"
+                      onClick={() => setHistoryCustomer(customer)}
+                    >
+                      Lịch sử giao dịch
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )
+          })}
         </div>
 
-        <div className="mt-6">
-          <PaginationBar
-            currentPage={walletPage}
-            setPage={setWalletPage}
-            totalPage={totalPages}
-          />
+        <div className="mt-8 space-y-4">
+          <p className="text-center text-sm font-medium text-gray-600">
+            Trang {walletPage} / {totalPages}
+          </p>
+          <PaginationBar currentPage={walletPage} setPage={setWalletPage} totalPage={totalPages} />
         </div>
       </Card>
+
+      <WalletTransactionModal open={historyCustomer != null} customer={historyCustomer} onClose={() => setHistoryCustomer(null)} />
     </div>
   )
 }

@@ -14,6 +14,7 @@ export type ManagerDashboardTab =
   | 'invoice'
   | 'wallet'
   | 'chat-template'
+  | 'product-batch-audit'
 
 export type ManagerDashboardContextValue = {
   activeTab: ManagerDashboardTab

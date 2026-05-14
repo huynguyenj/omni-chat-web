@@ -15,6 +15,14 @@ import { AnimatePresence, motion } from 'motion/react'
 import useConnectChat from '../../hooks/useConnectChat'
 import ChatContentSkeleton from '@/components/ui/skeleton/ChatContentSkeleton'
 import type { KeywordsRecommendation } from '../../types/system-recommendation-type'
+import { MdOutlineMoreHoriz } from 'react-icons/md'
+import CreateOrderSection from '../order/CreateOrderSection'
+import OrderHistorySection from '../order/OrderHistorySection'
+import { SiGoogleforms } from 'react-icons/si'
+import { CiLink } from 'react-icons/ci'
+import { LIST_ACCEPTANCE_WORD } from '../../const/acceptance-word'
+import Tag from '@/components/ui/tag/Tag'
+import { ScrollArea, ScrollBar } from '@/components/ui/scrollbar/ScrollArea'
 
 export default function MessageSection() {
   const { connectionRef, conversationDetail, messages, setMessages, context, loading } = useConnectChat()
@@ -25,7 +33,7 @@ export default function MessageSection() {
   const [isCustomerOpen, setIsCustomerOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement | null>(null)
   const toggleBtnRef = useRef<HTMLButtonElement | null>(null)
-
+  const [isSettingOpen, setIsSettingOpen] = useState(false)
 
   const handleSend = async () => {
     if (!inputRef.current) return
@@ -94,6 +102,21 @@ export default function MessageSection() {
     }
     return []
   }
+
+  const handleOpenSetting = () => {
+    setIsSettingOpen(prevState => !prevState)
+  }
+  const handleLinkProductMessage = () => {
+    if (inputRef.current) {
+      inputRef.current.value = 'https://omni-chat-web.vercel.app/product'
+    }
+  }
+
+  const handleLinkCustomerFormMessage = () => {
+    if (inputRef.current) {
+      inputRef.current.value = `https://omni-chat-web.vercel.app/customer/${conversationDetail?.activeCustomerId}`
+    }
+  }
   return (
     <div className='h-full flex overflow-x-hidden'>
       {context?.conversationId ?
@@ -115,7 +138,7 @@ export default function MessageSection() {
                 }
               </Button>
             </div>
-            <div className='bg-[#F5F7FA] overflow-y-auto h-[70%] py-7 px-5'>
+            <div className='bg-[#F5F7FA] overflow-y-auto h-[65%] py-5 px-5'>
               { loading ?
                 <ChatContentSkeleton count={3}/>
                 :
@@ -137,11 +160,49 @@ export default function MessageSection() {
               }
               <div ref={messageEndRef}></div>
             </div>
-            <div className='mt-5 px-5 flex gap-3'>
-              <Input ref={inputRef} variant='gray' placeholder='Nhập tin nhắn...'/>
-              <Button onClick={handleSend} variant='default' className='py-0.5 px-4'>
-                <FiSend className='text-white'/>
-              </Button>
+            <div className='flex flex-col py-1'>
+              <div className='px-5 flex gap-3'>
+                <div className='relative flex items-center group'>
+                  <Button className='bg-transparent text-black p-2 hover:bg-gray-200' onClick={handleOpenSetting}><MdOutlineMoreHoriz /></Button>
+                  <AnimatePresence>
+                    { isSettingOpen &&
+                      <motion.div
+                        initial={{ opacity: 0, x: -100 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -200 }}
+                        className='absolute -top-50 w-fit bg-gray-100 rounded-xl px-2 py-2 flex flex-col gap-1 items-start justify-center shadow-[0px_0px_4px_2px_rgba(0,0,0,0.1)]'>
+                        <CreateOrderSection/>
+                        <OrderHistorySection/>
+                        <Button className='bg-transparent text-black rounded-lg w-full justify-start p-2 hover:bg-secondary hover:text-white hover:border-none gap-2' onClick={handleLinkCustomerFormMessage}>
+                          <SiGoogleforms className='size-4'/>
+                          <p className='text-nowrap'>Đơn thông tin gửi khách hàng</p>
+                        </Button>
+                        <Button className='bg-transparent text-black rounded-lg  w-full justify-start p-2 hover:bg-secondary hover:text-white hover:border-none gap-2' onClick={handleLinkProductMessage}>
+                          <CiLink className='size-4'/>
+                          <p className='text-nowrap'>Gửi link sản phẩm cho khách</p>
+                        </Button>
+                      </motion.div>
+                    }
+                  </AnimatePresence>
+                </div>
+                <Input ref={inputRef} variant='gray' placeholder='Nhập tin nhắn...'/>
+                <Button onClick={handleSend} variant='default' className='py-0.5 px-4'>
+                  <FiSend className='text-white size-4'/>
+                </Button>
+              </div>
+              <div className='flex py-2 gap-3 items-start px-8'>
+                <p className='text-sm-body-desktop font-medium'>Các từ ràng buộc trước khi đặt đơn cho khách<span className='text-red-500'>*</span>: </p>
+                <ScrollArea className='w-190 pb-2'>
+                  <div className='flex items-center gap-2'>
+                    { LIST_ACCEPTANCE_WORD.map((word, i) => (
+                      <Tag key={i} className='bg-gray-100 border-none px-2 py-0.5 text-nowrap font-normal'>
+                        {word}
+                      </Tag>
+                    )) }
+                  </div>
+                  <ScrollBar orientation='horizontal' className='bg-gray-50 h-1.5'/>
+                </ScrollArea>
+              </div>
             </div>
           </div>
           <AnimatePresence>

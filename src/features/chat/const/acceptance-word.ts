@@ -1,0 +1,1 @@
+export const LIST_ACCEPTANCE_WORD = ['OK', 'Được', 'Chấp nhận', 'Nhất trí', 'Cứ vậy đi', 'Như thế đi', 'Chốt', 'Đồng ý']

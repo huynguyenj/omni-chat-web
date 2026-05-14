@@ -23,7 +23,7 @@ export default function useCreateCustomerForm({ activeCustomerId }: { activeCust
       activeCustomerId: activeCustomerId
     }
     const apiData = await execute({
-      apiUrl: '',
+      apiUrl: '/customer-profile/enrich',
       method: 'post',
       type: 'public',
       body: finalForm

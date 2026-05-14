@@ -140,7 +140,7 @@ export default function ProductPage() {
                   { listProductData && listProductData.items.length > 0 &&
                     listProductData.items.map((product) => (
                       <Card className='flex flex-col p-5 rounded-2xl border-border-primary'>
-                        <div className='w-full h-50 rounded-xl bg-amber-100'>
+                        <div className='w-full h-50 rounded-xl'>
                           <img src={product.imageUrl ? product.imageUrl : ProductUnavailable } alt="product_image" className='w-full h-full object-contain'/>
                         </div>
                         <p className='text-[0.9rem] font-medium'>Code: {product.code} </p>

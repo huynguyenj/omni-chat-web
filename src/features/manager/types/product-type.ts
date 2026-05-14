@@ -11,6 +11,7 @@ export type ManagerProductItem = {
   price: number
   quantity: number
   lifeSpan: number
+  createDate?: string | null
 }
 
 export type ManagerProductListResponse = {

@@ -197,7 +197,7 @@ function sumOrderStatus(rows: OrderDashboardMonthRow[], statusLabel: string): nu
 
 export default function RevenueTab() {
   const ORDERS_PER_PAGE = 9
-  const [revenueOrderStatusFilter, setRevenueOrderStatusFilter] = useState<RevenueOrderStatusFilter>('Pending')
+  const [revenueOrderStatusFilter, setRevenueOrderStatusFilter] = useState<RevenueOrderStatusFilter>('all')
   const [revenueChartInput, setRevenueChartInput] = useState('2026')
   const [totalRevenueAmount, setTotalRevenueAmount] = useState(0)
   const [totalRevenueLoading, setTotalRevenueLoading] = useState(false)

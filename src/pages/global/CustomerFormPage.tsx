@@ -18,8 +18,8 @@ export default function CustomerFormPage() {
         </div>
       </div>
       <div className='min-w-90 w-[40%] min-h-150 h-[60%] bg-white rounded-2xl px-5 lg:px-8 py-10'>
-        <div className='w-15 lg:w-20 xl:w-30 aspect-square rounded-full shadow-[-2px_2px_4px_4px_rgba(0,0,0,0.1)]'>
-          <img src={Logo} alt="logo" className='w-full h-full rounded-full'/>
+        <div className='w-full flex items-center justify-center'>
+          <img src={Logo} alt="logo" className='w-[20%] aspect-square rounded-full'/>
         </div>
         <h1 className='text-sm-title-desktop lg:text-m-title-desktop text-center font-medium text-primary'>Thông tin khách hàng</h1>
         <div className='flex flex-col gap-2 px-2 lg:px-10 mx-auto my-5'>
