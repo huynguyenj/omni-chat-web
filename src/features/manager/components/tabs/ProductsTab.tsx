@@ -1,8 +1,7 @@
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
-import Tag from '@/components/ui/tag/Tag'
 import Input from '@/components/ui/input/Input'
-import { Edit2, PlusIcon, Search, Trash2 } from 'lucide-react'
+import { Edit, PlusIcon, Search, Trash2 } from 'lucide-react'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import NodataCard from '@/components/ui/card/NodataCard'
 import { AnimatePresence } from 'motion/react'
@@ -13,10 +12,8 @@ import useDebounce from '@/hooks/useDebounce'
 import ProductCardSkeleton from '@/components/ui/skeleton/ProductCardSkeleton'
 import { PRODUCT_TYPE } from '@/features/chat/const/product-type'
 import { PRODUCT_LIST_SORT_BY, PRODUCT_PACKAGE_TYPE } from '../../const/product'
-import { LuPackageSearch } from 'react-icons/lu'
+import { LuPackage } from 'react-icons/lu'
 import type { ProductDetailType } from '@/features/chat/types/product-type'
-import useCreateBatchProduct from '../../hooks/useCreateBatchProduct'
-import { countRestDay, formatDate } from '@/utils/date-resolver'
 import { FiCheckCircle } from 'react-icons/fi'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 import useDeleteProduct from '../../hooks/useDeleteProduct'
@@ -24,28 +21,20 @@ import useCreateProduct from '../../hooks/useCreateProduct'
 import { Controller } from 'react-hook-form'
 import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
 import useGetAllBrand from '@/features/chat/hooks/useGetAllBrand'
-import useGetProductBatchManager from '../../hooks/useGetProductBatchManager'
-import CardSkeleton from '@/components/ui/skeleton/CardSkeleton'
-import { ScrollArea } from '@/components/ui/scrollbar/ScrollArea'
 import useUpdateProduct from '../../hooks/useUpdateProduct'
-
+import ProductBatchList from './product-tab/ProductBatchList'
 
 export default function ProductsTab() {
   const { currentPage, listProducts, loading, setCurrentPage, setOnRefresh, setSearchText, setSortBy, setSortType, sortBy, sortType } = useGetProductListManager()
-  const [isOpenCreateBatch, setIsOpenCreateBatch] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
   const [isOpenCreateProduct, setIsOpenCreateProduct] = useState(false)
   const [isOpenProductInfoEdit, setIsOpenProductInfoEdit] = useState(false)
-  const [isOpenProductImageEdit, setIsOpenProductImageEdit] = useState(false)
   const [batchDetailOpen, setBatchDetailOpen] = useState(false)
-
-  const { handleCreateBatch, listBatchItems, loading: loadingCreateBatch, productChoseForBatch, setListBatchItems, setProductChoseForBatch, handleAddBatch, handleDeleteBatch, handleSubmit, register } = useCreateBatchProduct()
   const { handleDelete, loading: deleteLoading, setProductId } = useDeleteProduct({ onRefresh: setOnRefresh, onCloseModalDelete: setIsAlertOpen })
   const { control, errors, handleSubmit:handleSubmitProduct, loading: createProductLoading, onSubmit: onSubmitProduct, register: registerProduct, preview, reset, setPreview } = useCreateProduct()
   const { listBrand } = useGetAllBrand()
-  const { loading:batchLoading, productBatchList, setBatchCurrentPage, setProductForBatchId, productForBatchId, batchCurrentPage } = useGetProductBatchManager()
   const { errors: errorUpdate, handleSubmitImage, handleSubmitProductInfo, loading: loadingUpdate, newImagePreview, onProductImageSubmit, onProductInfoSubmit, resetImage, resetProductInfo, setProductUpdateSelected, registerProductInfoUpdate, setNewImagePreview, controlProductUpdateImage, productUpdateSelected } = useUpdateProduct({ onRefresh: setOnRefresh })
-
+  const [productIdSelected, setProductIdSelected] = useState('')
   const handleSearch = (text: string) => {
     setSearchText(text)
   }
@@ -56,15 +45,6 @@ export default function ProductsTab() {
     setProductId(productId)
   }
 
-  const handleOpenCreateBatch = (product: ProductDetailType) => {
-    setProductChoseForBatch(product)
-    setIsOpenCreateBatch(prev => !prev)
-  }
-  const handleCloseCreateBatch = () => {
-    setListBatchItems([])
-    setIsOpenCreateBatch(prev => !prev)
-  }
-
   const handleOpenCreateProduct = () => {
     reset()
     setPreview(null)
@@ -73,7 +53,11 @@ export default function ProductsTab() {
 
   const handleUpdateProductInfo = (productInfo: ProductDetailType) => {
     setIsOpenProductInfoEdit(prev => !prev)
+    setNewImagePreview(null)
     setProductUpdateSelected(productInfo)
+    resetImage({
+      Image: undefined
+    })
     resetProductInfo({
       name: productInfo.name,
       description: productInfo.description,
@@ -81,21 +65,8 @@ export default function ProductsTab() {
     })
   }
 
-  const handleUpdateProductImage = (productInfo: ProductDetailType) => {
-    setNewImagePreview(null)
-    setIsOpenProductImageEdit(prev => !prev)
-    setProductUpdateSelected(productInfo)
-    resetImage({
-      Image: undefined
-    })
-  }
-
   const handleBatchShowSelect = (productId: string) => {
-    if (productForBatchId === productId && batchDetailOpen === true) {
-      setBatchDetailOpen(false)
-      return
-    }
-    setProductForBatchId(productId)
+    setProductIdSelected(productId)
     setBatchDetailOpen(true)
   }
   return (
@@ -149,107 +120,75 @@ export default function ProductsTab() {
             </div>
             {listProducts && listProducts.items.length > 0 ?
               <div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {listProducts.items.map((product) => (
-                    <Card
-                      key={product.id}
-                      className="p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full text-sm-body-desktop px-9 py-7"
-                    >
-                      <div className="flex flex-col gap-2">
-                        <div className='relative shadow-[0px_2px_4px_2px_rgba(0,0,0,0.1)] rounded-2xl w-full py-3'>
-                          { product.imageUrl ?
-                            <img src={product.imageUrl} alt='avatar' className='shrink-0 w-full h-60 object-contain'/>
-                            :
-                            <div className="shrink-0 h-12 w-12 rounded-full bg-[#3366CC] text-white flex items-center justify-center font-semibold">
-                              {product.name.charAt(0)}
+                <div className='overflow-x-auto'>
+                  <table className='w-full border border-border-primary my-3 table-fixed min-w-250 '>
+                    <thead className='bg-secondary'>
+                      <tr className='text-white'>
+                        <th className='py-2 text-start px-5 w-1/6'>STT</th>
+                        <th className='py-2 text-start px-5 w-1/3'>Tên sản phẩm</th>
+                        <th className='py-2 text-start px-5 w-1/4'>Ảnh</th>
+                        <th className='py-2 text-start px-5 w-1/3'>Hãng</th>
+                        <th className='py-2 text-start px-5 w-1/4'>Loại sữa</th>
+                        <th className='py-2 text-start px-5 w-1/4'>Loại hộp</th>
+                        <th className='py-2 text-start px-5 w-1/4'>Dung tích</th>
+                        <th className='py-2 text-end px-5 w-1/4'>Số lượng</th>
+                        <th className='py-2 text-end px-5 w-1/4'>Giá</th>
+                        <th className='py-2 text-end px-5 w-1/4'>Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {listProducts.items.map((product, i) => (
+                        <tr key={product.id}>
+                          <td className='py-2 px-5 w-1/6 border-r border-b-2 border-border-primary'>
+                            <p>{i + 1}</p>
+                          </td>
+                          <td className='py-2 px-5 w-1/4 border-r border-b-2 border-border-primary'>
+                            <p>{product.name}</p>
+                          </td>
+                          <td className='py-2 px-5 w-1/4 wrap-break-word border-r border-b-2 border-border-primary'>
+                            { product.imageUrl ?
+                              <img src={product.imageUrl} alt='avatar' className='shrink-0 w-20 h-20 object-contain'/>
+                              :
+                              <div className="shrink-0 h-20 w-20 rounded-full bg-[#3366CC] text-white flex items-center justify-center font-semibold">
+                                {product.name.charAt(0)}
+                              </div>
+                            }
+                          </td>
+                          <td className='py-2 px-5 w-1/6 border-r border-b-2 border-border-primary'>
+                            <p>{product.brand}</p>
+                          </td>
+                          <td className='py-2 px-5 w-1/4 border-r border-b-2 border-border-primary'>
+                            <p>{PRODUCT_TYPE[product.productKind].name}</p>
+                          </td>
+                          <td className='py-2 px-5 w-1/4 border-r border-b-2 border-border-primary'>
+                            <p>{PRODUCT_PACKAGE_TYPE[product.productPackagingType]}</p>
+                          </td>
+                          <td className='py-2 px-5 w-1/4 border-r border-b-2 border-border-primary'>
+                            <p>{product.volumeMl}ml</p>
+                          </td>
+                          <td className='py-2 px-5 w-1/4 border-r border-b-2 border-border-primary text-end'>
+                            <p>{product.quantity}</p>
+                          </td>
+                          <td className='py-2 px-5 w-1/4 border-r border-b-2 border-border-primary text-end'>
+                            <p>{product.price.toLocaleString()}đ</p>
+                          </td>
+                          <td className='py-2 px-5 border-r border-b-2 border-border-primary'>
+                            <div className='grid grid-cols-2 justify-end items-center gap-2 '>
+                              <Button className='p-0 bg-transparent hover:bg-transparent hover:opacity-60' onClick={() => handleBatchShowSelect(product.id)}>
+                                <LuPackage className='text-secondary size-5'/>
+                              </Button>
+                              <Button className='p-0 bg-transparent hover:bg-transparent hover:opacity-60' onClick={() => handleUpdateProductInfo(product)}>
+                                <Edit className='text-secondary size-5'/>
+                              </Button>
+                              <Button className='p-0 bg-transparent hover:bg-transparent hover:opacity-60' onClick={() => handleOpenAlert(product.id)}>
+                                <Trash2 className='text-red-500 size-5'/>
+                              </Button>
                             </div>
-                          }
-                          <Button className='absolute top-2 left-2 bg-transparent text-black hover:bg-gray-200' onClick={() => handleUpdateProductImage(product)}>
-                            <Edit2 className='size-4'/>
-                          </Button>
-                        </div>
-                        <div className='flex flex-col gap-1'>
-                          <p className="font-semibold text-m-body-desktop line-clamp-1 my-2 ml-2">{product.name.toUpperCase()}</p>
-                          <div className='flex gap-2 items-center px-2'>
-                            <div className='flex gap-2 items-center'>
-                              <p className='text-sm-body-desktop font-medium'>Loại: </p>
-                              <Tag className={`bg-transparent rounded-2xl px-2 py-0.5 border text-nowrap ${PRODUCT_TYPE[product.productKind].style}`}>
-                                {PRODUCT_TYPE[product.productKind].name}
-                              </Tag>
-                            </div>
-                            <div className='flex gap-2 items-center px-2'>
-                              <p className='text-sm-body-desktop font-medium'>Kiểu hộp: </p>
-                              <Tag variant='primary' className='rounded-2xl px-5 text-nowrap'>
-                                {PRODUCT_PACKAGE_TYPE[product.productPackagingType]}
-                              </Tag>
-                            </div>
-                          </div>
-                          <div className='flex flex-col gap-2  px-2'>
-                            <p className='text-sm-body-desktop font-medium'>Dung tích: <span className='text-primary text-m-body-desktop'>{product.volumeMl}ml</span></p>
-                            <p className='text-sm-body-desktop font-medium'>Hãng: <span className='text-primary text-m-body-desktop'>{product.brand}</span></p>
-                          </div>
-                          <div className='flex justify-end'>
-                            <p className='text-xl-body-desktop text-green-accent font-medium'>{product.price.toLocaleString()}đ</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className='flex w-full gap-2 items-center my-3'>
-                        <Button variant="default" onClick={() => handleOpenCreateBatch(product)} className='w-full'>
-                          <PlusIcon className="size-4" />
-                          Tạo lô
-                        </Button>
-                        <Button variant="danger" className="py-3 px-3 text-white hover:text-red-500 border-border-primary hover:bg-gray-200 w-full flex-1" onClick={() => handleOpenAlert(product.id)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                        <Button variant='basic' className='py-3 px-3 hover:bg-gray-200 w-fit' onClick={() => handleUpdateProductInfo(product)}>
-                          <Edit2 className="size-4" />
-                        </Button>
-                      </div>
-                      <Button variant="basic" className='' onClick={() => handleBatchShowSelect(product.id)}>
-                        <LuPackageSearch />
-                          Xem lô hàng
-                      </Button>
-                      { productForBatchId === product.id && batchDetailOpen &&
-                        <>
-                          { batchLoading ?
-                            <CardSkeleton count={3}/>
-                            :
-                            <>
-                              { productBatchList && productBatchList.items.length > 0 ?
-                                <>
-                                  <ScrollArea className='h-50 my-3 px-4'>
-                                    { productBatchList.items.map((batch) => (
-                                      <Card key={batch.id} className='text-sm-body-desktop my-2'>
-                                        <div className='flex justify-between items-center'>
-                                          <p className='text-primary font-medium'>{batch.code}</p>
-                                          <p className='text-primary font-medium'>{batch.quantity} sp</p>
-                                        </div>
-                                        <p className='text-[0.85rem] text-soft-gray'>EXP: {formatDate(batch.expiryDate)}</p>
-                                        <p className={`${countRestDay(batch.expiryDate) <= 30 ? 'text-red-500 font-medium' : 'text-soft-gray text-[0.85rem]'}`}>
-                                          {countRestDay(batch.expiryDate) > 0 ? `Còn lại ${countRestDay(batch.expiryDate)} ngày` : 'Hết hạn'}
-                                        </p>
-                                      </Card>
-                                    )) }
-                                  </ScrollArea>
-                                  <PaginationBar
-                                    currentPage={batchCurrentPage}
-                                    setPage={setBatchCurrentPage}
-                                    totalPage={productBatchList.meta.total_pages}
-                                  />
-                                </>
-                                :
-                                <NodataCard content='Không có lô nào từ sản phẩm này'/>
-                              }
-                            </>
-                          }
-                        </>
-                      }
-                    </Card>
-                  ))}
-
-                </div>
-                <div className='w-full flex justify-center mt-4'>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                   <PaginationBar
                     currentPage={currentPage}
                     setPage={setCurrentPage}
@@ -264,55 +203,11 @@ export default function ProductsTab() {
         }
       </Card>
       <AnimatePresence>
-        { isOpenCreateBatch &&
-        <PopupBasic title='Tạo lô sản phẩm mới' onClose={() => setIsOpenCreateBatch(false)}>
-          <p className='text-sm-body-desktop text-soft-gray'>Sản phẩm: {productChoseForBatch?.name}</p>
-          <div className='flex items-center gap-3 my-3'>
-            <Input {...register('manuFactureDate', { valueAsDate: true })} variant='gray' label='Ngày sản xuất' type='date'/>
-            <Input {...register('quantity', { valueAsNumber: true })} variant='gray' label='Số lượng sản phẩm' type='number'/>
-          </div>
-          <Button variant='outline' onClick={handleSubmit(handleAddBatch)} className='w-full my-2'>
-            <PlusIcon/>
-            Thêm lô
-          </Button>
-          { listBatchItems.length > 0 &&
-            <>
-              <p className='text-sm-body-desktop font-medium text-primary'>Danh sách lô ({listBatchItems.length})</p>
-              { listBatchItems.map((batch, i) => (
-                <Card key={i} className='text-sm-body-desktop my-3 bg-[#EFF6FF] border-none'>
-                  <div className='flex items-center justify-between w-full'>
-                    <div className='flex items-center gap-3'>
-                      <div className='flex items-center justify-center text-white bg-secondary w-8 aspect-square rounded-full'>{i+1}</div>
-                      <div>
-                        <p className='text-primary font-medium'>Lô #{i+1}</p>
-                        <p>Ngày sản xuất: {formatDate(batch.manuFactureDate)} - {batch.quantity}sp</p>
-                      </div>
-                    </div>
-                    <Button className='bg-transparent border-none text-red-400 hover:bg-gray-200' onClick={() => handleDeleteBatch(batch)}>
-                      <Trash2 className='size-4'/>
-                    </Button>
-                  </div>
-                </Card>
-              )) }
-              <div className='flex w-full gap-2 items-center'>
-                { loadingCreateBatch ?
-                  <LoadingSpinner size='lg'/>
-                  :
-                  <>
-                    <Button variant="basic" className="py-2 px-3 hover:bg-gray-200 w-full" onClick={handleCloseCreateBatch}
-                    >
-                    Hủy
-                    </Button>
-                    <Button variant='default' className='py-2 px-3 w-full' onClick={handleCreateBatch}>
-                      <FiCheckCircle className='size-4' />
-                                    Tạo lô ({listBatchItems.length})
-                    </Button>
-                  </>
-                }
-              </div>
-            </>
-          }
-        </PopupBasic>
+        { batchDetailOpen &&
+          <PopupBasic onClose={() => setBatchDetailOpen(false)} title='Lô của sản phẩm' size='lg'>
+            <p className='text-soft-gray'>Danh sách lô của sản phẩm</p>
+            <ProductBatchList productId={productIdSelected}/>
+          </PopupBasic>
         }
       </AnimatePresence>
       <AnimatePresence>
@@ -492,21 +387,15 @@ export default function ProductsTab() {
                   <LoadingSpinner size='lg'/>
                   :
                   <>
-                    <Button variant='basic' className='w-full' onClick={() => setIsOpenProductInfoEdit(false)}>Hủy</Button>
                     <Button className='w-full' onClick={handleSubmitProductInfo(onProductInfoSubmit)}>Cập nhật thông tin</Button>
                   </>
                 }
               </div>
             </div>
-          </PopupBasic>
-        }
-      </AnimatePresence>
-      <AnimatePresence>
-        { isOpenProductImageEdit &&
-          <PopupBasic title='Cập nhật ảnh cho sản phẩm' onClose={() => setIsOpenProductImageEdit(false)}>
+            <hr className='border border-border-primary my-3'/>
             <div className='text-sm-body-desktop'>
-              <p className='text-soft-gray'>Cập nhật lại thông tin cơ bản của sản phẩm</p>
-              <div className='flex flex-col gap-3 my-5'>
+              <p className='text-soft-gray'>Cập nhật lại ảnh của sản phẩm</p>
+              <div className='flex flex-col gap-3 my-2'>
                 { productUpdateSelected?.imageUrl ?
                   <div className='w-full h-40 my-3'>
                     <p className='font-medium'>Ảnh hiện tại</p>
@@ -528,10 +417,10 @@ export default function ProductsTab() {
                     />
                   )}
                 />
-                <div className='w-full h-50 my-4'>
+                <div className='w-full h-fit my-4'>
                   <p className='font-medium'>Ảnh mới</p>
                   { newImagePreview ?
-                    <img src={newImagePreview} alt='product-image' className='w-full h-full object-contain'/>
+                    <img src={newImagePreview} alt='product-image' className='w-50 h-50 object-contain'/>
                     :
                     <p>Chưa có ảnh mới được tải lên</p>
                   }
@@ -542,8 +431,7 @@ export default function ProductsTab() {
                   <LoadingSpinner size='lg'/>
                   :
                   <>
-                    <Button variant='basic' className='w-full' onClick={() => setIsOpenProductImageEdit(false)}>Hủy</Button>
-                    <Button className='w-full' onClick={handleSubmitImage(onProductImageSubmit)}>Cập nhật thông tin</Button>
+                    <Button className='w-full' onClick={handleSubmitImage(onProductImageSubmit)}>Cập nhật ảnh</Button>
                   </>
                 }
               </div>

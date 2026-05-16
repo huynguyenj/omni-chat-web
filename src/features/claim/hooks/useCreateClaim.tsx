@@ -9,7 +9,7 @@ import { useState } from 'react'
 
 const ClaimFormSchema = z.object({
   claimTypeId: z.string({ error: 'Hãy chọn loại đơn bạn muốn tạo' }),
-  reason: z.string({ error: 'Xin hãy viết lí do mà bạn viết đơn' }),
+  reason: z.string().min(1, { error: 'Xin hãy viết lí do mà bạn viết đơn' }),
   description: z.string()
 })
 

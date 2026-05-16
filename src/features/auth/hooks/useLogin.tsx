@@ -10,7 +10,7 @@ import { ROLE_HOME } from '@/router/const/role-route'
 
 const LoginFormSchema = z.object({
   username: z.email(),
-  password: z.string().min(8, { error: 'Password must at least 8 characters' })
+  password: z.string().min(8, { error: 'Mật khẩu ít nhất 8 kí tự' })
 })
 
 export type LoginFormType = z.infer<typeof LoginFormSchema>

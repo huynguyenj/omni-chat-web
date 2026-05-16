@@ -10,7 +10,7 @@ export default function useGetKeywords() {
   const [keyWordList, setKeyWordList] = useState<PaginationStructure<KeywordDetailType>>()
   const [filterIntent, setFilterIntent] = useState('')
   const [sortBy, setSortBy] = useState('createdate')
-  const [sortType, setSortType] = useState('false')
+  const [sortType, setSortType] = useState('true')
   const { execute, loading } = useApiCall<PaginationStructure<KeywordDetailType>>()
   const [onRefresh, setOnRefresh] = useState(false)
   useEffect(() => {

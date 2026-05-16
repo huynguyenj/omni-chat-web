@@ -8,7 +8,7 @@ import z from 'zod'
 const keywordSchema = z.object({
   intentTypeId: z.string({ error: 'Hãy chọn chức năng' }),
   weight: z.number(),
-  keywordText: z.string({ error: 'Hãy điền từ keyword' })
+  keywordText: z.string().min(1, { error: 'Hãy điền từ keyword' })
 })
 
 type KeywordFormType = z.infer<typeof keywordSchema>
