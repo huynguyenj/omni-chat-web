@@ -23,6 +23,7 @@ import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from
 import useGetAllBrand from '@/features/chat/hooks/useGetAllBrand'
 import useUpdateProduct from '../../hooks/useUpdateProduct'
 import ProductBatchList from './product-tab/ProductBatchList'
+import { TableSkeleton } from '@/components/ui/skeleton/TableSkeleton'
 
 export default function ProductsTab() {
   const { currentPage, listProducts, loading, setCurrentPage, setOnRefresh, setSearchText, setSortBy, setSortType, sortBy, sortType } = useGetProductListManager()
@@ -86,7 +87,7 @@ export default function ProductsTab() {
           <Input variant='gray' icon={Search} placeholder='Tìm kiếm theo tên sản phẩm...' onChange={(e) => debounce(e.target.value)}/>
         </div>
         { loading ?
-          <ProductCardSkeleton count={3}/>
+          <TableSkeleton numberOfColumn={10}/>
           :
           <>
             <div className='flex gap-2 items-center w-full mb-3'>
