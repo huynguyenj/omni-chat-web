@@ -10,7 +10,7 @@ export default function TaskPage() {
   const staffInfo = useAuthStore((state) => state)
   const navigate = useNavigate()
   return (
-    <div className="flex flex-col items-start gap-3 bg-[#F5F7FA] min-h-screen max-h-[140vh] px-30 py-10">
+    <div className="flex flex-col items-start gap-3 bg-[#F5F7FA] min-h-screen max-h-[140vh] sm:px-30 py-10">
       <Button className='bg-transparent text-sm-body-desktop items-center gap-3 hover:bg-white' onClick={() => navigate(PRIVATE_PATH.CHAT)}>
         <FaArrowLeft/>
          Quay lại trang chat
