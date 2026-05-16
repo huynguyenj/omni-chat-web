@@ -5,6 +5,7 @@ import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { toast } from 'react-toastify'
+import { useAuthStore } from '@/features/auth/store/auth-store'
 import { ClaimApi } from '../../api/claim-api'
 import { ManagerStaffApi } from '../../api/manager-staff-api'
 import type { StaffDetailType, StaffIntentType } from '../../types/staff-type'
@@ -342,12 +343,63 @@ function ChangeTaskClaimDetailModal({
   onClose: () => void
   onReassignSuccess: () => Promise<void>
 }) {
+  const managerId = useAuthStore((s) => s.staffId ?? s.accountId)
   const [staffPickerOpen, setStaffPickerOpen] = useState(false)
-  const [pickedStaffSummary, setPickedStaffSummary] = useState<string | null>(null)
-  const [reassigning, setReassigning] = useState(false)
+  const [pickedStaff, setPickedStaff] = useState<StaffDetailType | null>(null)
+  const [approving, setApproving] = useState(false)
+  const [rejecting, setRejecting] = useState(false)
 
   if (!claim) return null
   const status = toClaimStatus(claim.status, 'pending')
+  const busy = approving || rejecting
+
+  const handleApproveReassign = async () => {
+    if (!claim.id) {
+      toast.error('Thiếu claimId, không thể duyệt chuyển giao.')
+      return
+    }
+    if (!claim.conversationId) {
+      toast.error('Thiếu conversationId, không thể duyệt chuyển giao.')
+      return
+    }
+    if (!pickedStaff?.id) {
+      toast.error('Vui lòng chọn nhân viên mới trước khi duyệt.')
+      return
+    }
+    setApproving(true)
+    try {
+      const msg = await ClaimApi.approveReassignClaim(claim.id, claim.conversationId, pickedStaff.id)
+      toast.success(msg)
+      await onReassignSuccess()
+      onClose()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Duyệt chuyển giao thất bại.')
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  const handleReject = async () => {
+    if (!claim.id) {
+      toast.error('Thiếu claimId, không thể từ chối.')
+      return
+    }
+    if (!managerId) {
+      toast.error('Không xác định được manager. Vui lòng đăng nhập lại.')
+      return
+    }
+    setRejecting(true)
+    try {
+      const msg = await ClaimApi.rejectChangeTaskClaim(claim.id, managerId)
+      toast.success(msg)
+      await onReassignSuccess()
+      onClose()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Từ chối yêu cầu thất bại.')
+    } finally {
+      setRejecting(false)
+    }
+  }
 
   return (
     <>
@@ -400,20 +452,42 @@ function ChangeTaskClaimDetailModal({
             <div className="rounded-lg border border-amber-200 overflow-hidden">
               <p className="bg-amber-600 px-4 py-2.5 text-xs font-semibold text-white uppercase tracking-wide">Thay nhân viên</p>
               <div className="space-y-2 bg-amber-50/50 p-4">
-                {pickedStaffSummary ? (
-                  <p className="text-sm text-gray-800">{pickedStaffSummary}</p>
+                {pickedStaff ? (
+                  <p className="text-sm text-gray-800">
+                    {pickedStaff.name} · {pickedStaff.phone} · {pickedStaff.email}
+                  </p>
                 ) : (
-                  <p className="text-xs text-gray-500">Chưa chọn nhân viên.</p>
+                  <p className="text-xs text-gray-500">Chưa chọn nhân viên mới.</p>
                 )}
                 <Button
                   type="button"
                   variant="default"
                   size="sm"
                   className="w-full bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60"
-                  disabled={reassigning}
+                  disabled={busy}
                   onClick={() => setStaffPickerOpen(true)}
                 >
-                  {reassigning ? 'Đang thay...' : 'Thay nhân viên'}
+                  Chọn nhân viên mới
+                </Button>
+                {pickedStaff && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full bg-[#6FDFA0] text-white hover:bg-[#5BCB8C] disabled:opacity-60"
+                    disabled={busy}
+                    onClick={() => void handleApproveReassign()}
+                  >
+                    {approving ? 'Đang duyệt...' : 'Duyệt chuyển giao'}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full bg-[#F87171] text-white hover:bg-[#F25F5F] disabled:opacity-60"
+                  disabled={busy}
+                  onClick={() => void handleReject()}
+                >
+                  {rejecting ? 'Đang từ chối...' : 'Từ chối'}
                 </Button>
               </div>
             </div>
@@ -424,24 +498,9 @@ function ChangeTaskClaimDetailModal({
       <StaffPickerModal
         open={staffPickerOpen}
         onClose={() => setStaffPickerOpen(false)}
-        onSelect={async (staff) => {
-          if (!claim.conversationId) {
-            toast.error('Thiếu conversationId, không thể thay nhân viên.')
-            setStaffPickerOpen(false)
-            return
-          }
-          setReassigning(true)
-          try {
-            const msg = await ClaimApi.reassignClaimConversation(claim.conversationId, staff.id)
-            setPickedStaffSummary(`${staff.name} · ${staff.phone} · ${staff.email}`)
-            toast.success(msg)
-            await onReassignSuccess()
-          } catch (e) {
-            toast.error(e instanceof Error ? e.message : 'Thay nhân viên thất bại.')
-          } finally {
-            setReassigning(false)
-            setStaffPickerOpen(false)
-          }
+        onSelect={(staff) => {
+          setPickedStaff(staff)
+          setStaffPickerOpen(false)
         }}
       />
     </>
@@ -532,7 +591,7 @@ export default function ClaimsTab() {
       const totalPages = Number((response as { meta?: { total_pages?: number } })?.meta?.total_pages ?? 1)
       setChangeTaskTotalPages(Math.max(1, Number.isFinite(totalPages) ? totalPages : 1))
     } catch {
-      setChangeTaskError('Không thể tải danh sách ChangeTask claim.')
+      setChangeTaskError('Không thể tải danh sách chuyển yêu cầu.')
       setChangeTaskClaims([])
       setChangeTaskTotalPages(1)
     } finally {
@@ -605,8 +664,8 @@ export default function ClaimsTab() {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-[#003366] text-xl font-semibold">Claims</h2>
-            <p className="text-sm text-gray-500 mt-1">Yêu cầu của staff</p>
+            <h2 className="text-[#003366] text-xl font-semibold">Danh sách yêu cầu</h2>
+            <p className="text-sm text-gray-500 mt-1">Yêu cầu của nhân viên</p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -657,14 +716,14 @@ export default function ClaimsTab() {
 
         {isLoading && (
           <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải danh sách claim...
+            Đang tải danh sách yêu cầu...
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {!isLoading && claims.length === 0 && (
             <div className="col-span-full rounded-md border border-gray-200 bg-gray-50 px-3 py-8 text-center text-sm text-gray-600">
-              Chưa có dữ liệu claim.
+              Chưa có dữ liệu yêu cầu.
             </div>
           )}
 
@@ -680,15 +739,15 @@ export default function ClaimsTab() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>Submit date</span>
+                  <span>Ngày tạo</span>
                   <span>{claim.submitDate}</span>
                 </div>
                 <div className="bg-[#F5F7FA] p-3 rounded-lg">
-                  <p className="text-xs text-gray-500 uppercase font-medium mb-1">Description</p>
+                  <p className="text-xs text-gray-500 uppercase font-medium mb-1">Mô tả</p>
                   <p className="text-sm font-semibold text-[#003366]">{claim.description}</p>
                 </div>
                 <div className="bg-[#F5F7FA] p-3 rounded-lg">
-                  <p className="text-xs text-gray-500 uppercase font-medium mb-1">Reason</p>
+                  <p className="text-xs text-gray-500 uppercase font-medium mb-1">Lý do</p>
                   <p className="text-sm font-semibold text-[#003366]">{claim.reason}</p>
                 </div>
               </div>
@@ -734,7 +793,7 @@ export default function ClaimsTab() {
 
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-[#003366] text-xl font-semibold">Danh sách ChangeTask Claim </h3>
+          <h3 className="text-[#003366] text-xl font-semibold">Danh sách chuyển yêu cầu</h3>
         </div>
 
         {changeTaskError && (
@@ -745,14 +804,14 @@ export default function ClaimsTab() {
 
         {changeTaskLoading && (
           <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải ChangeTask claim...
+            Đang tải danh sách chuyển yêu cầu...
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {!changeTaskLoading && changeTaskClaims.length === 0 && (
             <div className="col-span-full rounded-md border border-gray-200 bg-gray-50 px-3 py-8 text-center text-sm text-gray-600">
-              Chưa có dữ liệu ChangeTask claim.
+              Chưa có dữ liệu chuyển yêu cầu.
             </div>
           )}
 
@@ -776,11 +835,11 @@ export default function ClaimsTab() {
                     <span>{formatDateTime(item.submitDate)}</span>
                   </div>
                   <div className="bg-[#F5F7FA] p-3 rounded-lg">
-                    <p className="text-xs text-gray-500 uppercase font-medium mb-1">Description</p>
+                    <p className="text-xs text-gray-500 uppercase font-medium mb-1">Mô tả</p>
                     <p className="text-sm font-semibold text-[#003366]">{item.description || '—'}</p>
                   </div>
                   <div className="bg-[#F5F7FA] p-3 rounded-lg">
-                    <p className="text-xs text-gray-500 uppercase font-medium mb-1">Reason</p>
+                    <p className="text-xs text-gray-500 uppercase font-medium mb-1">Lý do</p>
                     <p className="text-sm font-semibold text-[#003366]">{item.reason || '—'}</p>
                   </div>
                 </div>

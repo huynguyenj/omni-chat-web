@@ -415,7 +415,7 @@ export default function ShippersTab() {
         <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Shipper hoạt động</p>
+              <p className="text-sm text-gray-600 mb-1">Đội ngũ giao hàng đang hoạt động</p>
               <p className="text-3xl font-bold text-[#003366]">{shipperLoading ? '…' : activeCount}</p>
               <p className="text-[10px] text-gray-500 mt-1">Theo trang hiện tại</p>
             </div>
@@ -427,7 +427,7 @@ export default function ShippersTab() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Đơn đang giao</p>
               <p className="text-3xl font-bold text-yellow-700">{shipperLoading ? '…' : shippingCount}</p>
-              <p className="text-[10px] text-gray-500 mt-1">Tổng theo shipper trên trang</p>
+              <p className="text-[10px] text-gray-500 mt-1">Tổng theo đội ngũ giao hàng trên trang</p>
             </div>
             <Clock className="h-12 w-12 text-yellow-600 opacity-50" />
           </div>
@@ -437,7 +437,7 @@ export default function ShippersTab() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Đã giao</p>
               <p className="text-3xl font-bold text-[#2ECC71]">{shipperLoading ? '…' : deliveredCount}</p>
-              <p className="text-[10px] text-gray-500 mt-1">Tổng theo shipper trên trang</p>
+              <p className="text-[10px] text-gray-500 mt-1">Tổng theo đội ngũ giao hàng trên trang</p>
             </div>
             <CheckCircle className="h-12 w-12 text-[#2ECC71] opacity-50" />
           </div>
@@ -447,7 +447,7 @@ export default function ShippersTab() {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
-            <h2 className="text-[#003366] text-xl font-semibold">Danh sách Shipper</h2>
+            <h2 className="text-[#003366] text-xl font-semibold">Danh sách đội ngũ giao hàng</h2>
             <p className="text-sm text-gray-500 mt-1">Quản lý đội ngũ giao hàng</p>
           </div>
         </div>
@@ -460,14 +460,14 @@ export default function ShippersTab() {
 
         {shipperLoading && (
           <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải danh sách shipper...
+            Đang tải danh sách đội ngũ giao hàng...
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {!shipperLoading && shippers.length === 0 && (
             <div className="col-span-full rounded-md border border-gray-200 bg-gray-50 px-3 py-8 text-center text-sm text-gray-600">
-              Chưa có dữ liệu shipper.
+              Chưa có dữ liệu đội ngũ giao hàng.
             </div>
           )}
 
@@ -522,7 +522,7 @@ export default function ShippersTab() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-[#003366] text-xl font-semibold">Đơn hàng giao</h2>
-            <p className="text-sm text-gray-500 mt-1">Danh sách đơn hàng có trạng thái Pending</p>
+            <p className="text-sm text-gray-500 mt-1"></p>
           </div>
         </div>
 
@@ -534,14 +534,14 @@ export default function ShippersTab() {
 
         {ordersLoading && (
           <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải đơn hàng pending...
+            Đang tải đơn hàng chờ xử lý...
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {!ordersLoading && pendingOrders.length === 0 && (
             <div className="col-span-full rounded-md border border-gray-200 bg-gray-50 px-3 py-8 text-center text-sm text-gray-600">
-              Không có đơn hàng pending.
+              Không có đơn hàng chờ xử lý.
             </div>
           )}
 
