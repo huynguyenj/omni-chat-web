@@ -19,7 +19,7 @@ export default function AwaitMessageBox({ customerName, message, time, platform,
           <p className='text-sm-body-desktop'>{customerName}</p>
           <p className='text-[0.95rem] text-soft-gray'>{formatTime(time)}</p>
         </div>
-        <p className='text-[0.95rem] text-gray-400 mt-1'>{truncateText(message, 30)}</p>
+        <p className='text-[0.95rem] text-gray-400 mb-2'>{truncateText(message, 30)}</p>
         <div className='flex items-center gap-2'>
           <div className='w-fit rounded-lg border border-light-secondary text-light-secondary font-bold text-[0.85rem] px-2 py-0.5'>
             {platform}

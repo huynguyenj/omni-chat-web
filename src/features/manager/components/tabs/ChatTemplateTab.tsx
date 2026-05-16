@@ -69,7 +69,7 @@ export default function ChatTemplateTab() {
           <>
             { listChatTemplate && listChatTemplate.items.length > 0 ?
               <div className='overflow-x-auto'>
-                <table className='w-full border border-border-primary my-3 table-fixed min-w-120 '>
+                <table className='w-full border border-border-primary my-3 table-fixed min-w-200 '>
                   <thead className='bg-secondary'>
                     <tr className='text-white'>
                       <th className='py-2 text-start px-5 w-1/3'>Id</th>
