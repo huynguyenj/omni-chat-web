@@ -82,7 +82,7 @@ export default function ListTasksSection() {
                 <>
                   <div className='px-5'>
                     { listTasks.items.map((task) => (
-                      <Card key={task.id} className='flex gap-3 py-4 text-sm/7 my-4'>
+                      <Card key={task.id} className='flex flex-col xl:flex-row gap-3 py-4 text-sm/7 my-4'>
                         <div>
                           <Tag variant={TASK_STATUS[task.status].tagVariant} className='py-0.5'>
                             {TASK_STATUS[task.status].name}
@@ -90,14 +90,12 @@ export default function ListTasksSection() {
                         </div>
                         <div>
                           <p className='text-m-body-desktop font-medium'>{task.intentTypeName}</p>
-                          <div className="flex items-center gap-4 text-[0.85rem] text-soft-gray">
+                          <div className="flex flex-col xl:flex-row xl:items-center gap-4 text-[0.85rem] text-soft-gray">
                             {/* <span>Conversation: {task.}</span> */}
-                            <span>•</span>
-                            <span>Khách hàng: {task.customerName}</span>
-                            <span>•</span>
-                            <span>Hoàn thành: {formatDate(task.completedAt)}</span>
-                            <span>•</span>
+                            <span>• Khách hàng: {task.customerName}</span>
+                            <span>• Hoàn thành: {formatDate(task.completedAt)}</span>
                             <span className="flex items-center gap-1">
+                              •
                               <LuClock className="size-3" />
                               {formatTime(task.completedAt)}
                             </span>
