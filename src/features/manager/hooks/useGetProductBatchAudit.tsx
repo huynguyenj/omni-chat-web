@@ -31,13 +31,7 @@ export default function useGetProductBatchAudit() {
         toast.error(apiData.error)
         return
       }
-      setBatchAudit(prev => {
-        if (currentPage === 1) return apiData.data
-        return {
-          ...apiData.data,
-          items: [...(prev?.items || []), ...apiData.data.items]
-        }
-      })
+      setBatchAudit(apiData.data)
     }
     fetchProductBatchAudit()
   }, [currentPage, sortBy, isDescending, refreshKey, filterAction])

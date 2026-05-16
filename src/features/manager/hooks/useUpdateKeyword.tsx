@@ -36,5 +36,5 @@ export default function useUpdateKeyword({ onRefresh }: UseUpdateKeywordProps) {
     toast.success('Cập nhật keyword thành công')
     onRefresh((prev) => !prev)
   }
-  return { handleSubmit, register, onSubmit, setKeywordSelected, reset, loading }
+  return { handleSubmit, register, onSubmit, setKeywordSelected, reset, loading, keywordSelected }
 }
