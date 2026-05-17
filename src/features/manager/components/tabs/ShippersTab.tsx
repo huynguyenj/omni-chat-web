@@ -7,6 +7,7 @@ import Tag from '@/components/ui/tag/Tag'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerShipperApi } from '../../api/shipper-api'
 import { ManagerOrderApi } from '../../api/order-api'
+import { getOrderStatusPill } from '../../const/order-status'
 import type { ManagerOrderItem, ManagerOrderLineItem } from '../../types/order-type'
 import type { ManagerShipperApiItem } from '../../types/shipper-type'
 import { ITEMS_PER_PAGE } from '../../data/manager-dashboard-data'
@@ -62,21 +63,6 @@ function getOrderLineItems(order: ManagerOrderItem): ManagerOrderLineItem[] {
     unitPrice: order.totalAmount,
     lineTotal: order.totalAmount
   }]
-}
-
-function orderStatusPill(status: string): { label: string; className: string } {
-  const s = String(status)
-  const map: Record<string, { label: string; className: string }> = {
-    Pending: { label: 'Chờ xử lý', className: 'bg-[#facc15] text-white' },
-    Draft: { label: 'Đợi duyệt', className: 'bg-gray-400 text-white' },
-    Cancelled: { label: 'Đã hủy', className: 'bg-[#FB2C36] text-white' },
-    Shipped: { label: 'Đang giao', className: 'bg-[#3366CC] text-white' },
-    Completed: { label: 'Hoàn thành', className: 'bg-[#26C271] text-white' },
-    PendingReturn: { label: 'Chờ trả hàng', className: 'bg-[#FF9800] text-white' },
-    Returned: { label: 'Đã trả', className: 'bg-gray-500 text-white' },
-    ReturnedDefective: { label: 'Xã hàng lỗi', className: 'bg-amber-700 text-white' }
-  }
-  return map[s] ?? { label: s || '—', className: 'bg-gray-400 text-white' }
 }
 
 function formatMoney(n: number) {
@@ -159,8 +145,8 @@ function ViewOrderModal({
               <div className="rounded-xl bg-[#EAF3FF] px-4 py-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div>
                   <p className="text-xs text-gray-600 mb-1">Trạng thái đơn hàng</p>
-                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${orderStatusPill(String(order.status)).className}`}>
-                    {orderStatusPill(String(order.status)).label}
+                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getOrderStatusPill(String(order.status)).className}`}>
+                    {getOrderStatusPill(String(order.status)).label}
                   </span>
                 </div>
                 <div className="text-right">

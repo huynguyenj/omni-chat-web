@@ -1,13 +1,43 @@
+/**
+ * Trạng thái đơn hàng (enum BE).
+ * Draft | Pending | Cancelled | Shipped | PendingReturned | Returned | Completed |
+ * ReturnDefective | ReturnRejected | RefundRejected | RefundApproved | ReturnApproved
+ *
+ * Cấu trúc đơn (GET /api/v1/orders/get, GET /api/v1/orders/get/{id}):
+ * ```json
+ * {
+ *   "id": "uuid",
+ *   "customerId": "uuid",
+ *   "customerName": "string | null",
+ *   "customerPhoneNumber": "string | null",
+ *   "customerEmail": "string | null",
+ *   "customerAddress": "string | null",
+ *   "orderDate": "ISO datetime",
+ *   "name": "string",
+ *   "status": "Pending | Completed | ...",
+ *   "totalAmount": 0,
+ *   "deliveryStatus": 0,
+ *   "code": "ORD-...",
+ *   "orderItems": [
+ *     { "id": "uuid", "productName": "string", "quantity": 1, "itemsPrice": 0, "unitPrice": 0 }
+ *   ]
+ * }
+ * ```
+ */
 /** Giá trị query `orderStatuses` cho GET /orders/get (Swagger). */
 export type ManagerOrderStatusFilter =
   | 'Draft'
   | 'Pending'
   | 'Cancelled'
   | 'Shipped'
-  | 'PendingReturn'
+  | 'PendingReturned'
   | 'Returned'
   | 'Completed'
-  | 'ReturnedDefective'
+  | 'ReturnDefective'
+  | 'ReturnRejected'
+  | 'RefundRejected'
+  | 'RefundApproved'
+  | 'ReturnApproved'
 
 /** Trạng thái đơn hàng từ API (chuỗi trùng với filter khi backend trả về). */
 export type ManagerOrderStatus = ManagerOrderStatusFilter | string

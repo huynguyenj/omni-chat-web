@@ -18,6 +18,7 @@ import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerOrderApi } from '../../api/order-api'
+import { getOrderStatusPill, MANAGER_ORDER_STATUS_FILTERS } from '../../const/order-status'
 import PostSaleRequestsSection from './PostSaleRequestsSection'
 import type { ManagerOrderItem, ManagerOrderLineItem, ManagerOrderStatus, ManagerOrderStatusFilter } from '../../types/order-type'
 
@@ -79,21 +80,6 @@ function getLineItems(order: ManagerOrderItem): ManagerOrderLineItem[] {
       lineTotal: order.totalAmount
     }
   ]
-}
-
-function orderStatusPill(status: string): { label: string; className: string } {
-  const s = String(status)
-  const map: Record<string, { label: string; className: string }> = {
-    Pending: { label: 'Chờ xử lý', className: 'bg-[#facc15] text-white' },
-    Draft: { label: 'Bản nháp', className: 'bg-gray-400 text-white' },
-    Cancelled: { label: 'Đã hủy', className: 'bg-[#FB2C36] text-white' },
-    Shipped: { label: 'Đã giao hàng', className: 'bg-[#3366CC] text-white' },
-    Completed: { label: 'Đã hoàn thành', className: 'bg-[#26C271] text-white' },
-    PendingReturn: { label: 'Chờ trả hàng', className: 'bg-[#FF9800] text-white' },
-    Returned: { label: 'Đã trả hàng', className: 'bg-gray-500 text-white' },
-    ReturnedDefective: { label: 'Đã trả hàng do lỗi', className: 'bg-amber-700 text-white' }
-  }
-  return map[s] ?? { label: s || '—', className: 'bg-gray-400 text-white' }
 }
 
 function formatMoney(n: number) {
@@ -177,7 +163,7 @@ function OrderDetailModalBody({
   const [pendingAction, setPendingAction] = useState<'reject' | 'confirm' | null>(null)
   const lines = getLineItems(order)
   const totalQty = lines.reduce((s, l) => s + l.quantity, 0)
-  const pill = orderStatusPill(String(order.status))
+  const pill = getOrderStatusPill(String(order.status))
   const fromPostSaleList = Boolean(postSaleRequest?.id)
   const canSubmitDraft = !fromPostSaleList && order.status === 'Draft'
 
@@ -311,7 +297,7 @@ function OrderCard({
   onDetail: () => void
 }) {
   const lines = getLineItems(order)
-  const pill = orderStatusPill(String(order.status))
+  const pill = getOrderStatusPill(String(order.status))
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full border-t-4 border-t-[#3366CC]">
@@ -390,17 +376,6 @@ export default function OrdersTab() {
   const [detailPostSaleContext, setDetailPostSaleContext] = useState<OrderDetailPostSaleContext | null>(null)
   const [postSaleListRefreshKey, setPostSaleListRefreshKey] = useState(0)
   const pageSize = 6
-  const ORDER_STATUS_FILTERS: Array<{ value: 'all' | ManagerOrderStatusFilter; label: string }> = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'Draft', label: 'Bản nháp' },
-    { value: 'Pending', label: 'Chờ xử lý' },
-    { value: 'Shipped', label: 'Đã giao hàng' },
-    { value: 'Completed', label: 'Đã hoàn thành' },
-    { value: 'Cancelled', label: 'Đã hủy' },
-    { value: 'PendingReturn', label: 'Chờ trả hàng' },
-    { value: 'Returned', label: 'Đã trả hàng' },
-    { value: 'ReturnedDefective', label: 'Đã trả hàng do lỗi' }
-  ]
 
   const openOrderDetailById = async (orderId: string, psr?: OrderDetailPostSaleContext | null) => {
     if (!orderId) {
@@ -468,14 +443,14 @@ export default function OrdersTab() {
             <h2 className="text-[#003366] text-xl font-semibold">Đơn hàng giao</h2>
             <p className="text-sm text-gray-500 mt-1">
               Danh sách đơn hàng có trạng thái {
-                ORDER_STATUS_FILTERS.find((s) => s.value === selectedStatus)?.label ?? selectedStatus
+                MANAGER_ORDER_STATUS_FILTERS.find((s) => s.value === selectedStatus)?.label ?? selectedStatus
               }
             </p>
           </div>
         </div>
 
         <div className="mb-4 flex flex-wrap gap-2">
-          {ORDER_STATUS_FILTERS.map((status) => {
+          {MANAGER_ORDER_STATUS_FILTERS.map((status) => {
             const active = selectedStatus === status.value
             return (
               <Button

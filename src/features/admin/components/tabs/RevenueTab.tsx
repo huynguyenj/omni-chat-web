@@ -7,6 +7,7 @@ import { CheckCircle, Clock, DollarSign, TrendingDown, TrendingUp, Users, Rotate
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'react-toastify'
 import { isAxiosError } from 'axios'
+import { getOrderStatusUi } from '../../../manager/const/order-status'
 import type { ManagerOrderStatusFilter } from '../../../manager/types/order-type'
 import { OrderApi } from '../../api/order-api'
 import type { AdminOrderDetail, AdminOrderItem, OrderDashboardMonthRow } from '../../types/order-type'
@@ -139,38 +140,19 @@ const REVENUE_ORDER_STATUS_FILTERS: Array<{ value: RevenueOrderStatusFilter; lab
   { value: 'Draft', label: 'Bản nháp' },
   { value: 'Pending', label: 'Chờ xử lý' },
   { value: 'Shipped', label: 'Đã giao hàng' },
-  { value: 'Completed', label: 'Đã hoàn thành' },
+  { value: 'Completed', label: 'Hoàn thành' },
   { value: 'Cancelled', label: 'Đã hủy' },
-  { value: 'PendingReturn', label: 'Chờ trả hàng' },
+  { value: 'PendingReturned', label: 'Chờ trả hàng' },
   { value: 'Returned', label: 'Đã trả hàng' },
-  { value: 'ReturnedDefective', label: 'Đã trả hàng do lỗi' }
+  { value: 'ReturnDefective', label: 'Đã trả hàng do lỗi' },
+  { value: 'ReturnRejected', label: 'Từ chối trả hàng' },
+  { value: 'RefundRejected', label: 'Từ chối hoàn hàng' },
+  { value: 'RefundApproved', label: 'Chấp nhận hoàn hàng' },
+  { value: 'ReturnApproved', label: 'Chấp nhận trả hàng' }
 ]
 
 function adminOrderStatusUi(statusRaw: string): { labelVi: string; pillClass: string; cardBorderClass: string } {
-  const normalized = String(statusRaw).trim().toLowerCase().replace(/\s+/g, '')
-
-  const rows: Array<{ match: string; labelVi: string; pillClass: string; cardBorderClass: string }> = [
-    { match: 'draft', labelVi: 'Bản nháp', pillClass: 'bg-gray-500 text-white', cardBorderClass: 'border-t-gray-500' },
-    { match: 'pending', labelVi: 'Chờ xử lý', pillClass: 'bg-amber-500 text-white', cardBorderClass: 'border-t-amber-500' },
-    { match: 'shipped', labelVi: 'Đã giao hàng', pillClass: 'bg-[#3366CC] text-white', cardBorderClass: 'border-t-[#3366CC]' },
-    { match: 'completed', labelVi: 'Đã hoàn thành', pillClass: 'bg-[#26C271] text-white', cardBorderClass: 'border-t-[#26C271]' },
-    { match: 'cancelled', labelVi: 'Đã hủy', pillClass: 'bg-[#FB2C36] text-white', cardBorderClass: 'border-t-[#FB2C36]' },
-    { match: 'pendingreturn', labelVi: 'Chờ trả hàng', pillClass: 'bg-[#FF9800] text-white', cardBorderClass: 'border-t-[#FF9800]' },
-    { match: 'returned', labelVi: 'Đã trả hàng', pillClass: 'bg-slate-600 text-white', cardBorderClass: 'border-t-slate-600' },
-    { match: 'returneddefective', labelVi: 'Đã trả hàng do lỗi', pillClass: 'bg-amber-800 text-white', cardBorderClass: 'border-t-amber-800' }
-  ]
-
-  const hit = rows.find((r) => r.match === normalized)
-  if (hit) {
-    return { labelVi: hit.labelVi, pillClass: hit.pillClass, cardBorderClass: hit.cardBorderClass }
-  }
-
-  const raw = String(statusRaw).trim()
-  return {
-    labelVi: raw || '—',
-    pillClass: 'bg-slate-400 text-white',
-    cardBorderClass: 'border-t-slate-400'
-  }
+  return getOrderStatusUi(statusRaw)
 }
 
 function extractOrderDashboardRowsFromResponse(response: unknown): OrderDashboardMonthRow[] {
