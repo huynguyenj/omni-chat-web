@@ -35,7 +35,7 @@ export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoT
   return (
     <div className='flex flex-col py-4 h-full'>
       <div>
-        <div className='flex flex-col justify-center items-center'>
+        <div className='hidden md:flex flex-col justify-center items-center'>
           {avartarUrl ?
             <img src={avartarUrl} alt="avatar" className='w-20 h-20 rounded-full'/>
             :
@@ -68,19 +68,19 @@ export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoT
           }
         </div>
         <div className='bg-gray-200 w-full px-1 py-1 md:grid md:grid-cols-2 xl:flex gap-2 items-center justify-center'>
-          <Button className={`text-[0.75rem] px-5 py-1 gap-2 ${tab === 1 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(1)}>
+          <Button className={`text-[0.75rem] w-full md:w-fit mb-1 md:mb-0 px-5 py-1 gap-2 ${tab === 1 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(1)}>
             <GoTasklist className='text-[1rem]'/>
               Tasks
           </Button>
-          <Button className={`text-[0.75rem] text-nowrap px-4 py-1 gap-2 ${tab === 2 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(2)}>
+          <Button className={`text-[0.75rem] w-full md:w-fit mb-1 md:mb-0 text-nowrap px-4 py-1 gap-2 ${tab === 2 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(2)}>
             <IoPerson className='text-[1rem]'/>
               Hồ sơ
           </Button>
-          <Button className={`text-[0.75rem] text-nowrap px-4 py-1 gap-2 ${tab === 3 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(3)}>
+          <Button className={`text-[0.75rem] w-full md:w-fit mb-1 md:mb-0 text-nowrap px-4 py-1 gap-2 ${tab === 3 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(3)}>
             <FaShoppingBag className='text-[1rem]'/>
               Đơn hàng
           </Button>
-          <Button className={`text-[0.75rem] px-4 py-1 gap-2 ${tab === 4 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(4)}>
+          <Button className={`text-[0.75rem] w-full md:w-fit mb-1 md:mb-0 px-4 py-1 gap-2 ${tab === 4 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(4)}>
             <FaTicketAlt className='text-[1rem]'/>
               Tickets
           </Button>

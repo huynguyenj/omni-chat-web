@@ -43,7 +43,7 @@ export default function CustomerProfile() {
         <>
           { customerInfo ?
             <>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col md:flex-row justify-between items-center">
                 <p className="text-sm-body-desktop text-primary font-medium">Thông tin khách hàng</p>
                 <Button className="bg-white text-secondary font-medium hover:bg-blue-100" onClick={handleOpen}>
                   <FiEdit2/>
