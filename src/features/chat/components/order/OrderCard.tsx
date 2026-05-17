@@ -16,7 +16,6 @@ import type { OrderType } from '../../types/order-type'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 import { Controller } from 'react-hook-form'
 import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
-import { LIST_POST_REQUEST_TYPE, POST_REQUEST_TYPE } from '../../const/post-request-type'
 
 export default function OrderCard({ data }: { data: OrderType }) {
   const [orderItemCheck, setOrderItemCheck] = useState<Map<string, number>>(new Map())
@@ -93,11 +92,13 @@ export default function OrderCard({ data }: { data: OrderType }) {
         {/* <p className="text-sm-body-desktop text-gray-500">Số lượng: {data.quantity}</p> */}
         <p className="text-m-body-desktop font-medium text-green-accent">{data.totalAmount.toLocaleString()}đ</p>
       </div>
-      { data.status === 'Completed' &&
-              <Button variant='outline' className='w-full my-3 border-orange-400 text-orange-600 hover:bg-orange-50 hover:text-black' onClick={handleOpen}>
-                <FiRotateCcw className='size-4'/>
+      { data.status === 'Completed' || data.status === 'Shipped' ?
+        <Button variant='outline' className='w-full my-3 border-orange-400 text-orange-600 hover:bg-orange-50 hover:text-black' onClick={handleOpen}>
+          <FiRotateCcw className='size-4'/>
                 Yêu cầu hoàn tiền hoặc trả hàng
-              </Button>
+        </Button>
+        :
+        <></>
       }
       {isOpen &&
                 <AnimatePresence>
@@ -166,17 +167,21 @@ export default function OrderCard({ data }: { data: OrderType }) {
                             <SelectValue placeholder='Chọn loại đơn'/>
                           </SelectTrigger>
                           <SelectContent>
-                            { LIST_POST_REQUEST_TYPE.map((type, i) => (
-                              <SelectItem value={type} key={i}>{POST_REQUEST_TYPE[type]}</SelectItem>
-                            )) }
+                            { data.status === 'Shipped' &&
+                              <SelectItem value='Return'>Trả hàng</SelectItem>
+                            }
+                            {
+                              data.status === 'Completed' &&
+                            <SelectItem value='Refund'>Hoàn hàng</SelectItem>
+                            }
                           </SelectContent>
                         </AdvSelect>
                       )}
                     />
                     { errors.type?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.type.message}</p> }
                     <Alert variant='danger' className='rounded-xl flex items-center justify-center gap-2 my-5'>
-                      <PiWarningCircleBold color='#CA3500' className='font-bold hidden lg:block size-7'/>
-                      <p className='text-[0.9rem]'>Yêu cầu hoàn tiền hoặc trả hàng sẽ được gửi cho quản lí để xem xét và phê duyệt. Vui lòng điền đầy đủ thông tin</p>
+                      <PiWarningCircleBold color='#CA3500' className='font-bold hidden lg:block size-14'/>
+                      <p className='text-[0.9rem]'>Yêu cầu hoàn tiền hoặc trả hàng sẽ được gửi cho quản lí để xem xét và phê duyệt. Vui lòng điền đầy đủ thông tin (trả hàng đối với trường hợp chưa thanh toán, hoàn hàng là đã thanh toán rồi)</p>
                     </Alert>
                     { loading ?
                       <div className='w-full flex justify-center py-5'>
