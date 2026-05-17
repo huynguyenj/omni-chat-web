@@ -12,14 +12,14 @@ import NodataCard from '@/components/ui/card/NodataCard'
 function TicketCard({ data }: { data: TicketType}) {
   return (
     <Card>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between">
         <p className="text-m-body-desktop text-primary font-bold">{data.keywordType}</p>
         <Tag variant={TICKET_CONVERSATION_STATUS[data.status].tagVariant}>
           {TICKET_CONVERSATION_STATUS[data.status].name}
         </Tag>
       </div>
       <p className="text-sm-body-desktop text-gray-500">{formatDate(data.completeDate)}</p>
-      <p className="text-sm-body-desktop text-gray-600 my-7">{data.keywordType}</p>
+      <p className="text-sm-body-desktop text-gray-600 my-3">{data.keywordType}</p>
       <div className="flex gap-2 items-center">
         <GoPerson className='text-gray-500 text-[0.95rem]'/>
         <p className="text-[0.85rem] text-gray-500">{data.staffName}</p>

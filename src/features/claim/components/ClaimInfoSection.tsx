@@ -32,7 +32,7 @@ export default function ClaimInfoSection() {
       </Button>
       <AnimatePresence>
         {isOpen &&
-                    <PopupBasic title='Tạo claim mới' onClose={handleOpen}>
+                    <PopupBasic title='Tạo claim mới' onClose={handleOpen} size='md'>
                       <p className='text-soft-gray'>Tạo yêu cầu claim mới cho quản lí</p>
                       <div className='mt-10 text-sm-body-desktop text-sm/9'>
                         <label htmlFor="claim-select" className='font-medium'>Loại claim</label>
