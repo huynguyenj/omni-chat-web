@@ -12,10 +12,10 @@ type AwaitMessageBoxType = {
 
 export default function AwaitMessageBox({ customerName, message, time, platform, avatar, totalAwaitMessage }: AwaitMessageBoxType) {
   return (
-    <div className='px-5 py-5 flex gap-3'>
+    <div className='px-5 py-5 flex gap-3 border-b border-b-border-primary'>
       <img src={avatar ? avatar : AvatarSample} alt="avatar" className='w-15 h-15 rounded-full' />
       <div className='w-full'>
-        <div className='flex justify-between items-center'>
+        <div className='flex flex-row justify-between items-center lg:flex-col lg:items-start xl:flex-row xl:justify-between xl:items-center'>
           <p className='text-sm-body-desktop'>{customerName}</p>
           <p className='text-[0.95rem] text-soft-gray'>{formatTime(time)}</p>
         </div>
