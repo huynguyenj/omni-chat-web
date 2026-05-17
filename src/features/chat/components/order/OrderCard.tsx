@@ -14,12 +14,14 @@ import { useState } from 'react'
 import useRefundRequest from '../../hooks/useRefundRequest'
 import type { OrderType } from '../../types/order-type'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
+import { Controller } from 'react-hook-form'
+import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
 
 export default function OrderCard({ data }: { data: OrderType }) {
   const [orderItemCheck, setOrderItemCheck] = useState<Map<string, number>>(new Map())
   const [isOpen, setIsOpen] = useState(false)
   const [reasonValue, setReasonValue] = useState('')
-  const { handleRefundOrder, loading } = useRefundRequest({ orderId: data.id })
+  const { handleRefundOrder, loading, control, errors, handleSubmit, register } = useRefundRequest({ orderId: data.id })
   const handleOpen = () => {
     setIsOpen((prev) => !prev)
   }
@@ -63,11 +65,11 @@ export default function OrderCard({ data }: { data: OrderType }) {
     <Card className='text-sm-body-desktop'>
       <div className="flex flex-col gap-2">
         <p className="text-m-body-desktop text-primary font-bold">{data.code}</p>
-        <div className='flex justify-between items-center'>
+        <div className='flex flex-col items-start lg:flex-row lg:justify-between lg:items-center'>
           <p>Trạng thái đơn hàng</p>
           <Tag variant={ORDER_STATUS[data.status].tagVariant}>{ORDER_STATUS[data.status].name}</Tag>
         </div>
-        <div className='flex justify-between items-center'>
+        <div className='flex flex-col items-start lg:flex-row lg:justify-between lg:items-center'>
           <p>Trạng thái giao hàng</p>
           <Tag variant={data.deliveryStatus !== null ? DELIVERY_STATUS[data.deliveryStatus].tagVariant : 'default'}>
             {data.deliveryStatus !== null ? DELIVERY_STATUS[data.deliveryStatus].name: 'Chưa giao'}
@@ -90,15 +92,17 @@ export default function OrderCard({ data }: { data: OrderType }) {
         {/* <p className="text-sm-body-desktop text-gray-500">Số lượng: {data.quantity}</p> */}
         <p className="text-m-body-desktop font-medium text-green-accent">{data.totalAmount.toLocaleString()}đ</p>
       </div>
-      { data.status === 'Completed' &&
-              <Button variant='outline' className='w-full my-3 border-orange-400 text-orange-600 hover:bg-orange-50 hover:text-black' onClick={handleOpen}>
-                <FiRotateCcw className='size-4'/>
-                Yêu cầu hoàn tiền
-              </Button>
+      { data.status === 'Completed' || data.status === 'Shipped' ?
+        <Button variant='outline' className='w-full my-3 border-orange-400 text-orange-600 hover:bg-orange-50 hover:text-black' onClick={handleOpen}>
+          <FiRotateCcw className='size-4'/>
+                Yêu cầu hoàn tiền hoặc trả hàng
+        </Button>
+        :
+        <></>
       }
       {isOpen &&
                 <AnimatePresence>
-                  <PopupBasic title='Yêu cầu hoàn tiền' onClose={handleOpen}>
+                  <PopupBasic title='Yêu cầu hoàn tiền hoặc trả hàng' onClose={handleOpen} size='sm'>
                     <p className='text-sm-body-desktop text-soft-gray'>Đơn hàng {data.code} - {data.totalAmount.toLocaleString()}đ</p>
                     <Card className='my-3 bg-[#F5F7FA] rounded-[10px]'>
                       <div className="flex items-center justify-between my-1">
@@ -116,7 +120,7 @@ export default function OrderCard({ data }: { data: OrderType }) {
                       <Card variant='default' className='rounded-xl'>
                         { data.orderItems.map((item) => (
                           <div key={item.id} className='flex flex-col'>
-                            <div className='flex gap-3 justify-between items-center'>
+                            <div className='flex flex-col md:flex-row gap-3 md:justify-between md:items-center'>
                               <div className='flex gap-3 items-center'>
                                 <Checkbox
                                   id={item.productName}
@@ -127,19 +131,19 @@ export default function OrderCard({ data }: { data: OrderType }) {
                               </div>
                               { orderItemCheck.has(String(item.id)) &&
                                 <div className='flex items-center gap-2'>
-                                  <Button className='py-0.5 px-3 border-3 border-border-primary hover:bg-gray-200' variant='outline' onClick={() => handleItemQuantity(item.id, 'minus', item.quantity)}>
-                                    <p className='text-m-body-desktop font-bold text-black'>-</p>
+                                  <Button className='py-0 px-2 md:py-0.5 md:px-3 border-3 border-border-primary hover:bg-gray-200' variant='outline' onClick={() => handleItemQuantity(item.id, 'minus', item.quantity)}>
+                                    <p className='text-sm-body-desktop md:text-m-body-desktop font-bold text-black'>-</p>
                                   </Button>
-                                  <div className='px-8 py-1 rounded-sm border-3 border-border-primary'>
+                                  <div className='px-3 md:px-8 py-1 rounded-sm border-3 border-border-primary'>
                                     <p>{orderItemCheck.get(String(item.id))}</p>
                                   </div>
-                                  <Button className='py-0.5 px-3 border-3 border-border-primary hover:bg-gray-200' variant='outline' onClick={() => handleItemQuantity(item.id, 'plus', item.quantity)}>
-                                    <p className='text-m-body-desktop font-bold text-black'>+</p>
+                                  <Button className='py-0 px-2 md:py-0.5 md:px-3 border-3 border-border-primary hover:bg-gray-200' variant='outline' onClick={() => handleItemQuantity(item.id, 'plus', item.quantity)}>
+                                    <p className='text-sm-body-desktop md:text-m-body-desktop font-bold text-black'>+</p>
                                   </Button>
                                 </div>
                               }
                             </div>
-                            <div className='flex gap-3 text-[0.9rem] text-soft-gray ml-8'>
+                            <div className='flex flex-col md:flex-row md:gap-3 text-[0.9rem] text-soft-gray ml-8'>
                               <p>Đơn giá: <span className='font-medium text-green-accent'>{item.itemsPrice.toLocaleString()}đ</span></p>
                               <p>SL trong đơn: {item.quantity}</p>
                             </div>
@@ -148,10 +152,36 @@ export default function OrderCard({ data }: { data: OrderType }) {
                       </Card>
                     </div>
                     <label htmlFor="reason" className='text-sm-body-desktop font-bold text-primary'>Lí do trả hàng <span className='text-red-500'>*</span></label>
-                    <Input value={reasonValue} onChange={(e) => setReasonValue(e.target.value)} variant='gray' id='reason' placeholder='Lí do bạn trả hàng'/>
+                    <Input {...register('reason')} onChange={(e) => setReasonValue(e.target.value)} variant='gray' id='reason' placeholder='Lí do bạn trả hàng' error={errors.reason?.message}/>
+
+                    <label htmlFor="type" className='text-sm-body-desktop font-bold text-primary'>Loại trả hàng<span className='text-red-500'>*</span></label>
+                    <Controller
+                      control={control}
+                      name='type'
+                      render={({ field }) => (
+                        <AdvSelect
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder='Chọn loại đơn'/>
+                          </SelectTrigger>
+                          <SelectContent>
+                            { data.status === 'Shipped' &&
+                              <SelectItem value='Return'>Trả hàng</SelectItem>
+                            }
+                            {
+                              data.status === 'Completed' &&
+                            <SelectItem value='Refund'>Hoàn hàng</SelectItem>
+                            }
+                          </SelectContent>
+                        </AdvSelect>
+                      )}
+                    />
+                    { errors.type?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.type.message}</p> }
                     <Alert variant='danger' className='rounded-xl flex items-center justify-center gap-2 my-5'>
-                      <PiWarningCircleBold size={20} color='#CA3500' className='font-bold'/>
-                      <p className='text-[0.9rem]'>Yêu cầu hoàn tiền sẽ được gửi cho quản lí để xem xét và phê duyệt. Vui lòng điền đầy đủ thông tin</p>
+                      <PiWarningCircleBold color='#CA3500' className='font-bold hidden lg:block size-14'/>
+                      <p className='text-[0.9rem]'>Yêu cầu hoàn tiền hoặc trả hàng sẽ được gửi cho quản lí để xem xét và phê duyệt. Vui lòng điền đầy đủ thông tin (trả hàng đối với trường hợp chưa thanh toán, hoàn hàng là đã thanh toán rồi)</p>
                     </Alert>
                     { loading ?
                       <div className='w-full flex justify-center py-5'>
@@ -159,11 +189,11 @@ export default function OrderCard({ data }: { data: OrderType }) {
                       </div>
                       :
                       <>
-                        <div className='flex w-full items-center gap-3 my-3'>
+                        <div className='flex flex-col md:flex-row w-full md:items-center gap-3 my-3'>
                           <Button variant='outline' className='basis-[50%] border-3 border-border-primary text-black hover:bg-gray-200' onClick={handleOpen}>
                               Hủy
                           </Button>
-                          <Button className={`bg-orange-600 hover:bg-orange-700 text-white basis-[50%] ${!handleCheckInputValid() && 'opacity-50'}`} disabled={!handleCheckInputValid()} onClick={() => handleRefundOrder(orderItemCheck, reasonValue, data.customerId)}>
+                          <Button className={`bg-orange-600 hover:bg-orange-700 text-white basis-[50%] ${!handleCheckInputValid() && 'opacity-50'}`} disabled={!handleCheckInputValid()} onClick={handleSubmit(dataForm => handleRefundOrder(orderItemCheck, data.customerId, dataForm))}>
                             <FiRotateCcw className='size-4'/>
                         Yêu cầu hoàn tiền
                           </Button>

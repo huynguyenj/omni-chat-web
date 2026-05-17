@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { BatchCreateType } from '../types/batch-type'
 import useApiCall from '@/config/useApiCall'
-import type { ProductDetailType } from '@/features/chat/types/product-type'
 import { toast } from 'react-toastify'
 import z from 'zod'
 import { useForm } from 'react-hook-form'
@@ -14,16 +13,16 @@ const batchSchema = z.object({
 
 type BatchItemType = z.infer<typeof batchSchema>
 
-export default function useCreateBatchProduct() {
+export default function useCreateBatchProduct({ onRefresh }: { onRefresh: () => void }) {
   const [listBatchItems, setListBatchItems] = useState<BatchItemType[]>([])
-  const [productChoseForBatch, setProductChoseForBatch] = useState<ProductDetailType>()
+  const [productId, setProductChoseForBatch] = useState('')
   const { register, handleSubmit, reset } = useForm<BatchItemType>({ resolver: zodResolver(batchSchema) })
   const { execute, loading } = useApiCall<null>()
 
   const handleCreateBatch = async () => {
-    if (!productChoseForBatch) return
+    if (!productId) return
     const productBatchData: BatchCreateType = {
-      productId: productChoseForBatch.id,
+      productId: productId,
       productBatch: [...listBatchItems]
     }
     const apiData = await execute({
@@ -38,6 +37,7 @@ export default function useCreateBatchProduct() {
       return
     }
     toast.success('Thêm lô sản phẩm thành công')
+    onRefresh()
   }
   const handleAddBatch = (formData: BatchItemType) => {
     setListBatchItems(prev => [...prev, formData])
@@ -54,5 +54,5 @@ export default function useCreateBatchProduct() {
       quantity: 1
     })
   }
-  return { handleCreateBatch, setListBatchItems, listBatchItems, setProductChoseForBatch, productChoseForBatch, loading, handleAddBatch, handleDeleteBatch, register, handleSubmit }
+  return { handleCreateBatch, setListBatchItems, listBatchItems, setProductChoseForBatch, loading, handleAddBatch, handleDeleteBatch, register, handleSubmit }
 }

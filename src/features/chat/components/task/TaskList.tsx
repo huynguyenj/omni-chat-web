@@ -27,7 +27,7 @@ export default function TaskList() {
             <>
               { conversationTasks?.map((task) => (
                 <Card key={task.id} variant={task.status === 'Done' ? 'secondary' : 'primary'} size='sm' className='text-sm/7'>
-                  <div className='flex justify-between items-center'>
+                  <div className='flex flex-col xl:flex-row xl:justify-between xl:items-center'>
                     <div className='flex items-center gap-2'>
                       <Checkbox id='task' checked={task.status === 'Done'} onCheckedChange={() => handleUpdateTask(task.id)}/>
                       <label htmlFor="task" className={`text-sm-body-desktop font-bold text-primary ${task.status === 'Done' && 'line-through'}`}>{task.intentTypeName}</label>
