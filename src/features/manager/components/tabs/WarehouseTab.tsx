@@ -269,7 +269,7 @@ export default function WarehouseTab() {
         <div className="mb-6">
           <h2 className="text-[#003366] text-xl font-semibold">Danh sách chi tiết tồn kho</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Theo dõi tồn kho, SKU và trạng thái theo từng sản phẩm
+          Trạng thái tồn kho theo từng sản phẩm
           </p>
         </div>
 
