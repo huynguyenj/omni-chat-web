@@ -30,10 +30,21 @@ function resolvePendingChangeTasksEndpoint() {
   return '/api/v1/claims/pending-change-tasks'
 }
 
-function resolveReassignClaimEndpoint(conversationId: string, newStaffId: string) {
+function resolveReassignApproveEndpoint(claimId: string, conversationId: string, newStaffId: string) {
+  const c = encodeURIComponent(claimId)
+  const conv = encodeURIComponent(conversationId)
+  const staff = encodeURIComponent(newStaffId)
   const baseUrl = (apiPublic.defaults.baseURL ?? '').toLowerCase()
-  if (baseUrl.includes('/api/v1')) return `/claims/${conversationId}/reassign/${newStaffId}`
-  return `/api/v1/claims/${conversationId}/reassign/${newStaffId}`
+  if (baseUrl.includes('/api/v1')) return `/claims/${c}/reassign/${conv}/${staff}/approve`
+  return `/api/v1/claims/${c}/reassign/${conv}/${staff}/approve`
+}
+
+function resolveChangeTaskRejectEndpoint(claimId: string, managerId: string) {
+  const id = encodeURIComponent(claimId)
+  const mgr = encodeURIComponent(managerId)
+  const baseUrl = (apiPublic.defaults.baseURL ?? '').toLowerCase()
+  if (baseUrl.includes('/api/v1')) return `/claims/${id}/reject/${mgr}`
+  return `/api/v1/claims/${id}/reject/${mgr}`
 }
 
 function extractApiErrorMessage(err: unknown, fallback: string) {
@@ -86,19 +97,39 @@ export const ClaimApi = {
   rejectClaim: async (id: string): Promise<void> => {
     await apiPublic.patch(resolveClaimActionEndpoint(id, 'reject'))
   },
-  reassignClaimConversation: async (conversationId: string, newStaffId: string): Promise<string> => {
-    if (!conversationId) throw new Error('Thiếu conversationId để gán lại nhân viên.')
-    if (!newStaffId) throw new Error('Thiếu newStaffId để gán lại nhân viên.')
-    const endpoint = resolveReassignClaimEndpoint(conversationId, newStaffId)
+  approveReassignClaim: async (
+    claimId: string,
+    conversationId: string,
+    newStaffId: string
+  ): Promise<string> => {
+    if (!claimId) throw new Error('Thiếu claimId để duyệt chuyển giao.')
+    if (!conversationId) throw new Error('Thiếu conversationId để duyệt chuyển giao.')
+    if (!newStaffId) throw new Error('Thiếu newStaffId để duyệt chuyển giao.')
+    const endpoint = resolveReassignApproveEndpoint(claimId, conversationId, newStaffId)
     try {
       const response = await apiPublic.put<ApiResponseStructure<unknown>>(endpoint)
       const body = response as unknown as ApiResponseStructure<unknown>
       if (body.is_success === false) {
-        throw new Error(body.reason || body.message || 'Không thể thay nhân viên xử lý.')
+        throw new Error(body.reason || body.message || 'Không thể duyệt chuyển giao.')
       }
-      return body.message || 'Thay nhân viên thành công.'
+      return body.message || 'Duyệt chuyển giao thành công.'
     } catch (error) {
-      throw new Error(extractApiErrorMessage(error, 'Không thể thay nhân viên xử lý.'))
+      throw new Error(extractApiErrorMessage(error, 'Không thể duyệt chuyển giao.'))
+    }
+  },
+  rejectChangeTaskClaim: async (claimId: string, managerId: string): Promise<string> => {
+    if (!claimId) throw new Error('Thiếu claimId để từ chối yêu cầu.')
+    if (!managerId) throw new Error('Thiếu managerId để từ chối yêu cầu.')
+    const endpoint = resolveChangeTaskRejectEndpoint(claimId, managerId)
+    try {
+      const response = await apiPublic.put<ApiResponseStructure<unknown>>(endpoint)
+      const body = response as unknown as ApiResponseStructure<unknown>
+      if (body.is_success === false) {
+        throw new Error(body.reason || body.message || 'Không thể từ chối yêu cầu.')
+      }
+      return body.message || 'Đã từ chối yêu cầu chuyển giao.'
+    } catch (error) {
+      throw new Error(extractApiErrorMessage(error, 'Không thể từ chối yêu cầu.'))
     }
   },
   getDashboard: async (): Promise<ManagerClaimDashboardData> => {
