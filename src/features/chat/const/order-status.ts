@@ -20,7 +20,7 @@ export const ORDER_STATUS: Record<string, OrderStatusType> = {
     name: 'Đã giao hàng',
     tagVariant: 'default'
   },
-  PendingReturned: {
+  PendingReturn: {
     name: 'Chờ trả hàng',
     tagVariant: 'warn'
   },
@@ -32,7 +32,7 @@ export const ORDER_STATUS: Record<string, OrderStatusType> = {
     name: 'Hoàn thành',
     tagVariant: 'success'
   },
-  ReturnDefective: {
+  ReturnedDefective: {
     name: 'Đã trả hàng do lỗi',
     tagVariant: 'danger'
   },
