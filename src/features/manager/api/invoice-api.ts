@@ -16,6 +16,12 @@ function resolveInvoiceExportEndpoint(invoiceId: string) {
   return `/api/v1/invoices/${id}/export`
 }
 
+function resolveInvoiceRunEndpoint() {
+  const baseUrl = (apiPrivate.defaults.baseURL ?? '').toLowerCase()
+  if (baseUrl.includes('/api/v1')) return '/invoices/run'
+  return '/api/v1/invoices/run'
+}
+
 export const ManagerInvoiceApi = {
   getInvoices: async (query: ManagerInvoiceListQuery = {}): Promise<ApiResponseStructure<ManagerInvoiceListResponse>> => {
     const {
@@ -46,5 +52,21 @@ export const ManagerInvoiceApi = {
       responseType: 'blob'
     })
     return data as unknown as Blob
+  },
+
+  /** POST /api/v1/invoices/run — chạy giả lập/tổng hợp hóa đơn theo khoảng thời gian. */
+  runInvoices: async (query?: { from?: string; to?: string }): Promise<string> => {
+    const params: Record<string, string> = {}
+    if (query?.from?.trim()) params.from = query.from.trim()
+    if (query?.to?.trim()) params.to = query.to.trim()
+
+    const body = (await apiPrivate.post(resolveInvoiceRunEndpoint(), null, {
+      params: Object.keys(params).length > 0 ? params : undefined
+    })) as unknown as ApiResponseStructure<unknown>
+
+    if (body.is_success === false) {
+      throw new Error(body.message || 'Không thể chạy giả lập hóa đơn.')
+    }
+    return body.message?.trim() ? body.message : 'Đã chạy giả lập hóa đơn thành công.'
   }
 }

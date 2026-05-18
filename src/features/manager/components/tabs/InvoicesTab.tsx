@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AlertCircle,
   ArrowDown,
@@ -6,12 +6,15 @@ import {
   ArrowUpDown,
   CheckCircle,
   Clock,
+  Loader2,
+  Play,
   RefreshCcw,
   Search,
   TrendingUp
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
+import Button from '@/components/ui/button/Button'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerInvoiceApi } from '../../api/invoice-api'
 import type { ManagerInvoiceItem } from '../../types/invoice-type'
@@ -61,6 +64,13 @@ function formatDateShort(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
   return d.toLocaleDateString('vi-VN')
+}
+
+function toIsoDateTime(localValue: string): string | undefined {
+  if (!localValue.trim()) return undefined
+  const d = new Date(localValue)
+  if (Number.isNaN(d.getTime())) return undefined
+  return d.toISOString()
 }
 
 function invoiceStatusVisual(statusRaw: string): { label: string; amountClass: string } {
@@ -137,6 +147,59 @@ export default function InvoicesTab() {
   const [sortKey, setSortKey] = useState<InvoiceSortKey>('customerName')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [exportingInvoiceId, setExportingInvoiceId] = useState<string | null>(null)
+  const [simulating, setSimulating] = useState(false)
+  const [simulateFrom, setSimulateFrom] = useState('')
+  const [simulateTo, setSimulateTo] = useState('')
+
+  const fetchInvoices = useCallback(async () => {
+    setInvoiceLoading(true)
+    setInvoiceError(null)
+    try {
+      const mergedItems: ManagerInvoiceItem[] = []
+      let pageNumber = 1
+      let totalPages = 1
+
+      while (pageNumber <= totalPages) {
+        const response = await ManagerInvoiceApi.getInvoices({
+          pageNumber,
+          pageSize: 100,
+          sortBy: 'startedDate',
+          descending: true
+        })
+        const body = response
+        if (body.is_success === false || body.data == null) {
+          throw new Error(body.message || 'Không thể tải danh sách hóa đơn.')
+        }
+        const items = Array.isArray(body.data.items) ? body.data.items.map((item) => normalizeInvoice(item)) : []
+        mergedItems.push(...items)
+        totalPages = Math.max(1, Number(body.data.meta?.total_pages ?? 1))
+        pageNumber += 1
+      }
+
+      setAllInvoices(mergedItems)
+    } catch {
+      setInvoiceError('Không thể tải danh sách hóa đơn.')
+      setAllInvoices([])
+    } finally {
+      setInvoiceLoading(false)
+    }
+  }, [])
+
+  const handleSimulateInvoices = async () => {
+    setSimulating(true)
+    try {
+      const msg = await ManagerInvoiceApi.runInvoices({
+        from: toIsoDateTime(simulateFrom),
+        to: toIsoDateTime(simulateTo)
+      })
+      toast.success(msg)
+      await fetchInvoices()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không thể chạy giả lập hóa đơn.')
+    } finally {
+      setSimulating(false)
+    }
+  }
 
   const downloadInvoiceExport = async (invoice: ManagerInvoiceItem) => {
     setExportingInvoiceId(invoice.id)
@@ -169,41 +232,8 @@ export default function InvoicesTab() {
   }
 
   useEffect(() => {
-    const fetchInvoices = async () => {
-      setInvoiceLoading(true)
-      setInvoiceError(null)
-      try {
-        const mergedItems: ManagerInvoiceItem[] = []
-        let pageNumber = 1
-        let totalPages = 1
-
-        while (pageNumber <= totalPages) {
-          const response = await ManagerInvoiceApi.getInvoices({
-            pageNumber,
-            pageSize: 100,
-            sortBy: 'startedDate',
-            descending: true
-          })
-          const body = response
-          if (body.is_success === false || body.data == null) {
-            throw new Error(body.message || 'Không thể tải danh sách hóa đơn.')
-          }
-          const items = Array.isArray(body.data.items) ? body.data.items.map((item) => normalizeInvoice(item)) : []
-          mergedItems.push(...items)
-          totalPages = Math.max(1, Number(body.data.meta?.total_pages ?? 1))
-          pageNumber += 1
-        }
-
-        setAllInvoices(mergedItems)
-      } catch {
-        setInvoiceError('Không thể tải danh sách hóa đơn.')
-        setAllInvoices([])
-      } finally {
-        setInvoiceLoading(false)
-      }
-    }
     void fetchInvoices()
-  }, [])
+  }, [fetchInvoices])
 
   useEffect(() => {
     setInvoicePage(1)
@@ -396,7 +426,7 @@ export default function InvoicesTab() {
                       : 'bg-white text-[#003366] border-gray-200 hover:border-[#3366CC]/50 hover:bg-gray-50'
                   }`}
                   onClick={() => setStatusFilter(filter.value)}
-                  disabled={invoiceLoading}
+                  disabled={invoiceLoading || simulating}
                 >
                   {filter.label}
                 </button>
@@ -405,9 +435,53 @@ export default function InvoicesTab() {
           </div>
         </div>
 
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-[#003366]">Danh sách chi tiết hóa đơn</h2>
-          <p className="mt-1 text-sm text-gray-500">Quản lý hóa đơn tổng hợp đơn hàng cho khách hàng</p>
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold text-[#003366]">Danh sách chi tiết hóa đơn</h2>
+            <p className="mt-1 text-sm text-gray-500">Quản lý hóa đơn tổng hợp đơn hàng cho khách hàng</p>
+          </div>
+
+          <div className="flex w-full flex-col gap-2 rounded-xl border border-dashed border-[#3366CC]/40 bg-[#EAF3FF]/40 p-3 sm:flex-row sm:flex-wrap sm:items-end lg:w-auto lg:shrink-0">
+            <div className="flex min-w-[160px] flex-1 flex-col gap-1 sm:max-w-[220px]">
+              <label htmlFor="simulate-from" className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              Từ (tùy chọn)
+              </label>
+              <input
+                id="simulate-from"
+                type="datetime-local"
+                value={simulateFrom}
+                onChange={(e) => setSimulateFrom(e.target.value)}
+                disabled={simulating || invoiceLoading}
+                className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#003366] outline-none focus:border-[#3366CC] focus:ring-2 focus:ring-[#3366CC]/15 disabled:opacity-60"
+              />
+            </div>
+            <div className="flex min-w-[160px] flex-1 flex-col gap-1 sm:max-w-[220px]">
+              <label htmlFor="simulate-to" className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              Đến (tùy chọn)
+              </label>
+              <input
+                id="simulate-to"
+                type="datetime-local"
+                value={simulateTo}
+                onChange={(e) => setSimulateTo(e.target.value)}
+                disabled={simulating || invoiceLoading}
+                className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#003366] outline-none focus:border-[#3366CC] focus:ring-2 focus:ring-[#3366CC]/15 disabled:opacity-60"
+              />
+            </div>
+            <Button
+              type="button"
+              className="h-10 shrink-0 bg-[#3366CC] px-5 text-white hover:bg-[#2952A3]"
+              disabled={simulating || invoiceLoading}
+              onClick={() => void handleSimulateInvoices()}
+            >
+              {simulating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Play className="mr-2 h-4 w-4" />
+              )}
+            Giả lập
+            </Button>
+          </div>
         </div>
 
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
