@@ -1,16 +1,18 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import type { ResolveMessageType } from '../types/message-type'
-import { signalrConnection } from '../config/signalr'
+import { signalrSidebarConnection } from '../config/signalr'
 import SelectionMessageContext from '../context/SelectionMessageProvider'
 import { toast } from 'react-toastify'
 import * as signalr from '@microsoft/signalr'
 import useApiCall from '@/config/useApiCall'
+import { useAuthStore } from '@/features/auth/store/auth-store'
 
 
 export default function useGetResolveMessage(staffId: string | null) {
   const [resolveMessageTab, setResolveMessageTab] = useState<ResolveMessageType[]>([])
   const context = useContext(SelectionMessageContext)
   const connectionRef = useRef<signalr.HubConnection | null>(null)
+  const accessToken = useAuthStore(s => s.accessToken)
   const { execute, loading } = useApiCall<ResolveMessageType[]>()
   useEffect(() => {
     const fetchResolveMessage = async () => {
@@ -40,33 +42,14 @@ export default function useGetResolveMessage(staffId: string | null) {
       prevConnection.stop()
       connectionRef.current = null
     }
-    const newConnection = signalrConnection('supportConversationHub')
+    const newConnection = signalrSidebarConnection(context?.providerName ?? '', accessToken ?? '')
     connectionRef.current = newConnection
     if (newConnection) {
       newConnection.start().then(() => {
         console.log('connected')
-        newConnection.on('SidebarUpdated', (data: ResolveMessageType) => {
+        newConnection.on('SidebarUpdated', (data: ResolveMessageType[]) => {
           console.log(data)
-          setResolveMessageTab(prev => {
-            //Get the exited one that in previous awaited array
-            const existingIndex = prev.findIndex((m) => m.conversationId === data.conversationId)
-            if (existingIndex !=-1) {
-              //List contain awaited messages
-              const updatedExistingMessages = [...prev]
-              //Update the old awaited message existed with new message and date
-              updatedExistingMessages[existingIndex] = {
-                ...updatedExistingMessages[existingIndex],
-                lastMessage: data.lastMessage,
-                updateDate: data.updateDate,
-                unreadMessageCount: data.unreadMessageCount
-              }
-              // Get the updated object by splice method
-              const [updatedItem] = updatedExistingMessages.splice(existingIndex, 1)
-              // Put the updated message to top
-              return [updatedItem, ...updatedExistingMessages]
-            }
-            return [data, ...prev]
-          })
+          setResolveMessageTab(data)
         })
       })
         .catch(err => console.log('Signalr connected fail', err))
