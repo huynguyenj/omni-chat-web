@@ -73,8 +73,8 @@ function formatMoney(amount: number) {
 
 function transactionTypeLabel(type: string) {
   const key = String(type).trim().toLowerCase()
-  if (key === 'deposit') return 'Nạp tiền'
-  if (key === 'credit') return 'Đã thanh toán'
+  if (key === 'deposit') return 'Nạp tiền vào ví'
+  if (key === 'credit') return 'Hoàn tiền lại ví'
   if (key === 'debit') return 'Ghi nợ'
   return type || 'Khác'
 }
@@ -391,7 +391,7 @@ export default function WalletTab() {
               className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
             >
               <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:justify-between lg:gap-8">
-                <div className="flex shrink-0 gap-4 lg:max-w-sm">
+                <div className="flex w-full shrink-0 gap-4 lg:w-80">
                   {customer.avatarUrl ? (
                     <img
                       src={customer.avatarUrl}
@@ -403,10 +403,17 @@ export default function WalletTab() {
                       {customerInitial(customer.customerName)}
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <p className="text-lg font-bold leading-tight text-[#003366]">{customer.customerName}</p>
-                    <p className="mt-1 text-sm text-gray-500">{customer.email || '—'}</p>
-                    <p className="mt-0.5 text-sm text-gray-500">{customer.phoneNumber || '—'}</p>
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <p
+                      className="line-clamp-2 text-lg font-bold leading-tight text-[#003366] break-words"
+                      title={customer.customerName}
+                    >
+                      {customer.customerName}
+                    </p>
+                    <p className="mt-1 truncate text-sm text-gray-500" title={customer.email ?? undefined}>
+                      {customer.email || '—'}
+                    </p>
+                    <p className="mt-0.5 truncate text-sm text-gray-500">{customer.phoneNumber || '—'}</p>
                   </div>
                 </div>
 

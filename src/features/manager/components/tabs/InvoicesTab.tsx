@@ -120,10 +120,10 @@ function InvoiceSortHeader({
     <button
       type="button"
       onClick={() => onSort(columnKey)}
-      className="inline-flex min-h-[44px] w-full items-center justify-center gap-1 px-2 py-2 font-semibold text-[#003366] transition-colors hover:bg-[#BBDEFB]/60"
+      className="inline-flex min-h-[44px] w-full items-center justify-center gap-1 px-2 py-2 font-semibold text-white transition-colors hover:bg-white/15"
     >
       <span>{label}</span>
-      <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-[#1565C0]' : 'text-gray-500'}`} aria-hidden />
+      <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-white' : 'text-white/70'}`} aria-hidden />
     </button>
   )
 }
@@ -487,8 +487,8 @@ export default function InvoicesTab() {
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
           <table className="w-full min-w-[1040px] border-collapse font-sans text-sm">
             <thead>
-              <tr className="bg-[#E3F2FD]">
-                <th className="w-14 border border-gray-200 px-2 py-2 text-center font-semibold text-[#003366]">STT</th>
+              <tr className="bg-secondary">
+                <th className="w-14 border border-gray-200 px-2 py-2 text-center font-semibold text-white">STT</th>
                 <th className="min-w-[140px] border border-gray-200 p-0 align-middle">
                   <InvoiceSortHeader
                     label="Tên khách hàng"
@@ -548,6 +548,9 @@ export default function InvoicesTab() {
                     sortDir={sortDir}
                     onSort={toggleSort}
                   />
+                </th>
+                <th className="min-w-[110px] border border-gray-200 px-2 py-2 text-center font-semibold text-white">
+                  Xuất đơn                
                 </th>
               </tr>
             </thead>

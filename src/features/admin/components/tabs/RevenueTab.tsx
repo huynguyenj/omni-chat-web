@@ -910,20 +910,12 @@ export default function RevenueTab() {
             <div className="space-y-4">
               <dl className="grid grid-cols-1 gap-2 text-sm">
                 <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
-                  <dt className="text-gray-500">Tên đơn</dt>
-                  <dd className="font-medium text-[#003366] text-right">{orderDetail.name}</dd>
-                </div>
-                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
                   <dt className="text-gray-500">Mã đơn</dt>
                   <dd className="font-mono text-right">{orderDetail.code}</dd>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
                   <dt className="text-gray-500">Tên khách hàng</dt>
                   <dd className="text-right">{orderDetail.customerName || 'Chưa có tên'}</dd>
-                </div>
-                <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
-                  <dt className="text-gray-500">ID khách hàng</dt>
-                  <dd className="text-right font-mono">{orderDetail.customerId}</dd>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-gray-100 pb-2">
                   <dt className="text-gray-500">Số điện thoại</dt>

@@ -38,6 +38,41 @@ function normalizeClaim(raw: unknown, mode: 'pending' | 'history'): ManagerClaim
   }
 }
 
+/** Mỗi nguồn pending/history tối đa bản ghi khi gộp "Tất cả" (API không có endpoint all). */
+const CLAIMS_ALL_SOURCE_LIMIT = 200
+
+type ClaimListMode = 'all' | 'pending' | 'history'
+
+function claimSubmitTimeMs(c: ManagerClaimItem): number {
+  const t = new Date(c.submitDate).getTime()
+  return Number.isNaN(t) ? 0 : t
+}
+
+/** Gộp pending + history, sắp xếp mới nhất trước, phân trang client. */
+async function fetchMergedClaimsPageSlice(
+  pageIndex: number,
+  pageSize: number
+): Promise<{ items: ManagerClaimItem[]; total: number }> {
+  const [pRes, hRes] = await Promise.all([
+    ClaimApi.getPendingClaims(1, CLAIMS_ALL_SOURCE_LIMIT),
+    ClaimApi.getHistoryClaims(1, CLAIMS_ALL_SOURCE_LIMIT)
+  ])
+  const pendingItems = (Array.isArray(pRes?.items) ? pRes.items : []).map((item) => normalizeClaim(item, 'pending'))
+  const historyItems = (Array.isArray(hRes?.items) ? hRes.items : []).map((item) => normalizeClaim(item, 'history'))
+  const byId = new Map<string, ManagerClaimItem>()
+  for (const c of pendingItems) {
+    if (c.id) byId.set(c.id, c)
+  }
+  for (const c of historyItems) {
+    if (c.id) byId.set(c.id, c)
+  }
+  const merged = [...byId.values()].sort((a, b) => claimSubmitTimeMs(b) - claimSubmitTimeMs(a))
+  const total = merged.length
+  const start = (pageIndex - 1) * pageSize
+  const items = merged.slice(start, start + pageSize)
+  return { items, total }
+}
+
 function parseStaffIntentTypesFromClaim(raw: unknown): StaffIntentType[] {
   if (!Array.isArray(raw)) return []
   return raw
@@ -514,7 +549,7 @@ export default function ClaimsTab() {
   const [claims, setClaims] = useState<ManagerClaimItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<'pending' | 'history'>('pending')
+  const [mode, setMode] = useState<ClaimListMode>('pending')
   const [processingClaimId, setProcessingClaimId] = useState<string | null>(null)
   const [dashboard, setDashboard] = useState<ManagerClaimDashboardData>({
     total: 0,
@@ -533,33 +568,42 @@ export default function ClaimsTab() {
   const visibleClaims = claims.slice(0, pageSize)
   const totalClaims = dashboard.pending + dashboard.approved + dashboard.rejected
 
-  useEffect(() => {
-    const fetchClaims = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const response = mode === 'pending'
-          ? await ClaimApi.getPendingClaims(page, pageSize)
-          : await ClaimApi.getHistoryClaims(page, pageSize)
+  const setClaimListMode = (next: ClaimListMode) => {
+    setMode(next)
+    setPage(1)
+  }
 
-        const items = Array.isArray(response?.items) ? response.items.map(item => normalizeClaim(item, mode)).slice(0, pageSize) : []
+  const fetchClaims = useCallback(async (nextMode: ClaimListMode, nextPage: number) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      if (nextMode === 'all') {
+        const { items, total } = await fetchMergedClaimsPageSlice(nextPage, pageSize)
+        setClaims(items)
+        setTotalPages(Math.max(1, Math.ceil(total / pageSize)))
+      } else {
+        const response =
+          nextMode === 'pending'
+            ? await ClaimApi.getPendingClaims(nextPage, pageSize)
+            : await ClaimApi.getHistoryClaims(nextPage, pageSize)
+        const items = Array.isArray(response?.items)
+          ? response.items.map((item) => normalizeClaim(item, nextMode)).slice(0, pageSize)
+          : []
         setClaims(items)
         setTotalPages(Math.max(1, Math.ceil((response?.meta?.total_items ?? items.length) / pageSize)))
-      } catch {
-        setError('Không thể tải danh sách claim. Vui lòng thử lại.')
-        setClaims([])
-        setTotalPages(1)
-      } finally {
-        setIsLoading(false)
       }
+    } catch {
+      setError('Không thể tải danh sách claim. Vui lòng thử lại.')
+      setClaims([])
+      setTotalPages(1)
+    } finally {
+      setIsLoading(false)
     }
-
-    void fetchClaims()
-  }, [mode, page])
+  }, [pageSize])
 
   useEffect(() => {
-    setPage(1)
-  }, [mode])
+    void fetchClaims(mode, page)
+  }, [mode, page, fetchClaims])
 
   const fetchDashboard = async () => {
     setIsLoadingDashboard(true)
@@ -603,26 +647,6 @@ export default function ClaimsTab() {
     void refreshChangeTaskClaims()
   }, [refreshChangeTaskClaims])
 
-  const fetchClaims = async (nextMode: 'pending' | 'history', nextPage: number) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const response = nextMode === 'pending'
-        ? await ClaimApi.getPendingClaims(nextPage, pageSize)
-        : await ClaimApi.getHistoryClaims(nextPage, pageSize)
-
-      const items = Array.isArray(response?.items) ? response.items.map(item => normalizeClaim(item, nextMode)).slice(0, pageSize) : []
-      setClaims(items)
-      setTotalPages(Math.max(1, Math.ceil((response?.meta?.total_items ?? items.length) / pageSize)))
-    } catch {
-      setError('Không thể tải danh sách claim. Vui lòng thử lại.')
-      setClaims([])
-      setTotalPages(1)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleApproveClaim = async (id: string) => {
     if (!id) return
     setProcessingClaimId(id)
@@ -662,32 +686,37 @@ export default function ClaimsTab() {
   return (
     <div className="space-y-4">
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-[#003366] text-xl font-semibold">Danh sách yêu cầu</h2>
-            <p className="text-sm text-gray-500 mt-1">Yêu cầu của nhân viên</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={mode === 'pending' ? 'default' : 'outline'}
-              size="sm"
-              className={mode === 'pending' ? 'bg-[#3366CC] hover:bg-[#2952A3]' : ''}
-              onClick={() => setMode('pending')}
-              disabled={isLoading}
-            >
-              Pending
-            </Button>
-            <Button
-              variant={mode === 'history' ? 'default' : 'outline'}
-              size="sm"
-              className={mode === 'history' ? 'bg-[#3366CC] hover:bg-[#2952A3]' : ''}
-              onClick={() => setMode('history')}
-              disabled={isLoading}
-            >
-              History
-            </Button>
-          </div>
+        <div className="mb-4">
+          <h2 className="text-[#003366] text-xl font-semibold">Danh sách yêu cầu</h2>
+          <p className="text-sm text-gray-500 mt-1">Yêu cầu của nhân viên</p>
         </div>
+
+        <div className="mb-4 flex flex-wrap gap-2">
+          {(
+            [
+              { value: 'all' as const, label: 'Tất cả' },
+              { value: 'pending' as const, label: 'Chờ duyệt' },
+              { value: 'history' as const, label: 'Lịch sử' }
+            ] as const
+          ).map(({ value, label }) => (
+            <Button
+              key={value}
+              variant={mode === value ? 'default' : 'outline'}
+              size="sm"
+              className={mode === value ? 'bg-[#3366CC] hover:bg-[#2952A3]' : ''}
+              onClick={() => setClaimListMode(value)}
+              disabled={isLoading}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+
+        {mode === 'all' && (
+          <p className="mb-4 text-xs text-gray-500">
+            Tất cả: gộp tối đa {CLAIMS_ALL_SOURCE_LIMIT} yêu cầu chờ và {CLAIMS_ALL_SOURCE_LIMIT} lịch sử, sắp xếp theo ngày tạo.
+          </p>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           <Card className="p-4 border-l-4 border-l-[#3366CC] bg-blue-50">
@@ -752,7 +781,7 @@ export default function ClaimsTab() {
                 </div>
               </div>
 
-              {mode === 'pending' ? (
+              {claim.status === 'pending' ? (
                 <div className="pt-3 border-t mt-4 grid grid-cols-2 gap-2">
                   <Button
                     size="sm"
