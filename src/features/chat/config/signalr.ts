@@ -12,3 +12,14 @@ export const signalrConnection = (hubPath: string) => {
     .build()
   return connection
 }
+
+export const signalrSidebarConnection = (providerName: string, accessToken: string) => {
+  const connection = new signalr.HubConnectionBuilder()
+    .withUrl(import.meta.env.VITE_API_BASE_URL+`/SidebarHub?providerName=${providerName}`,
+      {
+        accessTokenFactory: () => accessToken as string
+      })
+    .withAutomaticReconnect()
+    .build()
+  return connection
+}
