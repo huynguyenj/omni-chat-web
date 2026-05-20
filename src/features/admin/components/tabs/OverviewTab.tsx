@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
+import AdminDashboardMetricCard from '../AdminDashboardMetricCard'
 import { isAxiosError } from 'axios'
 import { CheckCircle, Clock, FileX2, Milk, ShoppingCart, TrendingUp } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -441,54 +442,53 @@ export default function OverviewTab() {
             </Button>
           </div>
         </div>
-        <Card className="p-5 xl:col-span-2 hover:shadow-lg transition-shadow border-l-4 border-l-[#3366CC]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-[#EBF1FF]">
-              <Milk className="h-6 w-6 text-[#3366CC]" />
-            </div>
-            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Tổng tồn kho sản phẩm</h3>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-[#3366CC]">
-              {inventoryDashboardLoading
-                ? '...'
-                : inventoryDashboard != null
-                  ? inventoryDashboard.totalProducts.toLocaleString('vi-VN')
-                  : '—'}
-            </p>
-            <span className="text-sm text-gray-500">sản phẩm</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {inventoryDashboardLoading
+        <AdminDashboardMetricCard
+          className="xl:col-span-2"
+          accentColor="#3366CC"
+          iconBg="bg-[#EBF1FF]"
+          iconColor="text-[#3366CC]"
+          valueColor="text-[#3366CC]"
+          Icon={Milk}
+          topRightIcon={TrendingUp}
+          topRightClassName="text-[#2ECC71]"
+          title="Tổng tồn kho sản phẩm"
+          value={
+            inventoryDashboardLoading
+              ? '...'
+              : inventoryDashboard != null
+                ? inventoryDashboard.totalProducts.toLocaleString('vi-VN')
+                : '—'
+          }
+          unit="sản phẩm"
+          footer={
+            inventoryDashboardLoading
               ? 'Đang tải...'
               : inventoryDashboard
                 ? `Loại sản phẩm: ${inventoryDashboard.totalItems.toLocaleString('vi-VN')}`
-                : 'Chưa có dữ liệu kho'}
-          </p>
-        </Card>
+                : 'Chưa có dữ liệu kho'
+          }
+        />
 
         {OVERVIEW_INTENT_CARD_CONFIG.map((item) => {
           const CardIcon = item.Icon
           const currentApplied = intentCardAppliedByName[item.key] ?? '2026'
           const currentValue = intentCardValueByName[item.key] ?? 0
           const currentLoading = intentCardLoadingByName[item.key] ?? false
+          const accent = INTENT_COLOR_BY_NAME[item.key] ?? '#3366CC'
           return (
-            <Card key={item.key} className={`p-5 xl:col-span-2 hover:shadow-lg transition-shadow border-l-4 ${item.borderColor}`}>
-              <div className="flex items-start justify-between mb-3">
-                <div className={`p-3 rounded-lg ${item.iconBg}`}>
-                  <CardIcon className={`h-6 w-6 ${item.iconColor}`} />
-                </div>
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">{item.title}</h3>
-              <div className="flex items-baseline gap-2">
-                <p className={`text-3xl font-bold ${item.valueColor}`}>
-                  {currentLoading ? '...' : currentValue.toLocaleString('vi-VN')}
-                </p>
-                <span className="text-sm text-gray-500">tasks</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Kỳ lọc: {currentApplied || intentSummaryAppliedPeriod}</p>
-            </Card>
+            <AdminDashboardMetricCard
+              key={item.key}
+              className="xl:col-span-2"
+              accentColor={accent}
+              iconBg={item.iconBg}
+              iconColor={item.iconColor}
+              valueColor={item.valueColor}
+              Icon={CardIcon}
+              title={item.title}
+              value={currentLoading ? '...' : currentValue.toLocaleString('vi-VN')}
+              unit="nhiệm vụ"
+              footer={`Kỳ lọc: ${currentApplied || intentSummaryAppliedPeriod}`}
+            />
           )
         })}
       </div>

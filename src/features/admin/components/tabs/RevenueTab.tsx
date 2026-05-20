@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
+import AdminDashboardMetricCard from '../AdminDashboardMetricCard'
 import { REVENUE_ORDERS } from '@/components/admin/admin-dashboard-data'
 import { CheckCircle, ClipboardList, Clock, DollarSign, Mail, MapPin, Package, Phone, ShoppingBag, TrendingDown, TrendingUp, User, Users, RotateCcw, X, XCircle } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -577,7 +578,7 @@ export default function RevenueTab() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
         <div className="md:col-span-2 xl:col-span-6 flex justify-end">
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <p className="text-xs text-gray-500">
+            <p className="text-sm text-gray-500 sm:text-base">
               Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng (UTC). Đang xem:{' '}
               <span className="font-medium text-[#003366]">{summaryAppliedPeriod}</span>
             </p>
@@ -597,93 +598,82 @@ export default function RevenueTab() {
             </Button>
           </div>
         </div>
-        <Card className="p-5 xl:col-span-2 hover:shadow-lg transition-shadow border-l-4 border-l-[#2ECC71]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-green-50">
-              <DollarSign className="h-6 w-6 text-[#2ECC71]" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Tổng doanh thu</h3>
-          <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold text-[#2ECC71]">
-              {totalRevenueAmount === 0 ? '0 VNĐ' : `${Math.round(totalRevenueAmount / 1000).toLocaleString('vi-VN')}K VNĐ`}
-            </p>
-            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {totalRevenueLoading ? 'Đang tải...' : `Tổng từ dữ liệu ${summaryAppliedPeriod}`}
-          </p>
-        </Card>
+        <AdminDashboardMetricCard
+          className="xl:col-span-2"
+          accentColor="#2ECC71"
+          iconBg="bg-green-50"
+          iconColor="text-[#2ECC71]"
+          valueColor="text-[#2ECC71]"
+          Icon={DollarSign}
+          topRightIcon={TrendingUp}
+          topRightClassName="text-[#2ECC71]"
+          title="Tổng doanh thu"
+          value={totalRevenueLoading ? '...' : totalRevenueAmount === 0 ? '0' : `${Math.round(totalRevenueAmount / 1000).toLocaleString('vi-VN')}K`}
+          unit="VNĐ"
+          footer={totalRevenueLoading ? 'Đang tải...' : `Tổng từ dữ liệu ${summaryAppliedPeriod}`}
+        />
 
-        <Card className="p-5 xl:col-span-2 hover:shadow-lg transition-shadow border-l-4 border-l-[#FF9800]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-orange-50">
-              <Clock className="h-6 w-6 text-[#FF9800]" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Chờ thanh toán</h3>
-          <p className="text-3xl font-bold text-[#FF9800]">
-            {totalUnpaidAmount === 0 ? '0 VNĐ' : `${Math.round(totalUnpaidAmount / 1000).toLocaleString('vi-VN')}K VNĐ`}
-          </p>
-          <p className="text-xs text-gray-500 mt-2">
-            {totalUnpaidLoading ? 'Đang tải...' : `Tổng chưa thanh toán từ dữ liệu ${summaryAppliedPeriod}`}
-          </p>
-        </Card>
+        <AdminDashboardMetricCard
+          className="xl:col-span-2"
+          accentColor="#FF9800"
+          iconBg="bg-orange-50"
+          iconColor="text-[#FF9800]"
+          valueColor="text-[#FF9800]"
+          Icon={Clock}
+          title="Chờ thanh toán"
+          value={totalUnpaidLoading ? '...' : totalUnpaidAmount === 0 ? '0' : `${Math.round(totalUnpaidAmount / 1000).toLocaleString('vi-VN')}K`}
+          unit="VNĐ"
+          footer={totalUnpaidLoading ? 'Đang tải...' : `Tổng chưa thanh toán từ dữ liệu ${summaryAppliedPeriod}`}
+        />
 
-        <Card className="p-5 xl:col-span-2 hover:shadow-lg transition-shadow border-l-4 border-l-[#F44336]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-red-50">
-              <XCircle className="h-6 w-6 text-[#F44336]" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Tổng đơn hàng bị hủy</h3>
-          <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold text-[#F44336]">{cancelledOrdersAmount.toLocaleString('vi-VN')}</p>
-            <TrendingDown className="h-5 w-5 text-[#F44336]" />
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {cancelledOrdersLoading ? 'Đang tải...' : `Tổng đơn hủy từ dữ liệu ${summaryAppliedPeriod}`}
-          </p>
-        </Card>
+        <AdminDashboardMetricCard
+          className="xl:col-span-2"
+          accentColor="#F44336"
+          iconBg="bg-red-50"
+          iconColor="text-[#F44336]"
+          valueColor="text-[#F44336]"
+          Icon={XCircle}
+          topRightIcon={TrendingDown}
+          topRightClassName="text-[#F44336]"
+          title="Tổng đơn hàng bị hủy"
+          value={cancelledOrdersLoading ? '...' : cancelledOrdersAmount.toLocaleString('vi-VN')}
+          footer={cancelledOrdersLoading ? 'Đang tải...' : `Tổng đơn hủy từ dữ liệu ${summaryAppliedPeriod}`}
+        />
 
-        <Card className="p-5 xl:col-span-2 xl:col-start-2 hover:shadow-lg transition-shadow border-l-4 border-l-[#3366CC]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-blue-50">
-              <CheckCircle className="h-6 w-6 text-[#3366CC]" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Tổng đơn hàng hoàn thành</h3>
-          <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold text-[#3366CC]">{completedOrdersAmount.toLocaleString('vi-VN')}</p>
-            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {completedOrdersLoading ? 'Đang tải...' : `Tổng đơn hoàn thành từ dữ liệu ${summaryAppliedPeriod}`}
-          </p>
-        </Card>
+        <AdminDashboardMetricCard
+          className="xl:col-span-2 xl:col-start-2"
+          accentColor="#3366CC"
+          iconBg="bg-blue-50"
+          iconColor="text-[#3366CC]"
+          valueColor="text-[#3366CC]"
+          Icon={CheckCircle}
+          topRightIcon={TrendingUp}
+          topRightClassName="text-[#2ECC71]"
+          title="Tổng đơn hàng hoàn thành"
+          value={completedOrdersLoading ? '...' : completedOrdersAmount.toLocaleString('vi-VN')}
+          footer={completedOrdersLoading ? 'Đang tải...' : `Tổng đơn hoàn thành từ dữ liệu ${summaryAppliedPeriod}`}
+        />
 
-        <Card className="p-5 xl:col-span-2 xl:col-start-4 hover:shadow-lg transition-shadow border-l-4 border-l-[#8B5CF6]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-violet-50">
-              <RotateCcw className="h-6 w-6 text-[#8B5CF6]" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Tổng đơn hàng bị trả về</h3>
-          <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold text-[#8B5CF6]">{returnedOrdersAmount.toLocaleString('vi-VN')}</p>
-            <TrendingDown className="h-5 w-5 text-[#8B5CF6]" />
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {returnedOrdersLoading ? 'Đang tải...' : `Tổng đơn trả về từ dữ liệu ${summaryAppliedPeriod}`}
-          </p>
-        </Card>
+        <AdminDashboardMetricCard
+          className="xl:col-span-2 xl:col-start-4"
+          accentColor="#8B5CF6"
+          iconBg="bg-violet-50"
+          iconColor="text-[#8B5CF6]"
+          valueColor="text-[#8B5CF6]"
+          Icon={RotateCcw}
+          topRightIcon={TrendingDown}
+          topRightClassName="text-[#8B5CF6]"
+          title="Tổng đơn hàng bị trả về"
+          value={returnedOrdersLoading ? '...' : returnedOrdersAmount.toLocaleString('vi-VN')}
+          footer={returnedOrdersLoading ? 'Đang tải...' : `Tổng đơn trả về từ dữ liệu ${summaryAppliedPeriod}`}
+        />
       </div>
 
       <Card className="p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-[#003366] text-lg font-semibold">Doanh thu theo thời gian</h3>
-            <p className="text-sm text-gray-500">Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng</p>
+            <h3 className="text-[#003366] text-xl font-semibold sm:text-2xl">Doanh thu theo thời gian</h3>
+            <p className="text-base text-gray-500">Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng</p>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -702,9 +692,9 @@ export default function RevenueTab() {
             </Button>
           </div>
         </div>
-        {revenueChartLoading && <p className="mb-3 text-sm text-gray-500">Đang tải dữ liệu doanh thu...</p>}
+        {revenueChartLoading && <p className="mb-3 text-base text-gray-500">Đang tải dữ liệu doanh thu...</p>}
         {!revenueChartLoading && revenueChartData.length === 0 && (
-          <p className="mb-3 text-sm text-gray-500">Không có dữ liệu doanh thu cho bộ lọc hiện tại.</p>
+          <p className="mb-3 text-base text-gray-500">Không có dữ liệu doanh thu cho bộ lọc hiện tại.</p>
         )}
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={revenueChartData}>
@@ -724,8 +714,8 @@ export default function RevenueTab() {
       <Card className="p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-[#003366] text-lg font-semibold">Chờ thanh toán theo thời gian</h3>
-            <p className="text-sm text-gray-500">Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng</p>
+            <h3 className="text-[#003366] text-xl font-semibold sm:text-2xl">Chờ thanh toán theo thời gian</h3>
+            <p className="text-base text-gray-500">Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng</p>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -744,9 +734,9 @@ export default function RevenueTab() {
             </Button>
           </div>
         </div>
-        {unpaidChartLoading && <p className="mb-3 text-sm text-gray-500">Đang tải dữ liệu chờ thanh toán...</p>}
+        {unpaidChartLoading && <p className="mb-3 text-base text-gray-500">Đang tải dữ liệu chờ thanh toán...</p>}
         {!unpaidChartLoading && unpaidChartData.length === 0 && (
-          <p className="mb-3 text-sm text-gray-500">Không có dữ liệu chờ thanh toán cho bộ lọc hiện tại.</p>
+          <p className="mb-3 text-base text-gray-500">Không có dữ liệu chờ thanh toán cho bộ lọc hiện tại.</p>
         )}
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={unpaidChartData}>
@@ -766,8 +756,8 @@ export default function RevenueTab() {
       <Card className="p-6">
         <div className="mb-4">
           <div className="mb-3">
-            <h3 className="text-[#003366] text-lg font-semibold">Chi tiết đơn hàng</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="text-[#003366] text-xl font-semibold sm:text-2xl">Chi tiết đơn hàng</h3>
+            <p className="text-base text-gray-500">
               Danh sách {activeOrderCount} đơn hàng trong khoảng thời gian
               {revenueOrderStatusFilter !== 'all' && (
                 <span className="text-gray-400"> · Lọc: {REVENUE_ORDER_STATUS_FILTERS.find((f) => f.value === revenueOrderStatusFilter)?.label}</span>
@@ -803,40 +793,45 @@ export default function RevenueTab() {
               return (
                 <Card
                   key={order.id}
-                  className={`p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 ${statusUi.cardBorderClass} bg-white group`}
+                  className={`p-5 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 ${statusUi.cardBorderClass} bg-white group`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3 gap-2">
-                      <h3 className="font-bold text-[#003366] text-lg">{order.code}</h3>
+                      <h3 className="font-bold text-[#003366] text-xl sm:text-2xl">{order.code}</h3>
                     </div>
                     <div className="space-y-3 mb-4">
                       <div className="flex flex-col gap-1">
-                        <p className="text-[10px] text-gray-400 uppercase font-medium">Tên đơn hàng</p>
-                        <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.name}</p>
+                        <p className="text-xs text-gray-400 uppercase font-medium sm:text-sm">Tên đơn hàng</p>
+                        <p className="text-base font-semibold text-[#003366] line-clamp-1 italic sm:text-lg">{order.name}</p>
                       </div>
                       <div className="rounded-lg border border-gray-100 overflow-hidden">
-                        <p className="text-[10px] font-bold text-gray-500 uppercase px-2 pt-2 pb-1 bg-gray-50">Trạng thái đơn</p>
-                        <div className="px-2 pb-2 pt-1 bg-white flex flex-wrap items-center gap-2">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusUi.pillClass}`}>
+                        <p className="text-xs font-bold text-gray-500 uppercase px-2.5 pt-2.5 pb-1.5 bg-gray-50 sm:text-sm">Trạng thái đơn</p>
+                        <div className="px-2.5 pb-2.5 pt-1.5 bg-white flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${statusUi.pillClass}`}>
                             {statusUi.labelVi}
                           </span>
                           {order.status && statusUi.labelVi !== order.status && (
-                            <span className="text-[11px] text-gray-400 font-mono truncate max-w-[140px]" title={order.status}>
+                            <span className="text-sm text-gray-400 font-mono truncate max-w-[160px]" title={order.status}>
                               ({order.status})
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center justify-between pt-1">
-                        <div className="flex flex-col gap-1 text-[10px] text-gray-500">
-                          <span className="flex items-center gap-1 font-mono text-gray-400">📅 {dateText} | ⏰ {timeText}</span>
-                          <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Khách hàng: {order.customerName || order.customerId}</span>
+                      <div className="flex items-end justify-between gap-3 pt-1">
+                        <div className="flex min-w-0 flex-col gap-1.5 text-sm text-gray-500 sm:text-base">
+                          <span className="flex items-center gap-1.5 font-mono text-gray-500">📅 {dateText} | ⏰ {timeText}</span>
+                          <span className="flex items-center gap-1.5">
+                            <Users className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" /> Khách hàng: {order.customerName || order.customerId}
+                          </span>
                         </div>
-                        <p className="font-bold text-[#2ECC71] text-lg">{order.totalAmount.toLocaleString('vi-VN')}đ</p>
+                        <p className="flex shrink-0 items-baseline gap-0.5 font-bold leading-none text-[#2ECC71]">
+                          <span className="text-xl sm:text-2xl">{order.totalAmount.toLocaleString('vi-VN')}</span>
+                          <span className="text-xl sm:text-2xl">đ</span>
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full mt-2 border-[#3366CC] text-[#3366CC]" onClick={() => openOrderDetail(order)}>
+                  <Button variant="outline" className="mt-2 w-full min-h-11 border-[#3366CC] text-base text-[#3366CC]" onClick={() => openOrderDetail(order)}>
                     Chi tiết đơn hàng
                   </Button>
                 </Card>
@@ -848,43 +843,45 @@ export default function RevenueTab() {
               return (
                 <Card
                   key={order.id}
-                  className={`p-4 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 ${statusUi.cardBorderClass} bg-white group`}
+                  className={`p-5 hover:shadow-md transition-shadow flex flex-col justify-between h-full border-t-4 ${statusUi.cardBorderClass} bg-white group`}
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold text-[#003366] text-lg">{order.id}</h3>
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white ${statusUi.pillClass}`}>
+                    <div className="flex items-center justify-between mb-3 gap-2">
+                      <h3 className="font-bold text-[#003366] text-xl sm:text-2xl">{order.id}</h3>
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold text-white ${statusUi.pillClass}`}>
                         {statusUi.labelVi}
                       </span>
                     </div>
                     <div className="space-y-3 mb-4">
                       <div className="flex flex-col gap-1">
-                        <p className="text-[10px] text-gray-400 uppercase font-medium">Khách hàng</p>
-                        <p className="text-sm font-semibold text-[#003366] line-clamp-1 italic">{order.customer}</p>
+                        <p className="text-xs text-gray-400 uppercase font-medium sm:text-sm">Khách hàng</p>
+                        <p className="text-base font-semibold text-[#003366] line-clamp-1 italic sm:text-lg">{order.customer}</p>
                       </div>
-                      <div className="bg-[#F5F7FA] p-2 rounded-lg">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Sản phẩm</p>
-                        <div className="flex justify-between text-xs mb-1 last:mb-0">
+                      <div className="bg-[#F5F7FA] p-3 rounded-lg">
+                        <p className="text-xs font-bold text-gray-400 uppercase mb-2 sm:text-sm">Sản phẩm</p>
+                        <div className="flex justify-between text-sm mb-1 last:mb-0 sm:text-base">
                           <span className="text-gray-700 line-clamp-1 flex-1">
                             {order.product} <span className="text-gray-400">x{order.quantity}</span>
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between pt-1">
-                        <div className="flex flex-col gap-1 text-[10px] text-gray-500">
-                          <span className="flex items-center gap-1 font-mono text-gray-400">📅 {order.date} | ⏰ {order.time}</span>
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" /> Staff: {order.staff}
+                      <div className="flex items-end justify-between gap-3 pt-1">
+                        <div className="flex min-w-0 flex-col gap-1.5 text-sm text-gray-500 sm:text-base">
+                          <span className="flex items-center gap-1.5 font-mono text-gray-500">📅 {order.date} | ⏰ {order.time}</span>
+                          <span className="flex items-center gap-1.5">
+                            <Users className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" /> Staff: {order.staff}
                           </span>
                         </div>
-                        <p className="font-bold text-[#2ECC71] text-lg">{order.value.toLocaleString()}đ</p>
+                        <p className="flex shrink-0 items-baseline gap-0.5 font-bold leading-none text-[#2ECC71]">
+                          <span className="text-xl sm:text-2xl">{order.value.toLocaleString()}</span>
+                          <span className="text-xl sm:text-2xl">đ</span>
+                        </p>
                       </div>
                     </div>
                   </div>
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="w-full mt-2 border-[#3366CC] text-[#3366CC]"
+                    className="mt-2 w-full min-h-11 border-[#3366CC] text-base text-[#3366CC]"
                     onClick={() => toast.info('Dữ liệu mẫu không có API chi tiết đơn hàng.')}
                   >
                       Chi tiết đơn hàng
@@ -897,7 +894,7 @@ export default function RevenueTab() {
           <Button variant="outline" size="sm" disabled={ordersPage === 1} onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}>
             Trước
           </Button>
-          <p className="text-xs text-gray-500 text-center flex-1 min-w-0">
+          <p className="text-sm text-gray-500 text-center flex-1 min-w-0 sm:text-base">
             Trang {ordersPage}/{totalOrderPages}
           </p>
           <Button variant="outline" size="sm" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage((p) => Math.min(totalOrderPages, p + 1))}>
@@ -910,15 +907,15 @@ export default function RevenueTab() {
         <ModalShell onClose={closeOrderDetailModal} maxWidthClass="max-w-xl">
           <div className="mb-6 flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold uppercase tracking-wide text-[#003366] sm:text-lg">Chi tiết đơn hàng</h3>
+              <h3 className="text-lg font-bold uppercase tracking-wide text-[#003366] sm:text-xl">Chi tiết đơn hàng</h3>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-sm text-gray-600">Đơn hàng</span>
+                <span className="text-base text-gray-600">Đơn hàng</span>
                 {orderDetail?.code ? (
-                  <span className="inline-flex rounded-full bg-[#3366CC] px-3 py-1 text-xs font-semibold text-white sm:text-sm">
+                  <span className="inline-flex rounded-full bg-[#3366CC] px-3 py-1 text-sm font-semibold text-white sm:text-base">
                     {orderDetail.code}
                   </span>
                 ) : (
-                  <span className="text-sm text-gray-400">{orderDetailLoading ? 'Đang tải…' : '—'}</span>
+                  <span className="text-base text-gray-400">{orderDetailLoading ? 'Đang tải…' : '—'}</span>
                 )}
               </div>
             </div>
@@ -934,7 +931,7 @@ export default function RevenueTab() {
             </Button>
           </div>
 
-          {orderDetailLoading && <p className="py-10 text-center text-sm text-gray-600">Đang tải…</p>}
+          {orderDetailLoading && <p className="py-10 text-center text-base text-gray-600">Đang tải…</p>}
 
           {!orderDetailLoading && orderDetail && (
             <div className="space-y-4">
@@ -945,34 +942,34 @@ export default function RevenueTab() {
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EBF1FF]">
                       <User className="h-4 w-4 text-[#3366CC]" />
                     </div>
-                    <h4 className="text-xs font-bold uppercase tracking-wide text-[#3366CC] sm:text-sm">Thông tin khách hàng</h4>
+                    <h4 className="text-sm font-bold uppercase tracking-wide text-[#3366CC] sm:text-base">Thông tin khách hàng</h4>
                   </div>
-                  <div className="space-y-3 text-sm">
+                  <div className="space-y-3 text-base">
                     <div className="flex gap-2.5">
                       <User className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#3366CC]" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Tên khách hàng:</p>
+                        <p className="text-sm text-gray-500 sm:text-base">Tên khách hàng:</p>
                         <p className="font-bold text-[#003366]">{orderDetail.customerName || 'Chưa có tên'}</p>
                       </div>
                     </div>
                     <div className="flex gap-2.5">
                       <Phone className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#3366CC]" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Số điện thoại:</p>
+                        <p className="text-sm text-gray-500 sm:text-base">Số điện thoại:</p>
                         <p className="font-bold text-[#22C55E]">{orderDetail.customerPhone || 'Chưa có số điện thoại'}</p>
                       </div>
                     </div>
                     <div className="flex gap-2.5">
                       <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#3366CC]" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Email:</p>
+                        <p className="text-sm text-gray-500 sm:text-base">Email:</p>
                         <p className="break-all font-medium text-[#003366]">{orderDetail.customerEmail || 'Chưa có email'}</p>
                       </div>
                     </div>
                     <div className="flex gap-2.5">
                       <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#3366CC]" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Địa chỉ:</p>
+                        <p className="text-sm text-gray-500 sm:text-base">Địa chỉ:</p>
                         <p className="font-medium text-[#003366]">{orderDetail.customerAddress || 'Chưa có địa chỉ'}</p>
                       </div>
                     </div>
@@ -985,27 +982,27 @@ export default function RevenueTab() {
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E8F8F0]">
                       <ClipboardList className="h-4 w-4 text-[#22C55E]" />
                     </div>
-                    <h4 className="text-xs font-bold uppercase tracking-wide text-[#22C55E] sm:text-sm">Thông tin đơn hàng</h4>
+                    <h4 className="text-sm font-bold uppercase tracking-wide text-[#22C55E] sm:text-base">Thông tin đơn hàng</h4>
                   </div>
-                  <div className="space-y-3 text-sm">
+                  <div className="space-y-3 text-base">
                     <div className="flex gap-2.5">
                       <ClipboardList className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#22C55E]" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Mã đơn hàng:</p>
+                        <p className="text-sm text-gray-500 sm:text-base">Mã đơn hàng:</p>
                         <p className="font-bold text-[#22C55E]">{orderDetail.code}</p>
                       </div>
                     </div>
                     <div className="flex gap-2.5">
                       <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#22C55E]" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Ngày tạo:</p>
+                        <p className="text-sm text-gray-500 sm:text-base">Ngày tạo:</p>
                         <p className="font-bold text-[#22C55E]">{formatOrderDetailDateTime(orderDetail.orderDate)}</p>
                       </div>
                     </div>
                     <div className="flex gap-2.5">
                       <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#22C55E]" aria-hidden />
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-500">Trạng thái đơn:</p>
+                        <p className="text-sm text-gray-500 sm:text-base">Trạng thái đơn:</p>
                         <div className="mt-1">
                           {orderDetailStatusUi ? (
                             <span
@@ -1022,7 +1019,7 @@ export default function RevenueTab() {
                     <div className="flex gap-2.5">
                       <Package className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#22C55E]" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Trạng thái giao:</p>
+                        <p className="text-sm text-gray-500 sm:text-base">Trạng thái giao:</p>
                         <p className="font-bold text-[#22C55E]">{orderDetail.deliveryStatus}</p>
                       </div>
                     </div>
@@ -1037,9 +1034,10 @@ export default function RevenueTab() {
                     <DollarSign className="h-5 w-5" strokeWidth={2.5} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">Tổng tiền</p>
-                    <p className="text-lg font-bold leading-tight text-[#22C55E] sm:text-xl">
-                      {orderDetail.totalAmount.toLocaleString('vi-VN')}đ
+                    <p className="text-xs font-bold uppercase tracking-wide text-gray-500 sm:text-sm">Tổng tiền</p>
+                    <p className="flex items-baseline gap-0.5 font-bold leading-none text-[#22C55E]">
+                      <span className="text-xl sm:text-2xl">{orderDetail.totalAmount.toLocaleString('vi-VN')}</span>
+                      <span className="text-xl sm:text-2xl">đ</span>
                     </p>
                   </div>
                 </div>
@@ -1048,8 +1046,8 @@ export default function RevenueTab() {
                     <ShoppingBag className="h-5 w-5" strokeWidth={2} />
                   </div>
                   <div className="min-w-0 text-left sm:text-right">
-                    <p className="text-[9px] font-bold uppercase tracking-wide text-gray-500">Số sản phẩm</p>
-                    <p className="text-lg font-bold leading-tight text-[#003366] sm:text-xl">
+                    <p className="text-xs font-bold uppercase tracking-wide text-gray-500 sm:text-sm">Số sản phẩm</p>
+                    <p className="text-xl font-bold leading-tight text-[#003366] sm:text-2xl">
                       {orderDetail.orderItems.length} sản phẩm
                     </p>
                   </div>
@@ -1060,7 +1058,7 @@ export default function RevenueTab() {
               <div>
                 <div className="mb-2 flex items-center gap-1.5">
                   <ShoppingBag className="h-3.5 w-3.5 shrink-0 text-[#7C3AED] sm:h-4 sm:w-4" />
-                  <h4 className="text-[10px] font-bold uppercase tracking-wide text-[#7C3AED] sm:text-xs">Sản phẩm trong đơn</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wide text-[#7C3AED] sm:text-sm">Sản phẩm trong đơn</h4>
                 </div>
                 {orderDetail.orderItems.length > 0 ? (
                   <div className="space-y-2">
@@ -1073,19 +1071,26 @@ export default function RevenueTab() {
                           <Package className="h-6 w-6 text-gray-300 sm:h-7 sm:w-7" aria-hidden />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold leading-snug text-[#003366]">{item.productName}</p>
-                          <p className="mt-0.5 text-xs text-gray-500">Số lượng: {item.quantity}</p>
+                          <p className="text-base font-bold leading-snug text-[#003366] sm:text-lg">{item.productName}</p>
+                          <p className="mt-0.5 text-sm text-gray-500 sm:text-base">Số lượng: {item.quantity}</p>
                         </div>
                         <div className="shrink-0 self-center text-right">
-                          <p className="text-sm font-bold tabular-nums text-[#22C55E] sm:text-base">
-                            {item.itemsPrice == null ? 'Chưa có giá' : `${item.itemsPrice.toLocaleString('vi-VN')}đ`}
+                          <p className="flex items-baseline justify-end gap-0.5 font-bold tabular-nums text-[#22C55E]">
+                            {item.itemsPrice == null ? (
+                              <span className="text-base sm:text-lg">Chưa có giá</span>
+                            ) : (
+                              <>
+                                <span className="text-base sm:text-lg">{item.itemsPrice.toLocaleString('vi-VN')}</span>
+                                <span className="text-base sm:text-lg">đ</span>
+                              </>
+                            )}
                           </p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="rounded-md border border-dashed border-gray-200 bg-gray-50/80 py-4 text-center text-xs text-gray-600 sm:py-5 sm:text-sm">
+                  <p className="rounded-md border border-dashed border-gray-200 bg-gray-50/80 py-4 text-center text-sm text-gray-600 sm:py-5 sm:text-base">
                     Đơn hàng chưa có sản phẩm.
                   </p>
                 )}
@@ -1094,7 +1099,7 @@ export default function RevenueTab() {
           )}
 
           {!orderDetailLoading && !orderDetail && (
-            <p className="py-10 text-center text-sm text-gray-600">Không có dữ liệu đơn hàng.</p>
+            <p className="py-10 text-center text-base text-gray-600">Không có dữ liệu đơn hàng.</p>
           )}
         </ModalShell>
       )}
