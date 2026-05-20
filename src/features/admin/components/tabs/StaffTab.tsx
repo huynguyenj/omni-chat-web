@@ -346,8 +346,8 @@ export default function StaffTab() {
     try {
       const response = await StaffApi.getStaffs(1, 50)
       setApiStaffs(extractStaffItemsFromResponse(response))
-    } catch (error) {
-      console.log('Fetch staffs failed:', error)
+    } catch {
+      // Failed to refresh list; existing data unchanged
     }
   }
 
@@ -386,9 +386,9 @@ export default function StaffTab() {
         const response = await StaffApi.getStaffs(1, 50)
         if (cancelled) return
         setApiStaffs(extractStaffItemsFromResponse(response))
-      } catch (error) {
+      } catch {
         if (cancelled) return
-        console.log('Fetch staffs failed:', error)
+        toast.error('Không tải được danh sách nhân viên.')
       }
     }
     void loadInitialStaffs()
@@ -485,7 +485,6 @@ export default function StaffTab() {
       toast.success('Thêm tài khoản thành công')
       await fetchStaffs()
     } catch (error) {
-      console.log('Create staff failed:', error)
       toast.error(getApiErrorToastMessage(error, 'Không thể tạo tài khoản. Vui lòng thử lại.'))
     }
   }
@@ -535,7 +534,6 @@ export default function StaffTab() {
       toast.success('Cập nhật thành công')
       await fetchStaffs()
     } catch (error) {
-      console.log('Update staff failed:', error)
       toast.error(getApiErrorToastMessage(error, 'Không thể cập nhật tài khoản. Vui lòng thử lại.'))
     }
   }
@@ -546,7 +544,7 @@ export default function StaffTab() {
       toast.success('Xóa tài khoản thành công')
       await fetchStaffs()
     } catch (error) {
-      console.log('Delete staff failed:', error)
+      toast.error(getApiErrorToastMessage(error, 'Không thể xóa tài khoản. Vui lòng thử lại.'))
     }
   }
 
