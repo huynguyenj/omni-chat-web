@@ -397,16 +397,16 @@ export default function OverviewTab() {
         setOrderDashboardRows(rows)
       } else {
         setOrderDashboardRows([])
-        toast.info(response.message || 'Không có dữ liệu order dashboard cho kỳ này.')
+        toast.info(response.message || 'Không có dữ liệu bảng tổng quan đơn hàng cho kỳ này.')
       }
     } catch (error) {
       if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
         setOrderDashboardRows([])
-        toast.info('Không có dữ liệu order dashboard cho kỳ này.')
+        toast.info('Không có dữ liệu  cho kỳ này.')
         return
       }
       setOrderDashboardRows([])
-      toast.error('Không tải được order dashboard. Vui lòng thử lại.')
+      toast.error('Không tải được bảng tổng quan đơn hàng. Vui lòng thử lại.')
     } finally {
       setOrderDashboardLoading(false)
     }
@@ -496,7 +496,7 @@ export default function OverviewTab() {
       <Card className="p-6">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-[#003366] text-lg font-semibold">Task intent dashboard</h3>
+            <h3 className="text-[#003366] text-lg font-semibold">Bảng tổng quan nhiệm vụ</h3>
             <p className="text-sm text-gray-500">
               Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng (UTC). Đang xem:{' '}
               <span className="font-medium text-[#003366]">{taskDashboardAppliedPeriod}</span>
@@ -602,7 +602,7 @@ export default function OverviewTab() {
               <ShoppingCart className="h-5 w-5 text-[#3366CC]" />
             </div>
             <div>
-              <h3 className="text-[#003366] text-lg font-semibold">Order dashboard</h3>
+              <h3 className="text-[#003366] text-lg font-semibold">Bảng tổng quan đơn hàng</h3>
               <p className="text-sm text-gray-500">
                 Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng (UTC). Đang xem:{' '}
                 <span className="font-medium text-[#003366]">{orderDashboardAppliedInput}</span>
@@ -626,9 +626,9 @@ export default function OverviewTab() {
             </Button>
           </div>
         </div>
-        {orderDashboardLoading && <p className="text-sm text-gray-500 mb-4">Đang tải order dashboard...</p>}
+        {orderDashboardLoading && <p className="text-sm text-gray-500 mb-4">Đang tải bảng tổng quan đơn hàng...</p>}
         {!orderDashboardLoading && orderChartData.length === 0 && (
-          <p className="text-sm text-gray-500 mb-4">Chưa có dữ liệu order dashboard.</p>
+          <p className="text-sm text-gray-500 mb-4">Chưa có dữ liệu bảng tổng quan đơn hàng.</p>
         )}
         {!orderDashboardLoading && orderChartData.length > 0 && orderDashboardStatusNames.length === 0 && (
           <p className="text-sm text-gray-500 mb-4">Có tháng nhưng chưa có trạng thái đơn (status rỗng).</p>

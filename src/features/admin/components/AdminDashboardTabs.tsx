@@ -31,7 +31,7 @@ export default function AdminDashboardTabs() {
       <TabButton value="staff">
         <span className="inline-flex items-center">
           <Users className="h-4 w-4 mr-2" />
-          Quản lý Staff
+          Quản lý nhân viên
         </span>
       </TabButton>
     </Card>

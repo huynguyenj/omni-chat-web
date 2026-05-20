@@ -11,12 +11,13 @@ import { useAdminDashboard } from '../../hooks/useAdminDashboard'
 import type { StaffAccount } from '../../context/AdminDashboardContext'
 import { RolesApi, type RoleItem } from '../../api/roles-api'
 import { StaffApi } from '../../api/staff-api'
+import { IntentTypeApi, type IntentTypeItem } from '../../api/intent-type-api'
 import type { StaffItem } from '../../types/staff-type'
 
 function ModalShell({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onMouseDown={onClose}>
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto" onMouseDown={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -34,6 +35,58 @@ function extractStaffItemsFromResponse(response: unknown): StaffItem[] {
   return []
 }
 
+function staffIntentPayloadFromIds(ids: string[]) {
+  return ids.map((intentId) => ({ intentId }))
+}
+
+function IntentTypeChecklist({
+  intentTypes,
+  loading,
+  selectedIds,
+  onChange
+}: {
+  intentTypes: IntentTypeItem[]
+  loading: boolean
+  selectedIds: string[]
+  onChange: (next: string[]) => void
+}) {
+  const toggle = (id: string) => {
+    onChange(selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id])
+  }
+
+  if (loading) {
+    return <p className="text-sm text-gray-500 py-2">Đang tải danh sách loại intent...</p>
+  }
+  if (intentTypes.length === 0) {
+    return <p className="text-sm text-amber-700 py-2">Chưa có dữ liệu loại intent. Thử tải lại trang.</p>
+  }
+  return (
+    <div className="max-h-52 overflow-y-auto rounded-md border border-gray-200 bg-gray-50/80 p-2 space-y-2">
+      {intentTypes.map((it) => (
+        <label
+          key={it.id}
+          htmlFor={`intent-${it.id}`}
+          className="flex cursor-pointer items-start gap-2 rounded-md p-2 text-sm hover:bg-white"
+        >
+          <input
+            id={`intent-${it.id}`}
+            type="checkbox"
+            className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-[#3366CC] focus:ring-[#3366CC]"
+            checked={selectedIds.includes(it.id)}
+            onChange={() => toggle(it.id)}
+          />
+          <span className="min-w-0">
+            <span className="font-semibold text-[#003366]">{it.typeName}</span>
+            {it.description ? (
+              <span className="mt-0.5 block text-xs leading-snug text-gray-600">{it.description}</span>
+            ) : null}
+          </span>
+        </label>
+      ))}
+    </div>
+  )
+}
+
 export default function StaffTab() {
   const STAFFS_PER_PAGE = 9
   const {
@@ -47,30 +100,50 @@ export default function StaffTab() {
   const [apiStaffs, setApiStaffs] = useState<StaffItem[] | null>(null)
   const [roles, setRoles] = useState<RoleItem[]>([])
   const [rolesLoading, setRolesLoading] = useState(false)
+  const [intentTypes, setIntentTypes] = useState<IntentTypeItem[]>([])
+  const [intentTypesLoading, setIntentTypesLoading] = useState(false)
   const [addForm, setAddForm] = useState({
     name: '',
     email: '',
     phone: '',
     roleId: '',
-    intentId: ''
+    intentTypeIds: [] as string[]
   })
   const [editForm, setEditForm] = useState({
     name: '',
     email: '',
     phone: '',
-    intentId: ''
+    intentTypeIds: [] as string[]
   })
   const [staffPage, setStaffPage] = useState(1)
 
   // Staff tab: list staff accounts and manage add/edit dialogs.
-  const openEdit = (staff: StaffAccount) => {
+  const openEdit = async (staff: StaffAccount) => {
     setSelectedStaff(staff)
+    let types = intentTypes
+    if (types.length === 0) {
+      try {
+        setIntentTypesLoading(true)
+        types = await IntentTypeApi.getIntentTypes()
+        setIntentTypes(types)
+      } catch {
+        toast.error('Không tải được danh sách loại chức năng.')
+      } finally {
+        setIntentTypesLoading(false)
+      }
+    }
     const matchedStaff = apiStaffs?.find((s) => s.id === staff.id)
+    const intentTypeIds =
+      types.length > 0 && matchedStaff?.staffIntentTypes?.length
+        ? types
+          .filter((it) => matchedStaff.staffIntentTypes.some((s) => s.intentTypeName === it.typeName))
+          .map((it) => it.id)
+        : []
     setEditForm({
       name: staff.name,
       email: staff.email,
       phone: matchedStaff?.phone ?? '',
-      intentId: matchedStaff?.staffIntentTypes?.[0]?.intentTypeName ?? ''
+      intentTypeIds
     })
     setEditStaffDialogOpen(true)
   }
@@ -125,12 +198,27 @@ export default function StaffTab() {
     }
   }, [])
 
-  const parseIntentIds = (raw: string) =>
-    raw
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean)
-      .map((intentId) => ({ intentId }))
+  useEffect(() => {
+    let cancelled = false
+    const loadIntentTypes = async () => {
+      setIntentTypesLoading(true)
+      try {
+        const list = await IntentTypeApi.getIntentTypes()
+        if (!cancelled) setIntentTypes(list)
+      } catch {
+        if (!cancelled) {
+          setIntentTypes([])
+          toast.error('Không tải được danh sách loại chức năng.')
+        }
+      } finally {
+        if (!cancelled) setIntentTypesLoading(false)
+      }
+    }
+    void loadIntentTypes()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const normalizePhone = (p: string) => p.replace(/\s/g, '').trim()
 
@@ -186,10 +274,10 @@ export default function StaffTab() {
         email: addForm.email,
         phone: addForm.phone,
         roleId: addForm.roleId,
-        staffIntentTypes: parseIntentIds(addForm.intentId)
+        staffIntentTypes: staffIntentPayloadFromIds(addForm.intentTypeIds)
       })
       setAddStaffDialogOpen(false)
-      setAddForm({ name: '', email: '', phone: '', roleId: '', intentId: '' })
+      setAddForm({ name: '', email: '', phone: '', roleId: '', intentTypeIds: [] })
       toast.success('Thêm tài khoản thành công')
       await fetchStaffs()
     } catch (error) {
@@ -205,7 +293,7 @@ export default function StaffTab() {
         name: editForm.name,
         email: editForm.email,
         phone: editForm.phone,
-        staffIntentTypes: parseIntentIds(editForm.intentId)
+        staffIntentTypes: staffIntentPayloadFromIds(editForm.intentTypeIds)
       })
       setEditStaffDialogOpen(false)
       toast.success('Cập nhật thành công')
@@ -296,7 +384,7 @@ export default function StaffTab() {
                 variant="outline"
                 size="sm"
                 className="flex-1 h-8 text-xs border-[#3366CC]/30 text-[#3366CC] hover:bg-[#3366CC]/5"
-                onClick={() => openEdit(staff)}
+                onClick={() => void openEdit(staff)}
               >
                 <Edit2 className="h-3 w-3 mr-1" />
                 Sửa
@@ -347,7 +435,7 @@ export default function StaffTab() {
               <Input id="phone" placeholder="Nhập số điện thoại" variant="gray" value={addForm.phone} onChange={(e) => setAddForm((prev) => ({ ...prev, phone: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <label htmlFor="role" className="text-sm font-medium">Role</label>
+              <label htmlFor="role" className="text-sm font-medium">Vai trò</label>
               <select
                 id="role"
                 value={addForm.roleId}
@@ -364,8 +452,14 @@ export default function StaffTab() {
               </select>
             </div>
             <div className="space-y-2">
-              <label htmlFor="intentId" className="text-sm font-medium">Intent ID(s)</label>
-              <Input id="intentId" placeholder="UUID intentId" variant="gray" value={addForm.intentId} onChange={(e) => setAddForm((prev) => ({ ...prev, intentId: e.target.value }))} />
+              <label className="text-sm font-medium">Loại chức năng</label>
+              <p className="text-xs text-gray-500">Chọn một hoặc nhiều theo tên loại; hệ thống gửi UUID tương ứng.</p>
+              <IntentTypeChecklist
+                intentTypes={intentTypes}
+                loading={intentTypesLoading}
+                selectedIds={addForm.intentTypeIds}
+                onChange={(next) => setAddForm((prev) => ({ ...prev, intentTypeIds: next }))}
+              />
             </div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={() => setAddStaffDialogOpen(false)} className="flex-1">Hủy</Button>
@@ -382,7 +476,7 @@ export default function StaffTab() {
         <ModalShell onClose={() => setEditStaffDialogOpen(false)}>
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-[#003366]">Sửa thông tin tài khoản</h3>
-            <p className="text-sm text-gray-500">Cập nhật thông tin cho {selectedStaff.id}</p>
+            <p className="text-sm text-gray-500">Cập nhật thông tin</p>
           </div>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -398,8 +492,14 @@ export default function StaffTab() {
               <Input id="edit-phone" placeholder="Nhập số điện thoại" value={editForm.phone} onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))} variant="gray" />
             </div>
             <div className="space-y-2">
-              <label htmlFor="edit-intentId" className="text-sm font-medium">Intent ID(s)</label>
-              <Input id="edit-intentId" placeholder="UUID intentId" value={editForm.intentId} onChange={(e) => setEditForm((prev) => ({ ...prev, intentId: e.target.value }))} variant="gray" />
+              <label className="text-sm font-medium">Loại chức năng</label>
+              <p className="text-xs text-gray-500">Chọn một hoặc nhiều theo tên loại; hệ thống gửi UUID tương ứng.</p>
+              <IntentTypeChecklist
+                intentTypes={intentTypes}
+                loading={intentTypesLoading}
+                selectedIds={editForm.intentTypeIds}
+                onChange={(next) => setEditForm((prev) => ({ ...prev, intentTypeIds: next }))}
+              />
             </div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={() => setEditStaffDialogOpen(false)} className="flex-1">Hủy</Button>
