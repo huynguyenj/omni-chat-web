@@ -55,8 +55,8 @@ export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoT
             </div>
             :
             <div className='my-5 flex flex-col gap-3'>
-              <Button variant='success'>
-                <FiCheckCircle className='text-[1.25rem]' onClick={handleCompleteConversation}/>
+              <Button variant='success' onClick={handleCompleteConversation}>
+                <FiCheckCircle className='text-[1.25rem]'/>
                 Hoàn thành hỗ trợ
               </Button>
               <Button variant='outline' onClick={handleOpen}>
