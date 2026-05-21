@@ -9,7 +9,7 @@ import { toast } from 'react-toastify'
 import { ROLE_HOME } from '@/router/const/role-route'
 
 const LoginFormSchema = z.object({
-  username: z.email(),
+  username: z.email({ error: 'Hãy nhập đúng định dạng của email @gmail.com' }),
   password: z.string().min(8, { error: 'Mật khẩu ít nhất 8 kí tự' })
 })
 
