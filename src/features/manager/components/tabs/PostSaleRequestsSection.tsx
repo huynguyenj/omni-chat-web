@@ -37,11 +37,28 @@ function requestStatusUi(status: string): { label: string; badgeClass: string; b
       borderClass: 'border-t-[#26C271]'
     }
   }
+  if (s === 'Rejected') {
+    return {
+      label: 'Đã từ chối',
+      badgeClass: 'bg-[#FB2C36] text-white',
+      borderClass: 'border-t-[#FB2C36]'
+    }
+  }
   return {
     label: s || '—',
     badgeClass: 'bg-gray-400 text-white',
     borderClass: 'border-t-gray-400'
   }
+}
+
+function requestTypeUi(t: string): { label: string; badgeClass: string } {
+  const key = String(t ?? '').trim()
+  const label = requestTypeLabel(key)
+  if (key === 'Refund') return { label, badgeClass: 'bg-[#2563EB] text-white' }
+  if (key === 'Return') return { label, badgeClass: 'bg-[#7C3AED] text-white' }
+  if (key === 'Cancel') return { label, badgeClass: 'bg-[#64748B] text-white' }
+  if (key === 'Replacement') return { label, badgeClass: 'bg-[#0EA5E9] text-white' }
+  return { label, badgeClass: 'bg-gray-500 text-white' }
 }
 
 function productSummary(items: PostSaleRequestItem['postSaleItems']) {
@@ -169,7 +186,7 @@ export default function PostSaleRequestsSection({
     <Card className="p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h2 className="text-[#003366] text-xl font-semibold">Yêu cầu hoàn tiền (Refund)</h2>
+          <h2 className="text-[#003366] text-xl font-semibold">Yêu cầu hoàn tiền</h2>
           <p className="text-sm text-gray-500 mt-1">Các yêu cầu hoàn tiền từ nhân viên cần xử lý</p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
@@ -210,7 +227,8 @@ export default function PostSaleRequestsSection({
         )}
 
         {filteredItems.map((req) => {
-          const ui = requestStatusUi(String(req.status))
+          const statusUi = requestStatusUi(String(req.status))
+          const typeUi = requestTypeUi(String(req.type))
           const isPending = String(req.status) === 'Pending'
           const requestQty = totalRequestedQuantity(req.postSaleItems)
           const isProcessingCurrent = processingAction?.id === req.id
@@ -218,19 +236,23 @@ export default function PostSaleRequestsSection({
           return (
             <div
               key={req.id}
-              className={`rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full border-t-4 ${ui.borderClass}`}
+              className={`rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full border-t-4 ${statusUi.borderClass}`}
             >
               <div className="p-4 flex flex-col flex-1">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-[#003366] leading-tight font-mono">{orderTitle}</h3>
-                    <p className="text-[11px] text-gray-500 mt-0.5">{requestTypeLabel(String(req.type))}</p>
+                <div className="mb-3 min-w-0">
+                  <h3 className="text-lg font-bold text-[#003366] leading-tight font-mono">{orderTitle}</h3>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${typeUi.badgeClass}`}
+                    >
+                      {typeUi.label}
+                    </span>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${statusUi.badgeClass}`}
+                    >
+                      {statusUi.label}
+                    </span>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${ui.badgeClass}`}
-                  >
-                    {ui.label}
-                  </span>
                 </div>
 
                 <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">Sản phẩm</p>

@@ -16,7 +16,7 @@ function shipperStatusTag(shipper: ManagerShipperApiItem) {
   const online = String(shipper.shipperStatus).toLowerCase() === 'online'
   return online
     ? <Tag variant="success" size="sm" className="text-[10px] h-4 px-2">Hoạt động</Tag>
-    : <Tag variant="gray" size="sm" className="text-[10px] h-4 px-2">Offline</Tag>
+    : <Tag variant="gray" size="sm" className="text-[10px] h-4 px-2">Không trực tuyến</Tag>
 }
 
 function normalizeOrder(raw: unknown): ManagerOrderItem {

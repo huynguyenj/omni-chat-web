@@ -54,5 +54,7 @@ export function warningTypeLabelVi(value: ManagerWarningTypeValue | undefined | 
   if (key === 'staffNotResponding') return 'Nhân viên không phản hồi'
   if (key === 'slowPerformance') return 'Hiệu suất chậm'
   if (value === undefined || value === null || value === '') return 'Không xác định'
-  return String(value)
+  const raw = String(value).trim()
+  if (/unknown/i.test(raw)) return 'Không xác định'
+  return raw
 }

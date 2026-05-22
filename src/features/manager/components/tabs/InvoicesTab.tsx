@@ -499,7 +499,7 @@ export default function InvoicesTab() {
                   />
                 </th>
                 <th className="min-w-[180px] border border-gray-200 p-0 align-middle">
-                  <InvoiceSortHeader label="Email" columnKey="email" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <InvoiceSortHeader label="Thư điện tử" columnKey="email" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                 </th>
                 <th className="min-w-[120px] border border-gray-200 p-0 align-middle">
                   <InvoiceSortHeader label="SĐT" columnKey="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />

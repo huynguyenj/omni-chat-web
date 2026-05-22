@@ -8,7 +8,7 @@ import { CheckCircle, ClipboardList, Clock, DollarSign, Mail, MapPin, Package, P
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'react-toastify'
 import { isAxiosError } from 'axios'
-import { getOrderStatusUi } from '../../../manager/const/order-status'
+import { getDeliveryStatusLabel, getOrderStatusUi } from '../../../manager/const/order-status'
 import type { ManagerOrderStatusFilter } from '../../../manager/types/order-type'
 import { OrderApi } from '../../api/order-api'
 import type { AdminOrderDetail, AdminOrderItem, OrderDashboardMonthRow } from '../../types/order-type'
@@ -1020,7 +1020,7 @@ export default function RevenueTab() {
                       <Package className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#22C55E]" aria-hidden />
                       <div>
                         <p className="text-sm text-gray-500 sm:text-base">Trạng thái giao:</p>
-                        <p className="font-bold text-[#22C55E]">{orderDetail.deliveryStatus}</p>
+                        <p className="font-bold text-[#22C55E]">{getDeliveryStatusLabel(orderDetail.deliveryStatus)}</p>
                       </div>
                     </div>
                   </div>

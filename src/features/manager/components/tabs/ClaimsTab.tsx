@@ -30,7 +30,7 @@ function normalizeClaim(raw: unknown, mode: 'pending' | 'history'): ManagerClaim
   return {
     id: String(item.id ?? item.claimId ?? ''),
     staff: String(item.staff ?? item.staffName ?? item.createdBy ?? description ?? 'Chưa rõ'),
-    type: String(item.type ?? item.claimType ?? item.category ?? 'Claim'),
+    type: String(item.type ?? item.claimType ?? item.category ?? 'Yêu cầu'),
     submitDate: String(item.submitDate ?? item.createdAt ?? item.startDate ?? item.startAt ?? '-'),
     description,
     reason: String(item.reason ?? item.note ?? item.description ?? 'Không có lý do'),
@@ -122,7 +122,7 @@ async function mapRawToChangeTaskClaimsWithIntents(rawItems: unknown[]): Promise
 
 function ChangeTaskStaffIntentChips({ intents }: { intents: StaffIntentType[] }) {
   if (!intents.length) {
-    return <p className="text-xs text-gray-500">Chưa xác định IntentTypes cho staff.</p>
+    return <p className="text-xs text-gray-500">Chưa xác định loại chức năng cho nhân viên.</p>
   }
   return (
     <div className="flex flex-wrap gap-1.5 mt-1">
@@ -147,6 +147,17 @@ function formatDateTime(rawDate: string) {
   const date = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
   const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false })
   return `${date} ${time}`
+}
+
+function claimStatusLabelVi(status: ManagerClaimStatus | string): string {
+  if (status === 'approved') return 'Đã duyệt'
+  if (status === 'rejected') return 'Đã từ chối'
+  if (status === 'pending') return 'Chờ duyệt'
+  const raw = String(status ?? '').trim()
+  if (/approve/i.test(raw)) return 'Đã duyệt'
+  if (/reject/i.test(raw)) return 'Đã từ chối'
+  if (/pending/i.test(raw)) return 'Chờ duyệt'
+  return raw || '—'
 }
 
 function claimStatusTag(status: ManagerClaimStatus) {
@@ -292,7 +303,7 @@ function StaffPickerModal({
             </Button>
           </div>
           <div className="mt-3">
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Lọc theo staffIntentTypes</p>
+            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Lọc theo loại chức năng</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -445,7 +456,7 @@ function ChangeTaskClaimDetailModal({
         >
           <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-gray-100 bg-white px-5 py-4">
             <div>
-              <h3 className="text-lg font-semibold text-[#003366]">Chi tiết ChangeTask Claim</h3>
+              <h3 className="text-lg font-semibold text-[#003366]">Chi tiết yêu cầu đổi task</h3>
             </div>
             <Button type="button" variant="outline" size="sm" className="h-9 w-9 shrink-0 p-0" onClick={onClose} aria-label="Đóng">
               <X className="h-4 w-4" />
@@ -456,8 +467,8 @@ function ChangeTaskClaimDetailModal({
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-bold text-[#3366CC] text-lg">{claim.staffName || 'Chưa rõ'}</p>
-                <p className="text-sm text-gray-500">{claim.claimTypeName || 'Claim'}</p>
-                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-2">IntentTypes (staff)</p>
+                <p className="text-sm text-gray-500">{claim.claimTypeName || 'Đổi task'}</p>
+                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-2">Loại chức năng (nhân viên)</p>
                 <ChangeTaskStaffIntentChips intents={claim.staffIntentTypes} />
               </div>
               {claimStatusTag(status)}
@@ -465,22 +476,22 @@ function ChangeTaskClaimDetailModal({
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-[#F5F7FA] p-3">
-                <p className="text-xs text-gray-500 mb-1">Submit date</p>
+                <p className="text-xs text-gray-500 mb-1">Ngày gửi</p>
                 <p className="font-medium text-[#003366]">{formatDateTime(claim.submitDate)}</p>
               </div>
               <div className="rounded-lg bg-[#F5F7FA] p-3">
-                <p className="text-xs text-gray-500 mb-1">Status</p>
-                <p className="font-medium text-[#003366]">{claim.status || '—'}</p>
+                <p className="text-xs text-gray-500 mb-1">Trạng thái</p>
+                <p className="font-medium text-[#003366]">{claimStatusLabelVi(status)}</p>
               </div>
             </div>
 
             <div className="rounded-lg bg-[#F5F7FA] p-3">
-              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Description</p>
+              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Mô tả</p>
               <p className="text-sm font-semibold text-[#003366]">{claim.description || '—'}</p>
             </div>
 
             <div className="rounded-lg bg-[#F5F7FA] p-3">
-              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Reason</p>
+              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Lý do</p>
               <p className="text-sm font-semibold text-[#003366]">{claim.reason || '—'}</p>
             </div>
 
@@ -852,7 +863,7 @@ export default function ClaimsTab() {
                   <div className="min-w-0">
                     <p className="font-bold text-[#3366CC] text-lg">{item.staffName || 'Chưa rõ'}</p>
                     <p className="text-sm text-gray-500">{item.claimTypeName || 'Claim'}</p>
-                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-2">IntentTypes</p>
+                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-2">Loại chức năng</p>
                     <ChangeTaskStaffIntentChips intents={item.staffIntentTypes} />
                   </div>
                   {claimStatusTag(status)}
