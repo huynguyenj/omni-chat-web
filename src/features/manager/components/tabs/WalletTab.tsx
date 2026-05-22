@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   BadgeDollarSign,
-  CircleDollarSign,
   Clock3,
   Search,
   SlidersHorizontal,
@@ -26,22 +25,39 @@ function normalizeTransaction(raw: unknown): ManagerWalletTransaction {
   }
 }
 
+function pickNum(...candidates: unknown[]): number {
+  for (const v of candidates) {
+    if (v == null || v === '') continue
+    const n = Number(v)
+    if (Number.isFinite(n)) return n
+  }
+  return 0
+}
+
 function normalizeWalletInfo(raw: unknown): ManagerWalletInfo {
   const walletRaw = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-  const txsRaw = Array.isArray(walletRaw.transactions) ? walletRaw.transactions : []
+  const txsRaw = Array.isArray(walletRaw.transactions)
+    ? walletRaw.transactions
+    : Array.isArray(walletRaw.transactionList)
+      ? walletRaw.transactionList
+      : []
   return {
-    amount: Number(walletRaw.amount ?? 0),
-    totalDebt: Number(walletRaw.totalDebt ?? 0),
-    netAmount: Number(walletRaw.netAmount ?? 0),
+    amount: pickNum(walletRaw.amount),
+    totalDebt: pickNum(walletRaw.totalDebt, walletRaw.total_debt, walletRaw.debt),
+    netAmount: pickNum(walletRaw.netAmount, walletRaw.net_amount, walletRaw.net, walletRaw.balance),
     transactions: txsRaw.map((tx) => normalizeTransaction(tx))
   }
 }
 
 function normalizeCustomerWallet(raw: unknown): ManagerCustomerWalletItem {
   const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-  const walletRaw = item.getWalletResponse && typeof item.getWalletResponse === 'object'
-    ? item.getWalletResponse
-    : {}
+  const walletRaw =
+    item.getWalletResponse ??
+    item.get_wallet_response ??
+    item.walletResponse ??
+    item.wallet ??
+    item.customerWallet ??
+    item.customer_wallet
 
   return {
     id: String(item.id ?? ''),
@@ -53,11 +69,26 @@ function normalizeCustomerWallet(raw: unknown): ManagerCustomerWalletItem {
     facebookSenderId: item.facebookSenderId == null ? null : String(item.facebookSenderId),
     instagramSenderId: item.instagramSenderId == null ? null : String(item.instagramSenderId),
     currentProviderName: item.currentProviderName == null ? null : String(item.currentProviderName),
-    totalOrder: Number(item.totalOrder ?? 0),
-    customerDate: String(item.customerDate ?? ''),
-    totalPayment: Number(item.totalPayment ?? 0),
-    getWalletResponse: normalizeWalletInfo(walletRaw)
+    totalOrder: pickNum(item.totalOrder, item.total_order, item.orderCount),
+    customerDate: String(item.customerDate ?? item.customer_date ?? ''),
+    totalPayment: pickNum(item.totalPayment, item.total_payment, item.paymentTotal),
+    getWalletResponse: normalizeWalletInfo(
+      walletRaw && typeof walletRaw === 'object' ? walletRaw : {}
+    )
   }
+}
+
+/** Tổng hợp KPI: ví tiền (amount), tổng nợ (totalDebt). */
+function summarizeWalletKpis(customers: ManagerCustomerWalletItem[]) {
+  return customers.reduce(
+    (acc, customer) => {
+      const w = customer.getWalletResponse
+      acc.totalWallet += w.amount
+      acc.totalDebt += w.totalDebt
+      return acc
+    },
+    { totalWallet: 0, totalDebt: 0 }
+  )
 }
 
 function formatDateTime(iso: string) {
@@ -124,24 +155,14 @@ function WalletTransactionModal({
             <p className="text-sm text-gray-500">Đang tải lịch sử giao dịch...</p>
           ) : wallet ? (
             <>
-              <div className="mb-4 grid grid-cols-1 gap-2 rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm sm:grid-cols-3">
+              <div className="mb-4 grid grid-cols-1 gap-2 rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm sm:grid-cols-2">
                 <div>
-                  <p className="text-gray-500">Số dư ví</p>
+                  <p className="text-gray-500">Ví tiền</p>
                   <p className="font-bold tabular-nums text-[#003366]">{formatMoney(wallet.amount)}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Tổng nợ</p>
                   <p className="font-bold tabular-nums text-[#dc2626]">{formatMoney(wallet.totalDebt)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Đã thanh toán</p>
-                  <p
-                    className={`font-bold tabular-nums ${
-                      wallet.netAmount >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'
-                    }`}
-                  >
-                    {formatMoney(wallet.netAmount)}
-                  </p>
                 </div>
               </div>
 
@@ -285,26 +306,13 @@ export default function WalletTab() {
     return filteredCustomers.slice(start, start + WALLET_PAGE_SIZE)
   }, [filteredCustomers, walletPage])
 
-  const totalWalletAmount = useMemo(
-    () => filteredCustomers.reduce((sum, customer) => sum + customer.getWalletResponse.amount, 0),
-    [filteredCustomers]
-  )
-
-  const totalDebtAmount = useMemo(
-    () => filteredCustomers.reduce((sum, customer) => sum + customer.getWalletResponse.totalDebt, 0),
-    [filteredCustomers]
-  )
-
-  const totalNetAmount = useMemo(
-    () => filteredCustomers.reduce((sum, customer) => sum + customer.getWalletResponse.netAmount, 0),
-    [filteredCustomers]
-  )
+  const walletKpis = useMemo(() => summarizeWalletKpis(filteredCustomers), [filteredCustomers])
 
   return (
     <div className="space-y-4 rounded-xl bg-[#F8F9FA] p-3 md:p-4">
       <Card className="border border-gray-200/90 bg-white p-6 shadow-sm">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-[#003366]">Ví khách hàng</h2>
+          <h2 className="text-xl font-semibold text-[#003366]">Ví tiền</h2>
           <p className="mt-1 text-sm text-gray-500">Quản lý ví và công nợ khách hàng</p>
         </div>
 
@@ -314,11 +322,11 @@ export default function WalletTab() {
           </div>
         )}
 
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-sky-50 p-5">
             <div className="min-w-0">
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-sky-900/70">Tổng ví</p>
-              <p className="text-2xl font-bold tabular-nums text-[#003366] sm:text-3xl">{formatMoney(totalWalletAmount)}</p>
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-sky-900/70">Ví tiền</p>
+              <p className="text-2xl font-bold tabular-nums text-[#003366] sm:text-3xl">{formatMoney(walletKpis.totalWallet)}</p>
             </div>
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-[#3366CC] shadow-sm">
               <Wallet className="h-7 w-7" aria-hidden />
@@ -326,26 +334,11 @@ export default function WalletTab() {
           </div>
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50 p-5">
             <div className="min-w-0">
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-rose-900/70">Tổng công nợ</p>
-              <p className="text-2xl font-bold tabular-nums text-[#dc2626] sm:text-3xl">{formatMoney(totalDebtAmount)}</p>
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-rose-900/70">Tổng nợ</p>
+              <p className="text-2xl font-bold tabular-nums text-[#dc2626] sm:text-3xl">{formatMoney(walletKpis.totalDebt)}</p>
             </div>
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-rose-500 shadow-sm">
               <BadgeDollarSign className="h-7 w-7" aria-hidden />
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
-            <div className="min-w-0">
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70">Đã thanh toán</p>
-              <p
-                className={`text-2xl font-bold tabular-nums sm:text-3xl ${
-                  totalNetAmount >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'
-                }`}
-              >
-                {formatMoney(totalNetAmount)}
-              </p>
-            </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm">
-              <CircleDollarSign className="h-7 w-7" aria-hidden />
             </div>
           </div>
         </div>
@@ -374,14 +367,14 @@ export default function WalletTab() {
 
         {walletLoading && (
           <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-2.5 text-sm text-blue-800">
-            Đang tải danh sách ví khách hàng...
+            Đang tải danh sách ví tiền...
           </div>
         )}
 
         <div className="space-y-4">
           {!walletLoading && pagedCustomers.length === 0 && (
             <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-3 py-12 text-center text-sm text-gray-600">
-              Chưa có dữ liệu ví khách hàng.
+              Chưa có dữ liệu ví tiền.
             </div>
           )}
 
