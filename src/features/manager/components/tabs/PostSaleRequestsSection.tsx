@@ -61,6 +61,13 @@ function requestTypeLabel(t: string) {
   return map[t] ?? t ?? '—'
 }
 
+/** Tiêu đề thẻ = mã đơn gốc (OD…), không sinh PSR001, PSR002… */
+function postSaleOrderTitle(req: PostSaleRequestItem): string {
+  const code = req.orderCode?.trim()
+  if (code) return code
+  return '—'
+}
+
 function totalRequestedQuantity(items: PostSaleRequestItem['postSaleItems']) {
   if (!items?.length) return 0
   return items.reduce((sum, item) => sum + Math.max(0, Number(item.quantity ?? 0)), 0)
@@ -202,12 +209,12 @@ export default function PostSaleRequestsSection({
           </div>
         )}
 
-        {filteredItems.map((req, idx) => {
+        {filteredItems.map((req) => {
           const ui = requestStatusUi(String(req.status))
           const isPending = String(req.status) === 'Pending'
           const requestQty = totalRequestedQuantity(req.postSaleItems)
           const isProcessingCurrent = processingAction?.id === req.id
-          const displayId = `PSR${String((page - 1) * pageSize + idx + 1).padStart(3, '0')}`
+          const orderTitle = postSaleOrderTitle(req)
           return (
             <div
               key={req.id}
@@ -216,7 +223,7 @@ export default function PostSaleRequestsSection({
               <div className="p-4 flex flex-col flex-1">
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-[#003366] leading-tight font-mono">{displayId}</h3>
+                    <h3 className="text-lg font-bold text-[#003366] leading-tight font-mono">{orderTitle}</h3>
                     <p className="text-[11px] text-gray-500 mt-0.5">{requestTypeLabel(String(req.type))}</p>
                   </div>
                   <span

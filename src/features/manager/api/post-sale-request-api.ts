@@ -1,6 +1,9 @@
 import { apiPrivate } from '@/config/axios'
 import type { ApiResponseStructure } from '@/types/api-response'
+import { ManagerOrderApi } from './order-api'
 import type { PostSaleRequestItem, PostSaleRequestListQuery, PostSaleRequestListResponse } from '../types/post-sale-request-type'
+
+const orderCodeByIdCache = new Map<string, string>()
 
 function resolvePostSaleRequestsEndpoint() {
   const baseUrl = (apiPrivate.defaults.baseURL ?? '').toLowerCase()
@@ -24,8 +27,21 @@ function readString(source: Record<string, unknown>, keys: string[]): string {
   return ''
 }
 
+function flattenPostSaleRow(raw: unknown): Record<string, unknown> {
+  const row = raw && typeof raw === 'object' && !Array.isArray(raw) ? { ...(raw as Record<string, unknown>) } : {}
+  const nestedKeys = ['order', 'Order', 'orderInfo', 'OrderInfo', 'order_info', 'orderDetail', 'OrderDetail']
+  let nested: Record<string, unknown> = {}
+  for (const key of nestedKeys) {
+    const inner = row[key]
+    if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+      nested = { ...nested, ...(inner as Record<string, unknown>) }
+    }
+  }
+  return { ...nested, ...row }
+}
+
 function toPostSaleRequestItem(raw: unknown): PostSaleRequestItem {
-  const row = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  const row = flattenPostSaleRow(raw)
   const postSaleItemsRaw = Array.isArray(row.postSaleItems) ? row.postSaleItems : []
   const postSaleItems = postSaleItemsRaw
     .map((item) => {
@@ -47,8 +63,42 @@ function toPostSaleRequestItem(raw: unknown): PostSaleRequestItem {
     refundAmount: row.refundAmount == null ? null : Number(row.refundAmount),
     requestedTime: readString(row, ['requestedTime', 'requested_time', 'createdAt', 'created_at']),
     orderId: readString(row, ['orderId', 'order_id']),
+    orderCode: readString(row, [
+      'orderCode',
+      'order_code',
+      'OrderCode',
+      'code',
+      'Code',
+      'orderNumber',
+      'order_number'
+    ]),
     postSaleItems
   }
+}
+
+async function enrichPostSaleRequestsWithOrderCodes(items: PostSaleRequestItem[]): Promise<PostSaleRequestItem[]> {
+  const needsFetch = items.filter((item) => item.orderId && !item.orderCode?.trim())
+  if (needsFetch.length === 0) return items
+
+  await Promise.all(
+    needsFetch.map(async (item) => {
+      const cached = orderCodeByIdCache.get(item.orderId)
+      if (cached) return
+      try {
+        const order = await ManagerOrderApi.getOrderById(item.orderId)
+        const code = String(order.code ?? '').trim()
+        if (code) orderCodeByIdCache.set(item.orderId, code)
+      } catch {
+        /* ignore — card will show fallback */
+      }
+    })
+  )
+
+  return items.map((item) => {
+    if (item.orderCode?.trim()) return item
+    const code = orderCodeByIdCache.get(item.orderId)
+    return code ? { ...item, orderCode: code } : item
+  })
 }
 
 export const PostSaleRequestApi = {
@@ -73,7 +123,9 @@ export const PostSaleRequestApi = {
     )
     const body = response as unknown as ApiResponseStructure<PostSaleRequestListResponse>
     const rawItems = Array.isArray(body?.data?.items) ? body.data.items : []
-    const normalizedItems = rawItems.map((item) => toPostSaleRequestItem(item))
+    const normalizedItems = await enrichPostSaleRequestsWithOrderCodes(
+      rawItems.map((item) => toPostSaleRequestItem(item))
+    )
     let normalizedData = body.data
     if (body.data) {
       normalizedData = {
