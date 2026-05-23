@@ -10,7 +10,7 @@ import useGetProductListManager from '../../hooks/useGetProductListManager'
 import { useState } from 'react'
 import useDebounce from '@/hooks/useDebounce'
 import { PRODUCT_TYPE } from '@/features/chat/const/product-type'
-import { PRODUCT_LIST_SORT_BY, PRODUCT_PACKAGE_TYPE } from '../../const/product'
+import { LIST_PRODUCT_CAPACITY, LIST_PRODUCT_KIND_FILTER, LIST_PRODUCT_PACKAGE_TYPE, PRODUCT_LIST_SORT_BY, PRODUCT_PACKAGE_TYPE } from '../../const/product'
 import { LuPackage } from 'react-icons/lu'
 import type { ProductDetailType } from '@/features/chat/types/product-type'
 import { FiCheckCircle } from 'react-icons/fi'
@@ -25,13 +25,13 @@ import ProductBatchList from './product-tab/ProductBatchList'
 import { TableSkeleton } from '@/components/ui/skeleton/TableSkeleton'
 
 export default function ProductsTab() {
-  const { currentPage, listProducts, loading, setCurrentPage, setOnRefresh, setSearchText, setSortBy, setSortType, sortBy, sortType } = useGetProductListManager()
+  const { currentPage, listProducts, loading, setCurrentPage, setOnRefresh, setSearchText, setSortBy, setSortType, setFilterBrand, setFilterCapacity, setFilterPackageType, setFilterProductKind, sortBy, sortType, filterBrand, filterCapacity, filterPackageType, filterProductKind } = useGetProductListManager()
   const [isAlertOpen, setIsAlertOpen] = useState(false)
   const [isOpenCreateProduct, setIsOpenCreateProduct] = useState(false)
   const [isOpenProductInfoEdit, setIsOpenProductInfoEdit] = useState(false)
   const [batchDetailOpen, setBatchDetailOpen] = useState(false)
   const { handleDelete, loading: deleteLoading, setProductId } = useDeleteProduct({ onRefresh: setOnRefresh, onCloseModalDelete: setIsAlertOpen })
-  const { control, errors, handleSubmit:handleSubmitProduct, loading: createProductLoading, onSubmit: onSubmitProduct, register: registerProduct, preview, reset, setPreview } = useCreateProduct()
+  const { control, errors, handleSubmit:handleSubmitProduct, loading: createProductLoading, onSubmit: onSubmitProduct, register: registerProduct, preview, reset, setPreview } = useCreateProduct({ onRefresh: setOnRefresh })
   const { listBrand } = useGetAllBrand()
   const { errors: errorUpdate, handleSubmitImage, handleSubmitProductInfo, loading: loadingUpdate, newImagePreview, onProductImageSubmit, onProductInfoSubmit, resetImage, resetProductInfo, setProductUpdateSelected, registerProductInfoUpdate, setNewImagePreview, controlProductUpdateImage, productUpdateSelected } = useUpdateProduct({ onRefresh: setOnRefresh })
   const [productIdSelected, setProductIdSelected] = useState('')
@@ -89,7 +89,7 @@ export default function ProductsTab() {
           <TableSkeleton numberOfColumn={10}/>
           :
           <>
-            <div className='flex gap-2 items-center w-full mb-3'>
+            <div className='grid grid-cols-1 sm:flex gap-2 sm:items-center w-full mb-3'>
               <p className='text-nowrap'>Sắp xếp:</p>
               <AdvSelect
                 value={sortBy}
@@ -117,6 +117,76 @@ export default function ProductsTab() {
                   <SelectItem value='false'>{ sortBy !== 'createdate' ? 'Tăng dần' : 'Cũ nhất' }</SelectItem>
                 </SelectContent>
               </AdvSelect>
+            </div>
+            <div className='grid grid-cols-2 sm:flex gap-2 sm:items-center w-full mb-3'>
+              <div className='sm:w-[25%]'>
+                <p className='text-nowrap'>Dung tích</p>
+                <AdvSelect
+                  value={filterCapacity}
+                  onValueChange={setFilterCapacity}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Dung tích'/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>Tất cả</SelectItem>
+                    { LIST_PRODUCT_CAPACITY.map((capacity, i) => (
+                      <SelectItem key={i} value={capacity.value}>{capacity.label}</SelectItem>
+                    )) }
+                  </SelectContent>
+                </AdvSelect>
+              </div>
+              <div className='sm:w-[25%]'>
+                <p className='text-nowrap'>Loại sữa</p>
+                <AdvSelect
+                  value={filterProductKind}
+                  onValueChange={setFilterProductKind}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Loại sữa'/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>Tất cả</SelectItem>
+                    { LIST_PRODUCT_KIND_FILTER.map((kind, i) => (
+                      <SelectItem key={i} value={kind.value}>{kind.label}</SelectItem>
+                    )) }
+                  </SelectContent>
+                </AdvSelect>
+              </div>
+              <div className='sm:w-[25%]'>
+                <p className='text-nowrap'>Kiểu hộp</p>
+                <AdvSelect
+                  value={filterPackageType}
+                  onValueChange={setFilterPackageType}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Loại hộp'/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>Tất cả</SelectItem>
+                    { LIST_PRODUCT_PACKAGE_TYPE.map((p, i) => (
+                      <SelectItem key={i} value={p.value}>{p.label}</SelectItem>
+                    )) }
+                  </SelectContent>
+                </AdvSelect>
+              </div>
+              <div className='sm:w-[25%]'>
+                <p className='text-nowrap'>Hãng</p>
+                <AdvSelect
+                  value={filterBrand}
+                  onValueChange={setFilterBrand}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Hãng'/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>Tất cả</SelectItem>
+                    { listBrand.map((brand, i) => (
+                      <SelectItem key={i} value={brand.id}>{brand.name}</SelectItem>
+                    )) }
+                  </SelectContent>
+                </AdvSelect>
+              </div>
             </div>
             {listProducts && listProducts.items.length > 0 ?
               <div>

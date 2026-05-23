@@ -21,6 +21,7 @@ import { ManagerOrderApi } from '../../api/order-api'
 import { getOrderStatusPill, MANAGER_ORDER_STATUS_FILTERS } from '../../const/order-status'
 import PostSaleRequestsSection from './PostSaleRequestsSection'
 import type { ManagerOrderItem, ManagerOrderLineItem, ManagerOrderStatus, ManagerOrderStatusFilter } from '../../types/order-type'
+import { OrderCardSkeleton } from '@/components/ui/skeleton/OrderCardSkeleton'
 
 function readStr(obj: Record<string, unknown>, keys: string[]): string | undefined {
   for (const k of keys) {
@@ -303,13 +304,13 @@ function OrderCard({
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full border-t-4 border-t-[#3366CC]">
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-2 mb-3">
-          <h3 className="text-xl font-bold text-[#003366] leading-tight">{order.code}</h3>
-          <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${pill.className}`}>
+          <h3 className="text-xl font-bold text-primary leading-tight">{order.code}</h3>
+          <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-semibold whitespace-nowrap ${pill.className}`}>
             {pill.label}
           </span>
         </div>
 
-        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">Khách hàng</p>
+        <p className="text-[12px] font-medium text-gray-500 uppercase tracking-wide mb-1">Khách hàng</p>
         <p className="text-sm font-semibold text-[#003366] mb-4 line-clamp-2">{order.customerName || 'Khách lẻ'}</p>
 
         <div className="rounded-lg bg-[#F8FAFC] p-3 mb-4 flex-1">
@@ -440,8 +441,8 @@ export default function OrdersTab() {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-[#003366] text-xl font-semibold">Đơn hàng giao</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-[#003366] text-sm-title-desktop font-semibold">Đơn hàng giao</h2>
+            <p className="text-sm-body-desktop text-soft-gray mt-1">
               Danh sách đơn hàng có trạng thái {
                 MANAGER_ORDER_STATUS_FILTERS.find((s) => s.value === selectedStatus)?.label ?? selectedStatus
               }
@@ -477,8 +478,10 @@ export default function OrdersTab() {
         )}
 
         {isLoading && (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải danh sách đơn hàng...
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <OrderCardSkeleton key={index} />
+            ))}
           </div>
         )}
 

@@ -73,7 +73,7 @@ export default function KeywordsTab() {
         <div className="mb-4">
           <Input variant='gray' icon={Search} placeholder='Tìm kiếm theo tên...' onChange={(e) => debounce(e.target.value)}/>
         </div>
-        <div className='flex flex-col 2xl:flex-row 2xl:items-center w-full gap-5'>
+        <div className='flex flex-col 2xl:flex-row 2xl:items-center w-full gap-5 mb-5'>
           <div className='flex items-center w-full gap-2'>
             <p className='text-nowrap'>Lọc keyword theo chức năng:</p>
             <AdvSelect
@@ -127,7 +127,7 @@ export default function KeywordsTab() {
           <>
             { keyWordList && keyWordList.items.length > 0 ?
               <div className='overflow-x-auto'>
-                <table className='w-full border border-border-primary my-3 table-fixed min-w-250 '>
+                <table className='w-full border border-border-primary mb-3 table-fixed min-w-250 '>
                   <thead className='bg-secondary'>
                     <tr className='text-white'>
                       <th className='py-2 text-start px-5 w-1/3'>Id</th>

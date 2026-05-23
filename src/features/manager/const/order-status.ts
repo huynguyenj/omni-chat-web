@@ -113,3 +113,23 @@ export const MANAGER_ORDER_STATUS_FILTERS: Array<{ value: 'all' | ManagerOrderSt
     label: ORDER_STATUS[value]?.name ?? value
   }))
 ]
+
+/** Nhãn trạng thái giao hàng (deliveryStatus) — tách khỏi trạng thái đơn. */
+export function getDeliveryStatusLabel(deliveryStatus: string | number | null | undefined): string {
+  const s = String(deliveryStatus ?? '').trim().toLowerCase()
+  if (!s) return '—'
+  if (s === '0' || s === 'pending') return 'Chờ giao'
+  if (s === 'processing' || s === '1') return 'Đang giao'
+  if (s === 'delivered' || s === 'completed' || s === '2' || s === 'shipped') return 'Đã giao'
+  if (s === 'cancelled' || s === 'canceled') return 'Giao hủy'
+  const fromOrder = getOrderStatusPill(String(deliveryStatus))
+  if (fromOrder.label && fromOrder.label !== String(deliveryStatus)) return fromOrder.label
+  return String(deliveryStatus)
+}
+
+export function staffPresenceLabelVi(status: string | null | undefined): string {
+  const s = String(status ?? '').trim().toLowerCase()
+  if (s === 'online') return 'Trực tuyến'
+  if (s === 'offline') return 'Không trực tuyến'
+  return status?.trim() ? String(status) : '—'
+}

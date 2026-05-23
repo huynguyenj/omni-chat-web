@@ -62,6 +62,12 @@ export const router = createBrowserRouter([
         lazy: {
           Component: async () => (await import('@/pages/staff/TaskPage')).default
         }
+      },
+      {
+        path: PRIVATE_PATH.CHAT_TEMPLATE,
+        lazy: {
+          Component: async () => (await import('@/pages/staff/ChatTemplatePage')).default
+        }
       }
     ]
   },

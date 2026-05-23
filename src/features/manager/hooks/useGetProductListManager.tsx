@@ -9,6 +9,10 @@ export default function useGetProductListManager() {
   const [currentPage, setCurrentPage] = useState(1)
   const [sortBy, setSortBy] = useState('createdate')
   const [sortType, setSortType] = useState('false')
+  const [filterPackageType, setFilterPackageType] = useState('all')
+  const [filterProductKind, setFilterProductKind] = useState('all')
+  const [filterCapacity, setFilterCapacity] = useState('all')
+  const [filterBrand, setFilterBrand] = useState('all')
   const [listProducts, setListProducts] = useState<PaginationStructure<ProductDetailType>>()
   const { execute, loading } = useApiCall<PaginationStructure<ProductDetailType>>()
   const [onRefresh, setOnRefresh] = useState(false)
@@ -20,6 +24,10 @@ export default function useGetProductListManager() {
       params.append('sortBy', sortBy.toString())
       params.append('descending', sortType.toString())
       if (searchText) params.append('search', searchText.toString())
+      if (filterBrand && filterBrand !== 'all') params.append('brandId', filterBrand)
+      if (filterCapacity && filterCapacity !== 'all') params.append('volumeMl', filterCapacity)
+      if (filterPackageType && filterPackageType !== 'all') params.append('packagingType', filterPackageType)
+      if (filterProductKind && filterProductKind !== 'all') params.append('productKind', filterProductKind)
       const apiUrl = `/products/get?${params.toString()}`
       const apiData = await execute({
         apiUrl: apiUrl,
@@ -34,6 +42,6 @@ export default function useGetProductListManager() {
       setListProducts(data)
     }
     fetchStaffList()
-  }, [searchText, currentPage, onRefresh, sortBy, sortType])
-  return { setCurrentPage, setSearchText, listProducts, loading, currentPage, setOnRefresh, sortBy, sortType, setSortBy, setSortType }
+  }, [searchText, currentPage, onRefresh, sortBy, sortType, filterBrand, filterCapacity, filterPackageType, filterProductKind])
+  return { setCurrentPage, setSearchText, listProducts, loading, currentPage, setOnRefresh, sortBy, sortType, filterBrand, filterCapacity, filterPackageType, filterProductKind, setSortBy, setSortType, setFilterBrand, setFilterCapacity, setFilterPackageType, setFilterProductKind }
 }

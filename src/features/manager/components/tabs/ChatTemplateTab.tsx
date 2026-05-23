@@ -64,7 +64,7 @@ export default function ChatTemplateTab() {
           <Input variant='gray' placeholder='Tìm kiếm theo mã code, nội dung...' icon={Search} onChange={(e) => debounce(e.target.value)}/>
         </div>
         { loading ?
-          <TableSkeleton numberOfColumn={3}/>
+          <TableSkeleton numberOfColumn={4}/>
           :
           <>
             { listChatTemplate && listChatTemplate.items.length > 0 ?
@@ -144,7 +144,7 @@ export default function ChatTemplateTab() {
         { isCreateOpen &&
             <PopupBasic onClose={handleOpenCreatePopup} title='Tạo từ mẫu mới'>
               <div className='my-2'>
-                <Input {...register('code')} variant='gray' placeholder='H010' label='Code' error={errors.code?.message}/>
+                <Input {...register('code')} variant='gray' placeholder='H010' label='Mã mẫu' error={errors.code?.message}/>
                 <Input {...register('content')} variant='gray' placeholder='Xin chào quý khách' label='Nội dung' error={errors.content?.message}/>
               </div>
               <div className='flex w-full gap-2 items-center justify-center my-3'>
