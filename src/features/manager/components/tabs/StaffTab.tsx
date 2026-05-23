@@ -18,6 +18,7 @@ import useUpdateStaffInfo from '../../hooks/useUpdateStaffInfo'
 import { AnimatePresence } from 'motion/react'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 import useDeleteStaff from '../../hooks/useDeleteStaff'
+import { staffPresenceLabelVi } from '../../const/order-status'
 import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
 import { STAFF_LIST_SORT_BY } from '../../const/staff'
 
@@ -134,7 +135,7 @@ export default function StaffTab() {
                                 variant={staff.status === 'Online' ? 'success' : 'gray'}
                                 className="text-[0.8rem] px-2 py-0.5 w-fit"
                               >
-                                {staff.status}
+                                {staffPresenceLabelVi(staff.status)}
                               </Tag>
                             </div>
                           </div>
@@ -194,7 +195,7 @@ export default function StaffTab() {
           <p className='text-sm-body-desktop text-soft-gray'>Cập nhật thông tin nhân viên</p>
           <div className='flex flex-col gap-3 my-3'>
             <Input {...register('name')} placeholder='Tên nhân viên' variant='gray' label='Tên nhân viên' error={errors.name?.message}/>
-            <Input {...register('email')} placeholder='Email' variant='gray' label='Email' error={errors.email?.message}/>
+            <Input {...register('email')} placeholder='email@example.com' variant='gray' label='Thư điện tử' error={errors.email?.message}/>
             <Input {...register('phone')} placeholder='Số điện thoại' variant='gray' label='Số điện thoại' error={errors.phone?.message}/>
             <p className='text-sm-body-desktop text-primary font-medium'>Chức năng</p>
             <Card className='rounded-xl'>

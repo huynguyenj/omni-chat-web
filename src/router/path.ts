@@ -7,6 +7,7 @@ export const PUBLIC_PATH = {
 export const PRIVATE_PATH = {
   CHAT: '/staff/chat',
   TASK: '/staff/task',
+  CHAT_TEMPLATE: '/staff/chat-template',
   CLAIM: '/staff/claim',
   MANAGER: '/manager',
   ADMIN: '/admin'

@@ -16,6 +16,9 @@ import type {
   ManagerClaimItem,
   ManagerClaimStatus
 } from '../../types/claim-type'
+import { DashboardClaimSkeleton } from '@/components/ui/skeleton/DashboardClaimSkeleton'
+import { ClaimCardSkeleton } from '@/components/ui/skeleton/ClaimCardSkeleton'
+import { ChangeTaskClaimCardSkeleton } from '@/components/ui/skeleton/ChangeTaskClaimCardSkeleton'
 
 function toClaimStatus(raw: unknown, mode: 'pending' | 'history'): ManagerClaimStatus {
   const value = String(raw ?? '').toLowerCase()
@@ -30,12 +33,47 @@ function normalizeClaim(raw: unknown, mode: 'pending' | 'history'): ManagerClaim
   return {
     id: String(item.id ?? item.claimId ?? ''),
     staff: String(item.staff ?? item.staffName ?? item.createdBy ?? description ?? 'Chưa rõ'),
-    type: String(item.type ?? item.claimType ?? item.category ?? 'Claim'),
+    type: String(item.type ?? item.claimType ?? item.category ?? 'Yêu cầu'),
     submitDate: String(item.submitDate ?? item.createdAt ?? item.startDate ?? item.startAt ?? '-'),
     description,
     reason: String(item.reason ?? item.note ?? item.description ?? 'Không có lý do'),
     status: toClaimStatus(item.status ?? item.claimStatus, mode)
   }
+}
+
+/** Mỗi nguồn pending/history tối đa bản ghi khi gộp "Tất cả" (API không có endpoint all). */
+const CLAIMS_ALL_SOURCE_LIMIT = 200
+
+type ClaimListMode = 'all' | 'pending' | 'history'
+
+function claimSubmitTimeMs(c: ManagerClaimItem): number {
+  const t = new Date(c.submitDate).getTime()
+  return Number.isNaN(t) ? 0 : t
+}
+
+/** Gộp pending + history, sắp xếp mới nhất trước, phân trang client. */
+async function fetchMergedClaimsPageSlice(
+  pageIndex: number,
+  pageSize: number
+): Promise<{ items: ManagerClaimItem[]; total: number }> {
+  const [pRes, hRes] = await Promise.all([
+    ClaimApi.getPendingClaims(1, CLAIMS_ALL_SOURCE_LIMIT),
+    ClaimApi.getHistoryClaims(1, CLAIMS_ALL_SOURCE_LIMIT)
+  ])
+  const pendingItems = (Array.isArray(pRes?.items) ? pRes.items : []).map((item) => normalizeClaim(item, 'pending'))
+  const historyItems = (Array.isArray(hRes?.items) ? hRes.items : []).map((item) => normalizeClaim(item, 'history'))
+  const byId = new Map<string, ManagerClaimItem>()
+  for (const c of pendingItems) {
+    if (c.id) byId.set(c.id, c)
+  }
+  for (const c of historyItems) {
+    if (c.id) byId.set(c.id, c)
+  }
+  const merged = [...byId.values()].sort((a, b) => claimSubmitTimeMs(b) - claimSubmitTimeMs(a))
+  const total = merged.length
+  const start = (pageIndex - 1) * pageSize
+  const items = merged.slice(start, start + pageSize)
+  return { items, total }
 }
 
 function parseStaffIntentTypesFromClaim(raw: unknown): StaffIntentType[] {
@@ -87,7 +125,7 @@ async function mapRawToChangeTaskClaimsWithIntents(rawItems: unknown[]): Promise
 
 function ChangeTaskStaffIntentChips({ intents }: { intents: StaffIntentType[] }) {
   if (!intents.length) {
-    return <p className="text-xs text-gray-500">Chưa xác định IntentTypes cho staff.</p>
+    return <p className="text-xs text-gray-500">Chưa xác định loại chức năng cho nhân viên.</p>
   }
   return (
     <div className="flex flex-wrap gap-1.5 mt-1">
@@ -114,10 +152,21 @@ function formatDateTime(rawDate: string) {
   return `${date} ${time}`
 }
 
+function claimStatusLabelVi(status: ManagerClaimStatus | string): string {
+  if (status === 'approved') return 'Đã duyệt'
+  if (status === 'rejected') return 'Đã từ chối'
+  if (status === 'pending') return 'Chờ duyệt'
+  const raw = String(status ?? '').trim()
+  if (/approve/i.test(raw)) return 'Đã duyệt'
+  if (/reject/i.test(raw)) return 'Đã từ chối'
+  if (/pending/i.test(raw)) return 'Chờ duyệt'
+  return raw || '—'
+}
+
 function claimStatusTag(status: ManagerClaimStatus) {
-  if (status === 'approved') return <Tag variant="success" size="sm" className="text-[10px] h-4 px-2">Đã duyệt</Tag>
-  if (status === 'rejected') return <Tag variant="danger" size="sm" className="text-[10px] h-4 px-2">Từ chối</Tag>
-  return <Tag variant="warn" size="sm" className="text-[10px] h-4 px-2">Chờ duyệt</Tag>
+  if (status === 'approved') return <Tag variant="success" size="sm" className="text-[12px] h-4 px-2">Đã duyệt</Tag>
+  if (status === 'rejected') return <Tag variant="danger" size="sm" className="text-[12px] h-4 px-2">Từ chối</Tag>
+  return <Tag variant="warn" size="sm" className="text-[12px] h-4 px-2">Chờ duyệt</Tag>
 }
 
 function StaffPickerModal({
@@ -257,7 +306,7 @@ function StaffPickerModal({
             </Button>
           </div>
           <div className="mt-3">
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Lọc theo staffIntentTypes</p>
+            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Lọc theo loại chức năng</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -410,7 +459,7 @@ function ChangeTaskClaimDetailModal({
         >
           <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-gray-100 bg-white px-5 py-4">
             <div>
-              <h3 className="text-lg font-semibold text-[#003366]">Chi tiết ChangeTask Claim</h3>
+              <h3 className="text-lg font-semibold text-[#003366]">Chi tiết yêu cầu đổi task</h3>
             </div>
             <Button type="button" variant="outline" size="sm" className="h-9 w-9 shrink-0 p-0" onClick={onClose} aria-label="Đóng">
               <X className="h-4 w-4" />
@@ -421,8 +470,8 @@ function ChangeTaskClaimDetailModal({
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-bold text-[#3366CC] text-lg">{claim.staffName || 'Chưa rõ'}</p>
-                <p className="text-sm text-gray-500">{claim.claimTypeName || 'Claim'}</p>
-                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-2">IntentTypes (staff)</p>
+                <p className="text-sm text-gray-500">{claim.claimTypeName || 'Đổi task'}</p>
+                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-2">Loại chức năng (nhân viên)</p>
                 <ChangeTaskStaffIntentChips intents={claim.staffIntentTypes} />
               </div>
               {claimStatusTag(status)}
@@ -430,22 +479,22 @@ function ChangeTaskClaimDetailModal({
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-[#F5F7FA] p-3">
-                <p className="text-xs text-gray-500 mb-1">Submit date</p>
+                <p className="text-xs text-gray-500 mb-1">Ngày gửi</p>
                 <p className="font-medium text-[#003366]">{formatDateTime(claim.submitDate)}</p>
               </div>
               <div className="rounded-lg bg-[#F5F7FA] p-3">
-                <p className="text-xs text-gray-500 mb-1">Status</p>
-                <p className="font-medium text-[#003366]">{claim.status || '—'}</p>
+                <p className="text-xs text-gray-500 mb-1">Trạng thái</p>
+                <p className="font-medium text-[#003366]">{claimStatusLabelVi(status)}</p>
               </div>
             </div>
 
             <div className="rounded-lg bg-[#F5F7FA] p-3">
-              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Description</p>
+              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Mô tả</p>
               <p className="text-sm font-semibold text-[#003366]">{claim.description || '—'}</p>
             </div>
 
             <div className="rounded-lg bg-[#F5F7FA] p-3">
-              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Reason</p>
+              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Lý do</p>
               <p className="text-sm font-semibold text-[#003366]">{claim.reason || '—'}</p>
             </div>
 
@@ -514,7 +563,7 @@ export default function ClaimsTab() {
   const [claims, setClaims] = useState<ManagerClaimItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<'pending' | 'history'>('pending')
+  const [mode, setMode] = useState<ClaimListMode>('pending')
   const [processingClaimId, setProcessingClaimId] = useState<string | null>(null)
   const [dashboard, setDashboard] = useState<ManagerClaimDashboardData>({
     total: 0,
@@ -533,33 +582,42 @@ export default function ClaimsTab() {
   const visibleClaims = claims.slice(0, pageSize)
   const totalClaims = dashboard.pending + dashboard.approved + dashboard.rejected
 
-  useEffect(() => {
-    const fetchClaims = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const response = mode === 'pending'
-          ? await ClaimApi.getPendingClaims(page, pageSize)
-          : await ClaimApi.getHistoryClaims(page, pageSize)
+  const setClaimListMode = (next: ClaimListMode) => {
+    setMode(next)
+    setPage(1)
+  }
 
-        const items = Array.isArray(response?.items) ? response.items.map(item => normalizeClaim(item, mode)).slice(0, pageSize) : []
+  const fetchClaims = useCallback(async (nextMode: ClaimListMode, nextPage: number) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      if (nextMode === 'all') {
+        const { items, total } = await fetchMergedClaimsPageSlice(nextPage, pageSize)
+        setClaims(items)
+        setTotalPages(Math.max(1, Math.ceil(total / pageSize)))
+      } else {
+        const response =
+          nextMode === 'pending'
+            ? await ClaimApi.getPendingClaims(nextPage, pageSize)
+            : await ClaimApi.getHistoryClaims(nextPage, pageSize)
+        const items = Array.isArray(response?.items)
+          ? response.items.map((item) => normalizeClaim(item, nextMode)).slice(0, pageSize)
+          : []
         setClaims(items)
         setTotalPages(Math.max(1, Math.ceil((response?.meta?.total_items ?? items.length) / pageSize)))
-      } catch {
-        setError('Không thể tải danh sách claim. Vui lòng thử lại.')
-        setClaims([])
-        setTotalPages(1)
-      } finally {
-        setIsLoading(false)
       }
+    } catch {
+      setError('Không thể tải danh sách claim. Vui lòng thử lại.')
+      setClaims([])
+      setTotalPages(1)
+    } finally {
+      setIsLoading(false)
     }
-
-    void fetchClaims()
-  }, [mode, page])
+  }, [pageSize])
 
   useEffect(() => {
-    setPage(1)
-  }, [mode])
+    void fetchClaims(mode, page)
+  }, [mode, page, fetchClaims])
 
   const fetchDashboard = async () => {
     setIsLoadingDashboard(true)
@@ -603,26 +661,6 @@ export default function ClaimsTab() {
     void refreshChangeTaskClaims()
   }, [refreshChangeTaskClaims])
 
-  const fetchClaims = async (nextMode: 'pending' | 'history', nextPage: number) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const response = nextMode === 'pending'
-        ? await ClaimApi.getPendingClaims(nextPage, pageSize)
-        : await ClaimApi.getHistoryClaims(nextPage, pageSize)
-
-      const items = Array.isArray(response?.items) ? response.items.map(item => normalizeClaim(item, nextMode)).slice(0, pageSize) : []
-      setClaims(items)
-      setTotalPages(Math.max(1, Math.ceil((response?.meta?.total_items ?? items.length) / pageSize)))
-    } catch {
-      setError('Không thể tải danh sách claim. Vui lòng thử lại.')
-      setClaims([])
-      setTotalPages(1)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleApproveClaim = async (id: string) => {
     if (!id) return
     setProcessingClaimId(id)
@@ -662,51 +700,60 @@ export default function ClaimsTab() {
   return (
     <div className="space-y-4">
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-[#003366] text-xl font-semibold">Danh sách yêu cầu</h2>
-            <p className="text-sm text-gray-500 mt-1">Yêu cầu của nhân viên</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={mode === 'pending' ? 'default' : 'outline'}
-              size="sm"
-              className={mode === 'pending' ? 'bg-[#3366CC] hover:bg-[#2952A3]' : ''}
-              onClick={() => setMode('pending')}
-              disabled={isLoading}
-            >
-              Pending
-            </Button>
-            <Button
-              variant={mode === 'history' ? 'default' : 'outline'}
-              size="sm"
-              className={mode === 'history' ? 'bg-[#3366CC] hover:bg-[#2952A3]' : ''}
-              onClick={() => setMode('history')}
-              disabled={isLoading}
-            >
-              History
-            </Button>
-          </div>
+        <div className="mb-4">
+          <h2 className="text-primary text-sm-title-desktop font-semibold">Danh sách yêu cầu</h2>
+          <p className="text-sm-body-desktop text-soft-gray mt-1">Yêu cầu của nhân viên</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4 border-l-4 border-l-[#3366CC] bg-blue-50">
-            <p className="text-sm text-gray-600 mb-1">Tổng claim</p>
-            <p className="text-3xl font-bold text-[#003366]">{isLoadingDashboard ? '...' : totalClaims}</p>
-          </Card>
-          <Card className="p-4 border-l-4 border-l-[#F59E0B] bg-amber-50">
-            <p className="text-sm text-gray-600 mb-1">Chờ duyệt</p>
-            <p className="text-3xl font-bold text-amber-700">{isLoadingDashboard ? '...' : dashboard.pending}</p>
-          </Card>
-          <Card className="p-4 border-l-4 border-l-[#2ECC71] bg-green-50">
-            <p className="text-sm text-gray-600 mb-1">Đã duyệt</p>
-            <p className="text-3xl font-bold text-green-700">{isLoadingDashboard ? '...' : dashboard.approved}</p>
-          </Card>
-          <Card className="p-4 border-l-4 border-l-[#EF4444] bg-red-50">
-            <p className="text-sm text-gray-600 mb-1">Từ chối</p>
-            <p className="text-3xl font-bold text-red-700">{isLoadingDashboard ? '...' : dashboard.rejected}</p>
-          </Card>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {(
+            [
+              { value: 'all' as const, label: 'Tất cả' },
+              { value: 'pending' as const, label: 'Chờ duyệt' },
+              { value: 'history' as const, label: 'Lịch sử' }
+            ] as const
+          ).map(({ value, label }) => (
+            <Button
+              key={value}
+              variant={mode === value ? 'default' : 'outline'}
+              size="sm"
+              className={mode === value ? 'bg-[#3366CC] hover:bg-[#2952A3]' : ''}
+              onClick={() => setClaimListMode(value)}
+              disabled={isLoading}
+            >
+              {label}
+            </Button>
+          ))}
         </div>
+
+        {mode === 'all' && (
+          <p className="mb-4 text-xs text-gray-500">
+            Tất cả: gộp tối đa {CLAIMS_ALL_SOURCE_LIMIT} yêu cầu chờ và {CLAIMS_ALL_SOURCE_LIMIT} lịch sử, sắp xếp theo ngày tạo.
+          </p>
+        )}
+        { isLoadingDashboard ?
+          <DashboardClaimSkeleton/>
+          :
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <Card className="p-4 border-l-4 border-l-secondary bg-blue-50">
+              <p className="text-sm text-gray-600 mb-1">Tổng claim</p>
+              <p className="text-3xl font-bold text-primary">{totalClaims}</p>
+            </Card>
+            <Card className="p-4 border-l-4 border-l-[#F59E0B] bg-amber-50">
+              <p className="text-sm text-gray-600 mb-1">Chờ duyệt</p>
+              <p className="text-3xl font-bold text-amber-700">{dashboard.pending}</p>
+            </Card>
+            <Card className="p-4 border-l-4 border-l-[#2ECC71] bg-green-50">
+              <p className="text-sm text-gray-600 mb-1">Đã duyệt</p>
+              <p className="text-3xl font-bold text-green-700">{dashboard.approved}</p>
+            </Card>
+            <Card className="p-4 border-l-4 border-l-[#EF4444] bg-red-50">
+              <p className="text-sm text-gray-600 mb-1">Từ chối</p>
+              <p className="text-3xl font-bold text-red-700">{dashboard.rejected}</p>
+            </Card>
+          </div>
+
+        }
 
         {error && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -714,11 +761,13 @@ export default function ClaimsTab() {
           </div>
         )}
 
-        {isLoading && (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải danh sách yêu cầu...
-          </div>
-        )}
+        {isLoading &&
+         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+           {Array.from({ length: 6 }).map((_, index) => (
+             <ClaimCardSkeleton key={index} />
+           ))}
+         </div>
+        }
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {!isLoading && claims.length === 0 && (
@@ -752,7 +801,7 @@ export default function ClaimsTab() {
                 </div>
               </div>
 
-              {mode === 'pending' ? (
+              {claim.status === 'pending' ? (
                 <div className="pt-3 border-t mt-4 grid grid-cols-2 gap-2">
                   <Button
                     size="sm"
@@ -793,7 +842,7 @@ export default function ClaimsTab() {
 
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-[#003366] text-xl font-semibold">Danh sách chuyển yêu cầu</h3>
+          <h3 className="text-primary text-sm-title-desktop font-semibold">Danh sách chuyển yêu cầu</h3>
         </div>
 
         {changeTaskError && (
@@ -803,10 +852,13 @@ export default function ClaimsTab() {
         )}
 
         {changeTaskLoading && (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải danh sách chuyển yêu cầu...
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <ChangeTaskClaimCardSkeleton key={index} />
+            ))}
           </div>
         )}
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {!changeTaskLoading && changeTaskClaims.length === 0 && (
@@ -823,7 +875,7 @@ export default function ClaimsTab() {
                   <div className="min-w-0">
                     <p className="font-bold text-[#3366CC] text-lg">{item.staffName || 'Chưa rõ'}</p>
                     <p className="text-sm text-gray-500">{item.claimTypeName || 'Claim'}</p>
-                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-2">IntentTypes</p>
+                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-2">Loại chức năng</p>
                     <ChangeTaskStaffIntentChips intents={item.staffIntentTypes} />
                   </div>
                   {claimStatusTag(status)}
@@ -831,7 +883,7 @@ export default function ClaimsTab() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>Submit date</span>
+                    <span>Ngày đăng đơn</span>
                     <span>{formatDateTime(item.submitDate)}</span>
                   </div>
                   <div className="bg-[#F5F7FA] p-3 rounded-lg">

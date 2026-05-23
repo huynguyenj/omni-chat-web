@@ -102,10 +102,10 @@ function InventorySortHeader({
     <button
       type="button"
       onClick={() => onSort(columnKey)}
-      className="inline-flex items-center justify-center gap-1 w-full min-h-[44px] px-2 py-2 font-semibold text-[#003366] hover:bg-[#BBDEFB]/60 transition-colors"
+      className="inline-flex min-h-[44px] w-full items-center justify-center gap-1 px-2 py-2 font-semibold text-white transition-colors hover:bg-white/15"
     >
       <span>{label}</span>
-      <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-[#1565C0]' : 'text-gray-500'}`} aria-hidden />
+      <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-white' : 'text-white/70'}`} aria-hidden />
     </button>
   )
 }
@@ -276,9 +276,9 @@ export default function WarehouseTab() {
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
           <table className="w-full min-w-[920px] border-collapse text-sm font-sans">
             <thead>
-              <tr className="bg-[#E3F2FD]">
-                <th className="border border-gray-200 px-2 py-2 text-center text-[#003366] font-semibold w-14">STT</th>
-                <th className="border border-gray-200 px-2 py-2 text-left text-[#003366] font-semibold w-[100px]">Hình ảnh</th>
+              <tr className="bg-secondary">
+                <th className="border border-gray-200 px-2 py-2 text-center text-white font-semibold w-14">STT</th>
+                <th className="border border-gray-200 px-2 py-2 text-left text-white font-semibold w-[100px]">Hình ảnh</th>
                 <th className="border border-gray-200 p-0 align-middle min-w-[180px]">
                   <InventorySortHeader
                     label="Tên sản phẩm"
@@ -323,6 +323,9 @@ export default function WarehouseTab() {
                     sortDir={sortDir}
                     onSort={toggleSort}
                   />
+                </th>
+                <th className="min-w-[120px] border border-gray-200 px-2 py-2 text-center text-sm font-semibold text-white">
+                  Chi tiết
                 </th>
               </tr>
             </thead>

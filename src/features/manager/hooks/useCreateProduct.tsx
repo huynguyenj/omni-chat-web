@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import useApiCall from '@/config/useApiCall'
 import { toast } from 'react-toastify'
 import { z } from 'zod'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 
 export const createProductSchema = z.object({
   name: z.string({ error: 'Tên không được để trống' }),
@@ -26,8 +26,12 @@ export const createProductSchema = z.object({
     .refine((file) => file instanceof File, 'Vui lòng chọn ảnh')
 })
 
+type UseCreateProductProps = {
+  onRefresh: Dispatch<SetStateAction<boolean>>
+}
+
 type CreateProductForm = z.infer<typeof createProductSchema>
-export default function useCreateProduct() {
+export default function useCreateProduct({ onRefresh }: UseCreateProductProps) {
   const {
     register,
     handleSubmit,
@@ -69,6 +73,7 @@ export default function useCreateProduct() {
     }
 
     toast.success('Tạo sản phẩm thành công')
+    onRefresh(prevState => !prevState)
     reset()
   }
 

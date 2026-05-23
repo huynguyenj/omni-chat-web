@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Button from '@/components/ui/button/Button'
 import Card from '@/components/ui/card/Card'
+import AdminDashboardMetricCard from '../AdminDashboardMetricCard'
 import { isAxiosError } from 'axios'
 import { CheckCircle, Clock, FileX2, Milk, ShoppingCart, TrendingUp } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -8,17 +9,9 @@ import { toast } from 'react-toastify'
 import { OrderApi } from '../../api/order-api'
 import { ProductApi } from '../../api/product-api'
 import { SupportTaskApi } from '../../api/support-task-api'
-import { TaskCancelReasonApi } from '../../api/task-cancel-reason-api'
 import type { OrderDashboardMonthRow } from '../../types/order-type'
 import type { ProductType } from '../../types/product-type'
 import type { TaskIntentMonthRow } from '../../types/support-task-type'
-
-type CancelReasonRow = {
-  id: string
-  title: string
-  description: string
-  createdAt: string
-}
 
 type InventorySummary = {
   totalProducts: number
@@ -32,51 +25,12 @@ function isApiSuccessLike(response: unknown): boolean {
   return Number(r.status_code ?? r.statusCode ?? 0) === 200
 }
 
-function mapCancelReasonRow(raw: unknown): CancelReasonRow {
-  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-  const title =
-    typeof o.reasonName === 'string'
-      ? o.reasonName
-      : typeof o.name === 'string'
-        ? o.name
-        : typeof o.reason === 'string'
-          ? o.reason
-          : typeof o.title === 'string'
-            ? o.title
-            : '—'
-  const description =
-    typeof o.description === 'string' ? o.description : typeof o.note === 'string' ? o.note : ''
-  const createdAt =
-    typeof o.createdAt === 'string' ? o.createdAt : typeof o.created_at === 'string' ? o.created_at : ''
-  return {
-    id: String(o.id ?? o.cancelReasonId ?? ''),
-    title,
-    description,
-    createdAt
-  }
-}
-
 function summarizeInventoryFromProducts(products: ProductType[], totalItems: number): InventorySummary {
   const totalProducts = products.reduce((sum, item) => sum + Number(item.quantity ?? 0), 0)
 
   return {
     totalProducts,
     totalItems
-  }
-}
-
-function normalizeCancelReasonMeta(raw: unknown): {
-  total_pages: number
-  total_items: number
-  current_page: number
-  page_size: number
-} {
-  const m = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-  return {
-    total_pages: Number(m.total_pages ?? m.totalPages ?? 0),
-    total_items: Number(m.total_items ?? m.totalItems ?? 0),
-    current_page: Number(m.current_page ?? m.currentPage ?? 1),
-    page_size: Number(m.page_size ?? m.pageSize ?? 10)
   }
 }
 
@@ -282,16 +236,6 @@ export default function OverviewTab() {
   const [orderDashboardLoading, setOrderDashboardLoading] = useState(false)
   const [orderDashboardInput, setOrderDashboardInput] = useState('2026')
   const [orderDashboardAppliedInput, setOrderDashboardAppliedInput] = useState('2026')
-  const [cancelReasonPage, setCancelReasonPage] = useState(1)
-  const cancelReasonPageSize = 10
-  const [cancelReasonRows, setCancelReasonRows] = useState<CancelReasonRow[]>([])
-  const [cancelReasonMeta, setCancelReasonMeta] = useState({
-    total_pages: 0,
-    total_items: 0,
-    current_page: 1,
-    page_size: cancelReasonPageSize
-  })
-  const [cancelReasonLoading, setCancelReasonLoading] = useState(false)
   const taskIntentNames = useMemo(() => collectIntentNames(taskDashboardRows), [taskDashboardRows])
   const taskChartData = useMemo(
     () => buildTaskDashboardChartRows(taskDashboardRows, taskIntentNames),
@@ -454,16 +398,16 @@ export default function OverviewTab() {
         setOrderDashboardRows(rows)
       } else {
         setOrderDashboardRows([])
-        toast.info(response.message || 'Không có dữ liệu order dashboard cho kỳ này.')
+        toast.info(response.message || 'Không có dữ liệu bảng tổng quan đơn hàng cho kỳ này.')
       }
     } catch (error) {
       if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
         setOrderDashboardRows([])
-        toast.info('Không có dữ liệu order dashboard cho kỳ này.')
+        toast.info('Không có dữ liệu  cho kỳ này.')
         return
       }
       setOrderDashboardRows([])
-      toast.error('Không tải được order dashboard. Vui lòng thử lại.')
+      toast.error('Không tải được bảng tổng quan đơn hàng. Vui lòng thử lại.')
     } finally {
       setOrderDashboardLoading(false)
     }
@@ -472,36 +416,6 @@ export default function OverviewTab() {
   useEffect(() => {
     void fetchOrderDashboard('2026')
   }, [fetchOrderDashboard])
-
-  useEffect(() => {
-    const fetchCancelReasons = async () => {
-      setCancelReasonLoading(true)
-      try {
-        const response = await TaskCancelReasonApi.getPaging(cancelReasonPage, cancelReasonPageSize)
-        const items = extractArrayFromResponse(response)
-        if (items.length > 0 || isApiSuccessLike(response)) {
-          setCancelReasonRows(items.map(mapCancelReasonRow))
-          const responseObj = response && typeof response === 'object' ? (response as Record<string, unknown>) : {}
-          const dataObj = responseObj.data && typeof responseObj.data === 'object' ? (responseObj.data as Record<string, unknown>) : {}
-          const metaSource = dataObj.meta ?? dataObj.pagination ?? dataObj.pageInfo ?? responseObj.meta ?? responseObj.pagination ?? responseObj.pageInfo ?? null
-          setCancelReasonMeta(normalizeCancelReasonMeta(metaSource))
-        } else {
-          setCancelReasonRows([])
-          setCancelReasonMeta((prev) => ({ ...prev, total_pages: 0, total_items: 0 }))
-        }
-      } catch {
-        setCancelReasonRows([])
-        toast.error('Không tải được danh sách lý do hủy task.')
-      } finally {
-        setCancelReasonLoading(false)
-      }
-    }
-    void fetchCancelReasons()
-  }, [cancelReasonPage])
-
-  const cancelReasonTotalPages = Math.max(1, cancelReasonMeta.total_pages || 1)
-  const canPrevCancelReason = cancelReasonPage > 1
-  const canNextCancelReason = cancelReasonPage < cancelReasonTotalPages
 
   return (
     <div className="space-y-6">
@@ -528,54 +442,53 @@ export default function OverviewTab() {
             </Button>
           </div>
         </div>
-        <Card className="p-5 xl:col-span-2 hover:shadow-lg transition-shadow border-l-4 border-l-[#3366CC]">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-3 rounded-lg bg-[#EBF1FF]">
-              <Milk className="h-6 w-6 text-[#3366CC]" />
-            </div>
-            <TrendingUp className="h-5 w-5 text-[#2ECC71]" />
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Tổng tồn kho sản phẩm</h3>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-[#3366CC]">
-              {inventoryDashboardLoading
-                ? '...'
-                : inventoryDashboard != null
-                  ? inventoryDashboard.totalProducts.toLocaleString('vi-VN')
-                  : '—'}
-            </p>
-            <span className="text-sm text-gray-500">sản phẩm</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {inventoryDashboardLoading
+        <AdminDashboardMetricCard
+          className="xl:col-span-2"
+          accentColor="#3366CC"
+          iconBg="bg-[#EBF1FF]"
+          iconColor="text-[#3366CC]"
+          valueColor="text-[#3366CC]"
+          Icon={Milk}
+          topRightIcon={TrendingUp}
+          topRightClassName="text-[#2ECC71]"
+          title="Tổng tồn kho sản phẩm"
+          value={
+            inventoryDashboardLoading
+              ? '...'
+              : inventoryDashboard != null
+                ? inventoryDashboard.totalProducts.toLocaleString('vi-VN')
+                : '—'
+          }
+          unit="sản phẩm"
+          footer={
+            inventoryDashboardLoading
               ? 'Đang tải...'
               : inventoryDashboard
                 ? `Loại sản phẩm: ${inventoryDashboard.totalItems.toLocaleString('vi-VN')}`
-                : 'Chưa có dữ liệu kho'}
-          </p>
-        </Card>
+                : 'Chưa có dữ liệu kho'
+          }
+        />
 
         {OVERVIEW_INTENT_CARD_CONFIG.map((item) => {
           const CardIcon = item.Icon
           const currentApplied = intentCardAppliedByName[item.key] ?? '2026'
           const currentValue = intentCardValueByName[item.key] ?? 0
           const currentLoading = intentCardLoadingByName[item.key] ?? false
+          const accent = INTENT_COLOR_BY_NAME[item.key] ?? '#3366CC'
           return (
-            <Card key={item.key} className={`p-5 xl:col-span-2 hover:shadow-lg transition-shadow border-l-4 ${item.borderColor}`}>
-              <div className="flex items-start justify-between mb-3">
-                <div className={`p-3 rounded-lg ${item.iconBg}`}>
-                  <CardIcon className={`h-6 w-6 ${item.iconColor}`} />
-                </div>
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">{item.title}</h3>
-              <div className="flex items-baseline gap-2">
-                <p className={`text-3xl font-bold ${item.valueColor}`}>
-                  {currentLoading ? '...' : currentValue.toLocaleString('vi-VN')}
-                </p>
-                <span className="text-sm text-gray-500">tasks</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Kỳ lọc: {currentApplied || intentSummaryAppliedPeriod}</p>
-            </Card>
+            <AdminDashboardMetricCard
+              key={item.key}
+              className="xl:col-span-2"
+              accentColor={accent}
+              iconBg={item.iconBg}
+              iconColor={item.iconColor}
+              valueColor={item.valueColor}
+              Icon={CardIcon}
+              title={item.title}
+              value={currentLoading ? '...' : currentValue.toLocaleString('vi-VN')}
+              unit="nhiệm vụ"
+              footer={`Kỳ lọc: ${currentApplied || intentSummaryAppliedPeriod}`}
+            />
           )
         })}
       </div>
@@ -583,7 +496,7 @@ export default function OverviewTab() {
       <Card className="p-6">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-[#003366] text-lg font-semibold">Task intent dashboard</h3>
+            <h3 className="text-[#003366] text-lg font-semibold">Bảng tổng quan nhiệm vụ</h3>
             <p className="text-sm text-gray-500">
               Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng (UTC). Đang xem:{' '}
               <span className="font-medium text-[#003366]">{taskDashboardAppliedPeriod}</span>
@@ -689,7 +602,7 @@ export default function OverviewTab() {
               <ShoppingCart className="h-5 w-5 text-[#3366CC]" />
             </div>
             <div>
-              <h3 className="text-[#003366] text-lg font-semibold">Order dashboard</h3>
+              <h3 className="text-[#003366] text-lg font-semibold">Bảng tổng quan đơn hàng</h3>
               <p className="text-sm text-gray-500">
                 Nhập yyyy để lấy 12 tháng, hoặc mm/yyyy để lọc theo tháng (UTC). Đang xem:{' '}
                 <span className="font-medium text-[#003366]">{orderDashboardAppliedInput}</span>
@@ -713,9 +626,9 @@ export default function OverviewTab() {
             </Button>
           </div>
         </div>
-        {orderDashboardLoading && <p className="text-sm text-gray-500 mb-4">Đang tải order dashboard...</p>}
+        {orderDashboardLoading && <p className="text-sm text-gray-500 mb-4">Đang tải bảng tổng quan đơn hàng...</p>}
         {!orderDashboardLoading && orderChartData.length === 0 && (
-          <p className="text-sm text-gray-500 mb-4">Chưa có dữ liệu order dashboard.</p>
+          <p className="text-sm text-gray-500 mb-4">Chưa có dữ liệu bảng tổng quan đơn hàng.</p>
         )}
         {!orderDashboardLoading && orderChartData.length > 0 && orderDashboardStatusNames.length === 0 && (
           <p className="text-sm text-gray-500 mb-4">Có tháng nhưng chưa có trạng thái đơn (status rỗng).</p>
@@ -789,93 +702,6 @@ export default function OverviewTab() {
               </div>
             </div>
           </div>
-        )}
-      </Card>
-
-      <Card className="p-6">
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-[#FFEBEE]">
-              <FileX2 className="h-5 w-5 text-[#F44336]" />
-            </div>
-            <div>
-              <h3 className="text-[#003366] text-lg font-semibold">Danh sách lý do hủy task</h3>
-              <p className="text-sm text-gray-500">Dữ liệu phân trang từ task-cancel-reasons</p>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 sm:text-right">
-            Tổng {cancelReasonMeta.total_items.toLocaleString('vi-VN')} mục · Trang {cancelReasonMeta.current_page || cancelReasonPage} /{' '}
-            {cancelReasonTotalPages}
-          </p>
-        </div>
-        {cancelReasonLoading && <p className="text-sm text-gray-500 mb-3">Đang tải...</p>}
-        {!cancelReasonLoading && cancelReasonRows.length === 0 && (
-          <p className="text-sm text-gray-500">Chưa có lý do hủy task nào.</p>
-        )}
-        {cancelReasonRows.length > 0 && (
-          <>
-            <div className="overflow-x-auto rounded-lg border border-gray-100">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="bg-[#F5F7FA] text-left text-[#003366]">
-                    <th className="px-3 py-2 font-semibold whitespace-nowrap">#</th>
-                    <th className="px-3 py-2 font-semibold whitespace-nowrap">ID</th>
-                    <th className="px-3 py-2 font-semibold">Lý do</th>
-                    <th className="px-3 py-2 font-semibold">Mô tả</th>
-                    <th className="px-3 py-2 font-semibold whitespace-nowrap">Thời gian</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cancelReasonRows.map((row, index) => (
-                    <tr key={row.id || `row-${cancelReasonPage}-${index}`} className="border-t border-gray-100 hover:bg-gray-50/80">
-                      <td className="px-3 py-2 text-gray-500 tabular-nums">
-                        {(cancelReasonPage - 1) * cancelReasonPageSize + index + 1}
-                      </td>
-                      <td className="px-3 py-2 font-mono text-xs text-gray-600 whitespace-nowrap">{row.id || '—'}</td>
-                      <td className="px-3 py-2 text-gray-800">{row.title}</td>
-                      <td className="px-3 py-2 text-gray-600 max-w-xs truncate" title={row.description}>
-                        {row.description || '—'}
-                      </td>
-                      <td className="px-3 py-2 text-gray-600 whitespace-nowrap text-xs">
-                        {row.createdAt
-                          ? (() => {
-                            const d = new Date(row.createdAt)
-                            return Number.isNaN(d.getTime()) ? row.createdAt : d.toLocaleString('vi-VN')
-                          })()
-                          : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!canPrevCancelReason || cancelReasonLoading}
-                onClick={() => setCancelReasonPage((p) => Math.max(1, p - 1))}
-              >
-                Trước
-              </Button>
-              <span className="text-xs text-gray-500">
-                {cancelReasonMeta.total_items > 0
-                  ? `Hiển thị ${((cancelReasonPage - 1) * cancelReasonPageSize + 1).toLocaleString('vi-VN')}–${Math.min(
-                    cancelReasonPage * cancelReasonPageSize,
-                    cancelReasonMeta.total_items
-                  ).toLocaleString('vi-VN')} / ${cancelReasonMeta.total_items.toLocaleString('vi-VN')}`
-                  : 'Không có dữ liệu'}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!canNextCancelReason || cancelReasonLoading}
-                onClick={() => setCancelReasonPage((p) => p + 1)}
-              >
-                Sau
-              </Button>
-            </div>
-          </>
         )}
       </Card>
     </div>

@@ -19,6 +19,8 @@ export interface PostSaleRequestItem {
   refundAmount: number | null
   requestedTime: string
   orderId: string
+  /** Mã đơn gốc cần hoàn (OD…), không dùng mã PSR tự sinh. */
+  orderCode?: string
   postSaleItems: PostSaleItemRow[]
 }
 
