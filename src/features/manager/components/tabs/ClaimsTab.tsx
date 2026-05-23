@@ -16,6 +16,9 @@ import type {
   ManagerClaimItem,
   ManagerClaimStatus
 } from '../../types/claim-type'
+import { DashboardClaimSkeleton } from '@/components/ui/skeleton/DashboardClaimSkeleton'
+import { ClaimCardSkeleton } from '@/components/ui/skeleton/ClaimCardSkeleton'
+import { ChangeTaskClaimCardSkeleton } from '@/components/ui/skeleton/ChangeTaskClaimCardSkeleton'
 
 function toClaimStatus(raw: unknown, mode: 'pending' | 'history'): ManagerClaimStatus {
   const value = String(raw ?? '').toLowerCase()
@@ -161,9 +164,9 @@ function claimStatusLabelVi(status: ManagerClaimStatus | string): string {
 }
 
 function claimStatusTag(status: ManagerClaimStatus) {
-  if (status === 'approved') return <Tag variant="success" size="sm" className="text-[10px] h-4 px-2">Đã duyệt</Tag>
-  if (status === 'rejected') return <Tag variant="danger" size="sm" className="text-[10px] h-4 px-2">Từ chối</Tag>
-  return <Tag variant="warn" size="sm" className="text-[10px] h-4 px-2">Chờ duyệt</Tag>
+  if (status === 'approved') return <Tag variant="success" size="sm" className="text-[12px] h-4 px-2">Đã duyệt</Tag>
+  if (status === 'rejected') return <Tag variant="danger" size="sm" className="text-[12px] h-4 px-2">Từ chối</Tag>
+  return <Tag variant="warn" size="sm" className="text-[12px] h-4 px-2">Chờ duyệt</Tag>
 }
 
 function StaffPickerModal({
@@ -698,8 +701,8 @@ export default function ClaimsTab() {
     <div className="space-y-4">
       <Card className="p-6">
         <div className="mb-4">
-          <h2 className="text-[#003366] text-xl font-semibold">Danh sách yêu cầu</h2>
-          <p className="text-sm text-gray-500 mt-1">Yêu cầu của nhân viên</p>
+          <h2 className="text-primary text-sm-title-desktop font-semibold">Danh sách yêu cầu</h2>
+          <p className="text-sm-body-desktop text-soft-gray mt-1">Yêu cầu của nhân viên</p>
         </div>
 
         <div className="mb-4 flex flex-wrap gap-2">
@@ -728,25 +731,29 @@ export default function ClaimsTab() {
             Tất cả: gộp tối đa {CLAIMS_ALL_SOURCE_LIMIT} yêu cầu chờ và {CLAIMS_ALL_SOURCE_LIMIT} lịch sử, sắp xếp theo ngày tạo.
           </p>
         )}
+        { isLoadingDashboard ?
+          <DashboardClaimSkeleton/>
+          :
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <Card className="p-4 border-l-4 border-l-secondary bg-blue-50">
+              <p className="text-sm text-gray-600 mb-1">Tổng claim</p>
+              <p className="text-3xl font-bold text-primary">{totalClaims}</p>
+            </Card>
+            <Card className="p-4 border-l-4 border-l-[#F59E0B] bg-amber-50">
+              <p className="text-sm text-gray-600 mb-1">Chờ duyệt</p>
+              <p className="text-3xl font-bold text-amber-700">{dashboard.pending}</p>
+            </Card>
+            <Card className="p-4 border-l-4 border-l-[#2ECC71] bg-green-50">
+              <p className="text-sm text-gray-600 mb-1">Đã duyệt</p>
+              <p className="text-3xl font-bold text-green-700">{dashboard.approved}</p>
+            </Card>
+            <Card className="p-4 border-l-4 border-l-[#EF4444] bg-red-50">
+              <p className="text-sm text-gray-600 mb-1">Từ chối</p>
+              <p className="text-3xl font-bold text-red-700">{dashboard.rejected}</p>
+            </Card>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4 border-l-4 border-l-[#3366CC] bg-blue-50">
-            <p className="text-sm text-gray-600 mb-1">Tổng claim</p>
-            <p className="text-3xl font-bold text-[#003366]">{isLoadingDashboard ? '...' : totalClaims}</p>
-          </Card>
-          <Card className="p-4 border-l-4 border-l-[#F59E0B] bg-amber-50">
-            <p className="text-sm text-gray-600 mb-1">Chờ duyệt</p>
-            <p className="text-3xl font-bold text-amber-700">{isLoadingDashboard ? '...' : dashboard.pending}</p>
-          </Card>
-          <Card className="p-4 border-l-4 border-l-[#2ECC71] bg-green-50">
-            <p className="text-sm text-gray-600 mb-1">Đã duyệt</p>
-            <p className="text-3xl font-bold text-green-700">{isLoadingDashboard ? '...' : dashboard.approved}</p>
-          </Card>
-          <Card className="p-4 border-l-4 border-l-[#EF4444] bg-red-50">
-            <p className="text-sm text-gray-600 mb-1">Từ chối</p>
-            <p className="text-3xl font-bold text-red-700">{isLoadingDashboard ? '...' : dashboard.rejected}</p>
-          </Card>
-        </div>
+        }
 
         {error && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -754,11 +761,13 @@ export default function ClaimsTab() {
           </div>
         )}
 
-        {isLoading && (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải danh sách yêu cầu...
-          </div>
-        )}
+        {isLoading &&
+         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+           {Array.from({ length: 6 }).map((_, index) => (
+             <ClaimCardSkeleton key={index} />
+           ))}
+         </div>
+        }
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {!isLoading && claims.length === 0 && (
@@ -833,7 +842,7 @@ export default function ClaimsTab() {
 
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-[#003366] text-xl font-semibold">Danh sách chuyển yêu cầu</h3>
+          <h3 className="text-primary text-sm-title-desktop font-semibold">Danh sách chuyển yêu cầu</h3>
         </div>
 
         {changeTaskError && (
@@ -843,10 +852,13 @@ export default function ClaimsTab() {
         )}
 
         {changeTaskLoading && (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải danh sách chuyển yêu cầu...
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <ChangeTaskClaimCardSkeleton key={index} />
+            ))}
           </div>
         )}
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {!changeTaskLoading && changeTaskClaims.length === 0 && (
@@ -871,7 +883,7 @@ export default function ClaimsTab() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>Submit date</span>
+                    <span>Ngày đăng đơn</span>
                     <span>{formatDateTime(item.submitDate)}</span>
                   </div>
                   <div className="bg-[#F5F7FA] p-3 rounded-lg">

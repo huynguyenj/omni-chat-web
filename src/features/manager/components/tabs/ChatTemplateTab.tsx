@@ -64,7 +64,7 @@ export default function ChatTemplateTab() {
           <Input variant='gray' placeholder='Tìm kiếm theo mã code, nội dung...' icon={Search} onChange={(e) => debounce(e.target.value)}/>
         </div>
         { loading ?
-          <TableSkeleton numberOfColumn={3}/>
+          <TableSkeleton numberOfColumn={4}/>
           :
           <>
             { listChatTemplate && listChatTemplate.items.length > 0 ?

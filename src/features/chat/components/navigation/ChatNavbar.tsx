@@ -8,6 +8,7 @@ import { CgDanger } from 'react-icons/cg'
 import { AnimatePresence, motion } from 'motion/react'
 import { useNavigate } from 'react-router'
 import { PRIVATE_PATH } from '@/router/path'
+import { IoChatbubblesOutline } from 'react-icons/io5'
 
 export default function ChatNavbar() {
   const [tabChoice, setTabChoice] = useState(messageItem[0].name)
@@ -51,6 +52,10 @@ export default function ChatNavbar() {
               <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start font-normal' onClick={() => navigate(PRIVATE_PATH.CLAIM)}>
                 <CgDanger className='text-[#FB2C36] text-[1.2rem]'/>
                 Tạo claim
+              </Button>
+              <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start font-normal' onClick={() => navigate(PRIVATE_PATH.CHAT_TEMPLATE)}>
+                <IoChatbubblesOutline className='text-secondary text-[1.2rem]'/>
+                Mẫu chat
               </Button>
             </motion.div>
           }

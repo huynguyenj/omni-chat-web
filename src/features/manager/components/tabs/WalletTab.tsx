@@ -12,6 +12,7 @@ import Button from '@/components/ui/button/Button'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerWalletApi } from '../../api/wallet-api'
 import type { ManagerCustomerWalletItem, ManagerWalletInfo, ManagerWalletTransaction } from '../../types/wallet-type'
+import { CustomerWalletSkeleton } from '@/components/ui/skeleton/CustomerWalletSkeleton'
 
 const WALLET_PAGE_SIZE = 6
 
@@ -366,11 +367,8 @@ export default function WalletTab() {
         </div>
 
         {walletLoading && (
-          <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-2.5 text-sm text-blue-800">
-            Đang tải danh sách ví tiền...
-          </div>
+          <CustomerWalletSkeleton/>
         )}
-
         <div className="space-y-4">
           {!walletLoading && pagedCustomers.length === 0 && (
             <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-3 py-12 text-center text-sm text-gray-600">

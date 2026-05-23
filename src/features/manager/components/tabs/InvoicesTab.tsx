@@ -18,6 +18,7 @@ import Button from '@/components/ui/button/Button'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerInvoiceApi } from '../../api/invoice-api'
 import type { ManagerInvoiceItem } from '../../types/invoice-type'
+import { TableSkeleton } from '@/components/ui/skeleton/TableSkeleton'
 
 const INVOICE_PAGE_SIZE = 10
 type InvoiceStatusFilter = 'all' | 'Pending' | 'Completed' | 'PendingRefund' | 'Refunded'
@@ -348,7 +349,7 @@ export default function InvoicesTab() {
           <Card className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1">Tổng tiền</p>
+                <p className="text-[12px] font-semibold uppercase tracking-wide text-gray-500 mb-1">Tổng tiền</p>
                 <p className="text-2xl font-bold tabular-nums text-[#003366] sm:text-3xl">{formatKpiMoney(totalRevenue)}</p>
               </div>
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
@@ -359,7 +360,7 @@ export default function InvoicesTab() {
           <Card className="rounded-2xl border border-green-100 bg-green-50/80 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-green-800/80 mb-1">Đã thanh toán</p>
+                <p className="text-[12px] font-semibold uppercase tracking-wide text-green-800/80 mb-1">Đã thanh toán</p>
                 <p className="text-2xl font-bold tabular-nums text-[#15803d] sm:text-3xl">{formatKpiMoney(totalPaid)}</p>
               </div>
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#22c55e] shadow-sm">
@@ -370,7 +371,7 @@ export default function InvoicesTab() {
           <Card className="rounded-2xl border border-amber-100 bg-amber-50/80 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900/70 mb-1">Chờ thanh toán</p>
+                <p className="text-[12px] font-semibold uppercase tracking-wide text-amber-900/70 mb-1">Chờ thanh toán</p>
                 <p className="text-2xl font-bold tabular-nums text-[#b45309] sm:text-3xl">{formatKpiMoney(totalPending)}</p>
               </div>
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-amber-500 shadow-sm">
@@ -381,7 +382,7 @@ export default function InvoicesTab() {
           <Card className="rounded-2xl border border-red-100 bg-red-50/80 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-red-900/70 mb-1">Quá hạn</p>
+                <p className="text-[12px] font-semibold uppercase tracking-wide text-red-900/70 mb-1">Quá hạn</p>
                 <p className="text-2xl font-bold tabular-nums text-[#b91c1c] sm:text-3xl">{formatKpiMoney(totalOverdue)}</p>
               </div>
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-red-500 shadow-sm">
@@ -392,7 +393,7 @@ export default function InvoicesTab() {
           <Card className="rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#1e40af]/80 mb-1">Đã hoàn tiền</p>
+                <p className="text-[12px] font-semibold uppercase tracking-wide text-[#1e40af]/80 mb-1">Đã hoàn tiền</p>
                 <p className="text-2xl font-bold tabular-nums text-[#1d4ed8] sm:text-3xl">{formatKpiMoney(totalRefunded)}</p>
               </div>
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#3366CC] shadow-sm">
@@ -437,8 +438,8 @@ export default function InvoicesTab() {
 
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold text-[#003366]">Danh sách chi tiết hóa đơn</h2>
-            <p className="mt-1 text-sm text-gray-500">Quản lý hóa đơn tổng hợp đơn hàng cho khách hàng</p>
+            <h2 className="text-sm-title-desktop font-semibold text-primary">Danh sách chi tiết hóa đơn</h2>
+            <p className="mt-1 text-sm-body-desktop text-soft-gray">Quản lý hóa đơn tổng hợp đơn hàng cho khách hàng</p>
           </div>
 
           <div className="flex w-full flex-col gap-2 rounded-xl border border-dashed border-[#3366CC]/40 bg-[#EAF3FF]/40 p-3 sm:flex-row sm:flex-wrap sm:items-end lg:w-auto lg:shrink-0">
@@ -479,97 +480,92 @@ export default function InvoicesTab() {
               ) : (
                 <Play className="mr-2 h-4 w-4" />
               )}
-            Giả lập
+            Tạo thanh toán
             </Button>
           </div>
         </div>
-
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="w-full min-w-[1040px] border-collapse font-sans text-sm">
-            <thead>
-              <tr className="bg-secondary">
-                <th className="w-14 border border-gray-200 px-2 py-2 text-center font-semibold text-white">STT</th>
-                <th className="min-w-[140px] border border-gray-200 p-0 align-middle">
-                  <InvoiceSortHeader
-                    label="Tên khách hàng"
-                    columnKey="customerName"
-                    sortKey={sortKey}
-                    sortDir={sortDir}
-                    onSort={toggleSort}
-                  />
-                </th>
-                <th className="min-w-[180px] border border-gray-200 p-0 align-middle">
-                  <InvoiceSortHeader label="Thư điện tử" columnKey="email" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-                </th>
-                <th className="min-w-[120px] border border-gray-200 p-0 align-middle">
-                  <InvoiceSortHeader label="SĐT" columnKey="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-                </th>
-                <th className="min-w-[120px] border border-gray-200 p-0 align-middle">
-                  <InvoiceSortHeader
-                    label="Phương thức"
-                    columnKey="invoiceMethod"
-                    sortKey={sortKey}
-                    sortDir={sortDir}
-                    onSort={toggleSort}
-                  />
-                </th>
-                <th className="min-w-[110px] border border-gray-200 p-0 align-middle">
-                  <InvoiceSortHeader
-                    label="Bắt đầu"
-                    columnKey="startedDate"
-                    sortKey={sortKey}
-                    sortDir={sortDir}
-                    onSort={toggleSort}
-                  />
-                </th>
-                <th className="min-w-[110px] border border-gray-200 p-0 align-middle">
-                  <InvoiceSortHeader
-                    label="Kết thúc"
-                    columnKey="endedDate"
-                    sortKey={sortKey}
-                    sortDir={sortDir}
-                    onSort={toggleSort}
-                  />
-                </th>
-                <th className="min-w-[130px] border border-gray-200 p-0 align-middle">
-                  <InvoiceSortHeader
-                    label="Tổng hóa đơn"
-                    columnKey="total"
-                    sortKey={sortKey}
-                    sortDir={sortDir}
-                    onSort={toggleSort}
-                  />
-                </th>
-                <th className="min-w-[130px] border border-gray-200 p-0 align-middle">
-                  <InvoiceSortHeader
-                    label="Trạng thái"
-                    columnKey="status"
-                    sortKey={sortKey}
-                    sortDir={sortDir}
-                    onSort={toggleSort}
-                  />
-                </th>
-                <th className="min-w-[110px] border border-gray-200 px-2 py-2 text-center font-semibold text-white">
-                  Xuất đơn                
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoiceLoading && (
-                <tr>
-                  <td colSpan={10} className="border border-gray-200 bg-blue-50/50 px-3 py-10 text-center text-blue-700">
-                    Đang tải danh sách hóa đơn...
-                  </td>
+        { invoiceLoading ?
+          <TableSkeleton numberOfColumn={10}/>
+          :
+          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+            <table className="w-full min-w-[1040px] border-collapse font-sans text-sm">
+              <thead>
+                <tr className="bg-secondary">
+                  <th className="w-14 border border-gray-200 px-2 py-2 text-center font-semibold text-white">STT</th>
+                  <th className="min-w-[140px] border border-gray-200 p-0 align-middle">
+                    <InvoiceSortHeader
+                      label="Tên khách hàng"
+                      columnKey="customerName"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                      onSort={toggleSort}
+                    />
+                  </th>
+                  <th className="min-w-[180px] border border-gray-200 p-0 align-middle">
+                    <InvoiceSortHeader label="Email" columnKey="email" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  </th>
+                  <th className="min-w-[120px] border border-gray-200 p-0 align-middle">
+                    <InvoiceSortHeader label="SĐT" columnKey="phone" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  </th>
+                  <th className="min-w-[120px] border border-gray-200 p-0 align-middle">
+                    <InvoiceSortHeader
+                      label="Phương thức"
+                      columnKey="invoiceMethod"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                      onSort={toggleSort}
+                    />
+                  </th>
+                  <th className="min-w-[110px] border border-gray-200 p-0 align-middle">
+                    <InvoiceSortHeader
+                      label="Bắt đầu"
+                      columnKey="startedDate"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                      onSort={toggleSort}
+                    />
+                  </th>
+                  <th className="min-w-[110px] border border-gray-200 p-0 align-middle">
+                    <InvoiceSortHeader
+                      label="Kết thúc"
+                      columnKey="endedDate"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                      onSort={toggleSort}
+                    />
+                  </th>
+                  <th className="min-w-[130px] border border-gray-200 p-0 align-middle">
+                    <InvoiceSortHeader
+                      label="Tổng hóa đơn"
+                      columnKey="total"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                      onSort={toggleSort}
+                    />
+                  </th>
+                  <th className="min-w-[130px] border border-gray-200 p-0 align-middle">
+                    <InvoiceSortHeader
+                      label="Trạng thái"
+                      columnKey="status"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                      onSort={toggleSort}
+                    />
+                  </th>
+                  <th className="min-w-[110px] border border-gray-200 px-2 py-2 text-center font-semibold text-white">
+                  Xuất đơn
+                  </th>
                 </tr>
-              )}
-              {!invoiceLoading && visibleInvoices.length === 0 && (
-                <tr>
-                  <td colSpan={10} className="border border-gray-200 bg-gray-50 px-3 py-10 text-center text-gray-600">
+              </thead>
+              <tbody>
+                {!invoiceLoading && visibleInvoices.length === 0 && (
+                  <tr>
+                    <td colSpan={10} className="border border-gray-200 bg-gray-50 px-3 py-10 text-center text-gray-600">
                     Chưa có dữ liệu hóa đơn.
-                  </td>
-                </tr>
-              )}
-              {!invoiceLoading &&
+                    </td>
+                  </tr>
+                )}
+                {!invoiceLoading &&
                 pagedInvoices.map((invoice, index) => {
                   const visual = invoiceStatusVisual(invoice.invoiceStatus)
                   const stt = (invoicePage - 1) * INVOICE_PAGE_SIZE + index + 1
@@ -607,9 +603,11 @@ export default function InvoicesTab() {
                     </tr>
                   )
                 })}
-            </tbody>
-          </table>
-        </div>
+              </tbody>
+            </table>
+          </div>
+
+        }
 
         <div className="mt-8 space-y-4">
           <p className="text-center text-sm font-medium text-gray-600">

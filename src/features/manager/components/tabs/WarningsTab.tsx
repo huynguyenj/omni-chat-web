@@ -12,6 +12,7 @@ import {
   warningSeverityFromType,
   warningTypeLabelVi
 } from '../../types/warning-type'
+import { WarningCardSkeleton } from '@/components/ui/skeleton/WarningCardSkeleton'
 
 /** Bộ lọc danh sách (mức độ lọc client vì API chưa có warningType). */
 type WarningListFilter = 'all' | 'reviewed' | 'unreviewed' | 'high' | 'medium'
@@ -121,8 +122,8 @@ export default function WarningsTab() {
     <div className="space-y-4">
       <Card className="p-6">
         <div className="mb-6">
-          <h2 className="text-[#003366] text-xl font-semibold">Cảnh báo hội thoại</h2>
-          <p className="text-sm text-gray-500 mt-1">Giám sát các cuộc hội thoại có vấn đề</p>
+          <h2 className="text-primary text-sm-title-desktop font-semibold">Cảnh báo hội thoại</h2>
+          <p className="text-sm-body-desktop text-soft-gray mt-1">Giám sát các cuộc hội thoại có vấn đề</p>
         </div>
 
         <div className="mb-4 flex flex-wrap gap-2">
@@ -161,10 +162,13 @@ export default function WarningsTab() {
         )}
 
         {isLoading && (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải danh sách cảnh báo...
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <WarningCardSkeleton key={index} />
+            ))}
           </div>
         )}
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {!isLoading && warnings.length === 0 && (
@@ -207,7 +211,7 @@ export default function WarningsTab() {
                   </div>
 
                   <div className="flex flex-wrap gap-2 items-center">
-                    <Tag variant="warn" size="sm" className="text-[10px] h-4 px-2">
+                    <Tag variant="warn" size="sm" className="text-[12px] h-4 px-2">
                       <Clock className="h-3 w-3 mr-1 inline" />
                       {warning.createAt ? new Date(warning.createAt).toLocaleString('vi-VN') : '-'}
                     </Tag>
@@ -217,7 +221,7 @@ export default function WarningsTab() {
                     <Tag
                       variant={warning.isReviewed ? 'success' : 'danger'}
                       size="sm"
-                      className={`h-5 px-2 text-[10px] font-semibold ${
+                      className={`h-5 px-2 text-[12px] font-semibold ${
                         warning.isReviewed
                           ? 'bg-green-100 text-green-800 border border-green-200'
                           : 'bg-red-100 text-red-800 border border-red-200 animate-pulse'

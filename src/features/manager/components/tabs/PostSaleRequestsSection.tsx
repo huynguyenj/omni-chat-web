@@ -6,6 +6,7 @@ import Button from '@/components/ui/button/Button'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { PostSaleRequestApi } from '../../api/post-sale-request-api'
 import type { PostSaleRequestItem } from '../../types/post-sale-request-type'
+import { PostSaleRequestCardSkeleton } from '@/components/ui/skeleton/PostRequestSkeleton'
 
 function formatMoney(n: number | null | undefined) {
   if (n == null || Number.isNaN(Number(n))) return '—'
@@ -213,9 +214,10 @@ export default function PostSaleRequestsSection({
       )}
 
       {loading && (
-        <div className="mb-4 flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-          <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-          Đang tải yêu cầu...
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <PostSaleRequestCardSkeleton key={index} />
+          ))}
         </div>
       )}
 

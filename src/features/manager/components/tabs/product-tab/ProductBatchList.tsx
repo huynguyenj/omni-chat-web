@@ -58,7 +58,7 @@ export default function ProductBatchList({ productId }: { productId: string }) {
         <TableSkeleton numberOfColumn={5}/>
         :
         <>
-        
+
           { productBatchList && productBatchList.items.length > 0 ?
             <div>
               <table className='w-full border border-border-primary my-3 table-fixed min-w-250'>

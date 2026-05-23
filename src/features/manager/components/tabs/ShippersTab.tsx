@@ -11,6 +11,9 @@ import { getOrderStatusPill } from '../../const/order-status'
 import type { ManagerOrderItem, ManagerOrderLineItem } from '../../types/order-type'
 import type { ManagerShipperApiItem } from '../../types/shipper-type'
 import { ITEMS_PER_PAGE } from '../../data/manager-dashboard-data'
+import { DeliveryStatsSkeleton } from '@/components/ui/skeleton/DeliveryStatSkeleton'
+import { ShipperCardSkeleton } from '@/components/ui/skeleton/ShipperSkeleton'
+import { ShippingOrderCardSkeleton } from '@/components/ui/skeleton/ShipperOrderCardSkeleton'
 
 function shipperStatusTag(shipper: ManagerShipperApiItem) {
   const online = String(shipper.shipperStatus).toLowerCase() === 'online'
@@ -397,44 +400,49 @@ export default function ShippersTab() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Đội ngũ giao hàng đang hoạt động</p>
-              <p className="text-3xl font-bold text-[#003366]">{shipperLoading ? '…' : activeCount}</p>
-              <p className="text-[10px] text-gray-500 mt-1">Theo trang hiện tại</p>
+      { shipperLoading ?
+        <DeliveryStatsSkeleton/>
+        :
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm-body-desktop text-gray-600 mb-1">Đội ngũ giao hàng đang hoạt động</p>
+                <p className="text-3xl font-bold text-[#003366]">{activeCount}</p>
+                <p className="text-[12px] text-gray-500 mt-1">Theo trang hiện tại</p>
+              </div>
+              <Truck className="h-12 w-12 text-[#3366CC] opacity-50" />
             </div>
-            <Truck className="h-12 w-12 text-[#3366CC] opacity-50" />
-          </div>
-        </Card>
-        <Card className="p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Đơn đang giao</p>
-              <p className="text-3xl font-bold text-yellow-700">{shipperLoading ? '…' : shippingCount}</p>
-              <p className="text-[10px] text-gray-500 mt-1">Tổng theo đội ngũ giao hàng trên trang</p>
+          </Card>
+          <Card className="p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm-body-desktop text-gray-600 mb-1">Đơn đang giao</p>
+                <p className="text-3xl font-bold text-yellow-700">{shippingCount}</p>
+                <p className="text-[12px] text-gray-500 mt-1">Tổng theo đội ngũ giao hàng trên trang</p>
+              </div>
+              <Clock className="h-12 w-12 text-yellow-600 opacity-50" />
             </div>
-            <Clock className="h-12 w-12 text-yellow-600 opacity-50" />
-          </div>
-        </Card>
-        <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Đã giao</p>
-              <p className="text-3xl font-bold text-[#2ECC71]">{shipperLoading ? '…' : deliveredCount}</p>
-              <p className="text-[10px] text-gray-500 mt-1">Tổng theo đội ngũ giao hàng trên trang</p>
+          </Card>
+          <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm-body-desktop text-gray-600 mb-1">Đã giao</p>
+                <p className="text-3xl font-bold text-[#2ECC71]">{deliveredCount}</p>
+                <p className="text-[12px] text-gray-500 mt-1">Tổng theo đội ngũ giao hàng trên trang</p>
+              </div>
+              <CheckCircle className="h-12 w-12 text-[#2ECC71] opacity-50" />
             </div>
-            <CheckCircle className="h-12 w-12 text-[#2ECC71] opacity-50" />
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+
+      }
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
-            <h2 className="text-[#003366] text-xl font-semibold">Danh sách đội ngũ giao hàng</h2>
-            <p className="text-sm text-gray-500 mt-1">Quản lý đội ngũ giao hàng</p>
+            <h2 className="text-primary text-sm-title-desktop font-semibold">Danh sách đội ngũ giao hàng</h2>
+            <p className="text-sm-body-desktop text-soft-gray mt-1">Quản lý đội ngũ giao hàng</p>
           </div>
         </div>
 
@@ -445,8 +453,10 @@ export default function ShippersTab() {
         )}
 
         {shipperLoading && (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải danh sách đội ngũ giao hàng...
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <ShipperCardSkeleton key={index} />
+            ))}
           </div>
         )}
 
@@ -517,10 +527,11 @@ export default function ShippersTab() {
             {ordersError}
           </div>
         )}
-
         {ordersLoading && (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Đang tải đơn hàng chờ xử lý...
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <ShippingOrderCardSkeleton key={index} />
+            ))}
           </div>
         )}
 
