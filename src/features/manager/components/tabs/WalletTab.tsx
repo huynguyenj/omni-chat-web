@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'react-toastify'
 import {
   BadgeDollarSign,
   Clock3,
@@ -103,12 +104,95 @@ function formatMoney(amount: number) {
   return `${amount.toLocaleString('vi-VN')}đ`
 }
 
+function parseMoneyInput(raw: string): number {
+  const digits = raw.replace(/[^\d]/g, '')
+  if (!digits) return NaN
+  const n = Number(digits)
+  return Number.isFinite(n) ? n : NaN
+}
+
 function transactionTypeLabel(type: string) {
   const key = String(type).trim().toLowerCase()
   if (key === 'deposit') return 'Nạp tiền vào ví'
   if (key === 'credit') return 'Hoàn tiền lại ví'
   if (key === 'debit') return 'Ghi nợ'
   return type || 'Khác'
+}
+
+function WalletTopUpModal({
+  customer,
+  amountInput,
+  submitting,
+  onClose,
+  onAmountChange,
+  onSubmit
+}: {
+  customer: ManagerCustomerWalletItem
+  amountInput: string
+  submitting: boolean
+  onClose: () => void
+  onAmountChange: (value: string) => void
+  onSubmit: (amount: number) => void
+}) {
+
+  const handleSubmit = () => {
+    const amount = parseMoneyInput(amountInput)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Vui lòng nhập số tiền hợp lệ (lớn hơn 0).')
+      return
+    }
+    onSubmit(amount)
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[55] flex items-center justify-center bg-black/30 p-4"
+      onMouseDown={onClose}
+      role="presentation"
+    >
+      <div
+        className="w-full max-w-md rounded-xl bg-white shadow-lg"
+        onMouseDown={e => e.stopPropagation()}
+      >
+        <div className="border-b border-gray-100 px-5 py-4">
+          <h3 className="text-lg font-semibold text-[#003366]">Nạp tiền — {customer.customerName}</h3>
+        </div>
+        <div className="space-y-4 p-5">
+          <p className="text-sm text-gray-600">
+            Xác nhận khách trả tiền mặt. Số tiền sẽ được ghi nhận vào ví khách hàng.
+          </p>
+          <div>
+            <label htmlFor="wallet-topup-amount" className="mb-1.5 block text-sm font-medium text-[#003366]">
+              Số tiền (VNĐ)
+            </label>
+            <input
+              id="wallet-topup-amount"
+              type="text"
+              inputMode="numeric"
+              value={amountInput}
+              onChange={e => onAmountChange(e.target.value)}
+              placeholder="VD: 500000"
+              disabled={submitting}
+              className="h-11 w-full rounded-xl border border-gray-200 px-4 text-sm text-[#003366] outline-none transition-colors placeholder:text-gray-400 focus:border-[#3366CC] focus:ring-2 focus:ring-[#3366CC]/15 disabled:bg-gray-50"
+            />
+          </div>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" className="rounded-xl" onClick={onClose} disabled={submitting}>
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              className="rounded-xl bg-[#16a34a] font-semibold text-white hover:bg-[#15803d]"
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? 'Đang xử lý...' : 'Xác nhận nạp tiền'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function WalletTransactionModal({
@@ -209,6 +293,9 @@ export default function WalletTab() {
   const [historyWallet, setHistoryWallet] = useState<ManagerWalletInfo | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
+  const [topUpCustomer, setTopUpCustomer] = useState<ManagerCustomerWalletItem | null>(null)
+  const [topUpAmountInput, setTopUpAmountInput] = useState('')
+  const [topUpSubmitting, setTopUpSubmitting] = useState(false)
 
   const openTransactionHistory = async (customer: ManagerCustomerWalletItem) => {
     setHistoryCustomer(customer)
@@ -235,46 +322,87 @@ export default function WalletTab() {
     setHistoryLoading(false)
   }
 
-  useEffect(() => {
-    const fetchAllCustomers = async () => {
-      setWalletLoading(true)
-      setWalletError(null)
-      try {
-        const merged: ManagerCustomerWalletItem[] = []
-        let pageNumber = 1
-        let totalPages = 1
+  const loadCustomers = useCallback(async () => {
+    setWalletLoading(true)
+    setWalletError(null)
+    try {
+      const merged: ManagerCustomerWalletItem[] = []
+      let pageNumber = 1
+      let totalPages = 1
 
-        while (pageNumber <= totalPages) {
-          const response = await ManagerWalletApi.getCustomerWalletPaging({
-            pageNumber,
-            pageSize: 100
-          })
-          const body = response
-          if (body.is_success === false || body.data == null) {
-            throw new Error(body.message || 'Không thể tải danh sách ví khách hàng.')
-          }
-
-          const items = Array.isArray(body.data.items)
-            ? body.data.items.map((entry) => normalizeCustomerWallet(entry))
-            : []
-          merged.push(...items)
-          totalPages = Math.max(1, Number(body.data.meta?.total_pages ?? 1))
-          pageNumber += 1
+      while (pageNumber <= totalPages) {
+        const response = await ManagerWalletApi.getCustomerWalletPaging({
+          pageNumber,
+          pageSize: 100
+        })
+        const body = response
+        if (body.is_success === false || body.data == null) {
+          throw new Error(body.message || 'Không thể tải danh sách ví khách hàng.')
         }
 
-        const uniqueById = new Map<string, ManagerCustomerWalletItem>()
-        for (const item of merged) uniqueById.set(item.id, item)
-        setAllCustomers([...uniqueById.values()])
-      } catch {
-        setWalletError('Không thể tải danh sách ví khách hàng.')
-        setAllCustomers([])
-      } finally {
-        setWalletLoading(false)
+        const items = Array.isArray(body.data.items)
+          ? body.data.items.map((entry) => normalizeCustomerWallet(entry))
+          : []
+        merged.push(...items)
+        totalPages = Math.max(1, Number(body.data.meta?.total_pages ?? 1))
+        pageNumber += 1
       }
-    }
 
-    void fetchAllCustomers()
+      const uniqueById = new Map<string, ManagerCustomerWalletItem>()
+      for (const item of merged) uniqueById.set(item.id, item)
+      setAllCustomers([...uniqueById.values()])
+    } catch {
+      setWalletError('Không thể tải danh sách ví khách hàng.')
+      setAllCustomers([])
+    } finally {
+      setWalletLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void loadCustomers()
+  }, [loadCustomers])
+
+  const refreshCustomerWallet = async (customerId: string) => {
+    const body = await ManagerWalletApi.getWalletByCustomerId(customerId)
+    if (body.is_success === false || body.data == null) return
+    const wallet = normalizeWalletInfo(body.data)
+    setAllCustomers(prev =>
+      prev.map(c => (c.id === customerId ? { ...c, getWalletResponse: wallet } : c))
+    )
+  }
+
+  const openTopUp = (customer: ManagerCustomerWalletItem) => {
+    setTopUpAmountInput('')
+    setTopUpCustomer(customer)
+  }
+
+  const closeTopUp = () => {
+    if (topUpSubmitting) return
+    setTopUpCustomer(null)
+    setTopUpAmountInput('')
+  }
+
+  const handleTopUpSubmit = async (amount: number) => {
+    if (!topUpCustomer) return
+    setTopUpSubmitting(true)
+    try {
+      const body = await ManagerWalletApi.payCash({
+        customerId: topUpCustomer.id,
+        amount
+      })
+      if (body.is_success === false) {
+        throw new Error(body.message || 'Không thể nạp tiền.')
+      }
+      toast.success(`Đã nạp ${formatMoney(amount)} cho ${topUpCustomer.customerName}.`)
+      await refreshCustomerWallet(topUpCustomer.id)
+      setTopUpCustomer(null)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không thể nạp tiền. Vui lòng thử lại.')
+    } finally {
+      setTopUpSubmitting(false)
+    }
+  }
 
   const filteredCustomers = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
@@ -426,14 +554,22 @@ export default function WalletTab() {
                   </div>
                 </div>
 
-                <div className="flex shrink-0 items-stretch justify-center border-t border-gray-100 pt-4 lg:w-52 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                <div className="flex shrink-0 flex-col justify-center gap-2 border-t border-gray-100 pt-4 lg:w-56 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
                   <Button
                     type="button"
                     className="h-11 w-full rounded-xl border border-[#BFD8FF] bg-[#EAF3FF] font-semibold text-[#1E5BB8] hover:bg-[#DCEBFF]"
                     onClick={() => void openTransactionHistory(customer)}
                     disabled={historyLoading && historyCustomer?.id === customer.id}
                   >
-                      Lịch sử giao dịch
+                    Lịch sử giao dịch
+                  </Button>
+                  <Button
+                    type="button"
+                    className="h-11 w-full rounded-xl border border-emerald-200 bg-emerald-50 font-semibold text-emerald-800 hover:bg-emerald-100"
+                    onClick={() => openTopUp(customer)}
+                    disabled={topUpSubmitting && topUpCustomer?.id === customer.id}
+                  >
+                    Nạp tiền
                   </Button>
                 </div>
               </div>
@@ -448,6 +584,17 @@ export default function WalletTab() {
           <PaginationBar currentPage={walletPage} setPage={setWalletPage} totalPage={totalPages} />
         </div>
       </Card>
+
+      {topUpCustomer ? (
+        <WalletTopUpModal
+          customer={topUpCustomer}
+          amountInput={topUpAmountInput}
+          submitting={topUpSubmitting}
+          onClose={closeTopUp}
+          onAmountChange={setTopUpAmountInput}
+          onSubmit={amount => void handleTopUpSubmit(amount)}
+        />
+      ) : null}
 
       <WalletTransactionModal
         open={historyCustomer != null}

@@ -45,3 +45,9 @@ export type ManagerCustomerWalletQuery = {
   pageNumber?: number
   pageSize?: number
 }
+
+/** POST /api/v1/wallets/payment — xác nhận khách trả tiền mặt */
+export type ManagerWalletPaymentPayload = {
+  customerId: string
+  amount: number
+}

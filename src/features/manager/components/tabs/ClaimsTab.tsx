@@ -649,7 +649,7 @@ export default function ClaimsTab() {
       const totalPages = Number((response as { meta?: { total_pages?: number } })?.meta?.total_pages ?? 1)
       setChangeTaskTotalPages(Math.max(1, Number.isFinite(totalPages) ? totalPages : 1))
     } catch {
-      setChangeTaskError('Không thể tải danh sách chuyển yêu cầu.')
+      setChangeTaskError('Không thể tải khiếu nại.')
       setChangeTaskClaims([])
       setChangeTaskTotalPages(1)
     } finally {
@@ -842,7 +842,7 @@ export default function ClaimsTab() {
 
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-primary text-sm-title-desktop font-semibold">Danh sách chuyển yêu cầu</h3>
+          <h3 className="text-primary text-sm-title-desktop font-semibold">Danh sách khiếu nại</h3>
         </div>
 
         {changeTaskError && (
