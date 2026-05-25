@@ -25,3 +25,4 @@ dist-ssr
 
 # Local documentation (draft SRS — not committed)
 docs/ADMIN-DOC.md
+docs/MANAGER-DOC.md
