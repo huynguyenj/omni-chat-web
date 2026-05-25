@@ -1,9 +1,10 @@
-import { apiPublic } from '@/config/axios'
+import { apiPrivate, apiPublic } from '@/config/axios'
 import type { ApiResponseStructure } from '@/types/api-response'
 import type {
   ManagerCustomerWalletPagingResponse,
   ManagerCustomerWalletQuery,
-  ManagerWalletInfo
+  ManagerWalletInfo,
+  ManagerWalletPaymentPayload
 } from '../types/wallet-type'
 
 function resolveCustomerProfilePagingEndpoint() {
@@ -17,6 +18,12 @@ function resolveWalletByCustomerIdEndpoint(customerId: string) {
   const baseUrl = (apiPublic.defaults.baseURL ?? '').toLowerCase()
   if (baseUrl.includes('/api/v1')) return `/wallets/${id}`
   return `/api/v1/wallets/${id}`
+}
+
+function resolveWalletPaymentEndpoint() {
+  const baseUrl = (apiPrivate.defaults.baseURL ?? '').toLowerCase()
+  if (baseUrl.includes('/api/v1')) return '/wallets/payment'
+  return '/api/v1/wallets/payment'
 }
 
 export const ManagerWalletApi = {
@@ -39,5 +46,14 @@ export const ManagerWalletApi = {
     const endpoint = resolveWalletByCustomerIdEndpoint(customerId)
     const response = await apiPublic.get<ApiResponseStructure<ManagerWalletInfo>>(endpoint)
     return response as unknown as ApiResponseStructure<ManagerWalletInfo>
+  },
+
+  payCash: async (payload: ManagerWalletPaymentPayload): Promise<ApiResponseStructure<unknown>> => {
+    const endpoint = resolveWalletPaymentEndpoint()
+    const response = await apiPrivate.post<ApiResponseStructure<unknown>>(endpoint, {
+      customerId: payload.customerId,
+      amount: payload.amount
+    })
+    return response as unknown as ApiResponseStructure<unknown>
   }
 }
