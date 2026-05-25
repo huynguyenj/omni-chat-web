@@ -51,7 +51,7 @@ export default function ChatNavbar() {
               </Button>
               <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start font-normal' onClick={() => navigate(PRIVATE_PATH.CLAIM)}>
                 <CgDanger className='text-[#FB2C36] text-[1.2rem]'/>
-                Tạo claim
+                Tạo đơn
               </Button>
               <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start font-normal' onClick={() => navigate(PRIVATE_PATH.CHAT_TEMPLATE)}>
                 <IoChatbubblesOutline className='text-secondary text-[1.2rem]'/>
