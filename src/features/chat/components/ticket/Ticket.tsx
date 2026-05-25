@@ -32,8 +32,8 @@ export default function Ticket() {
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between mb-5">
-        <p className="text-sm-body-desktop">Lịch sử tickets</p>
-        <Tag className="border border-gray-300">{listTickets?.length} tickets</Tag>
+        <p className="text-sm-body-desktop">Lịch sử hỗ trợ</p>
+        <Tag className="border border-gray-300">{listTickets?.length} hỗ trợ</Tag>
       </div>
       { loading ?
         <CardSkeleton count={3}/>

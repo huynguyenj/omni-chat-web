@@ -82,7 +82,7 @@ export default function CustomerInfo({ customerName, avartarUrl }: CustomerInfoT
           </Button>
           <Button className={`text-[0.75rem] w-full md:w-fit mb-1 md:mb-0 px-4 py-1 gap-2 ${tab === 4 ? 'rounded-[18px] shadow-[0px_1px_0px_0px_#3366CC] bg-white text-secondary border' : 'bg-gray-200 border-none text-black'} hover:bg-[initial]`} onClick={() => setTab(4)}>
             <FaTicketAlt className='text-[1rem]'/>
-              Tickets
+              Hỗ trợ
           </Button>
         </div>
       </div>
