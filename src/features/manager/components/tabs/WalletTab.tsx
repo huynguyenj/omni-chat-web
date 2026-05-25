@@ -4,7 +4,6 @@ import {
   BadgeDollarSign,
   Clock3,
   Search,
-  SlidersHorizontal,
   Wallet,
   X
 } from 'lucide-react'
@@ -479,11 +478,11 @@ export default function WalletTab() {
               type="text"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Tìm theo tên, email, SĐT hoặc ID..."
+              placeholder="Tìm theo tên, email, hoặc SĐT..."
               className="h-11 w-full rounded-2xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-[#003366] outline-none transition-colors placeholder:text-gray-400 focus:border-[#3366CC] focus:ring-2 focus:ring-[#3366CC]/15"
             />
           </div>
-          <Button
+          {/* <Button
             type="button"
             variant="outline"
             disabled={walletLoading}
@@ -491,7 +490,7 @@ export default function WalletTab() {
           >
             <SlidersHorizontal className="h-4 w-4" />
             Lọc
-          </Button>
+          </Button> */}
         </div>
 
         {walletLoading && (
