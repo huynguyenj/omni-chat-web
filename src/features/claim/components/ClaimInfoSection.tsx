@@ -28,14 +28,14 @@ export default function ClaimInfoSection() {
     <div>
       <Button onClick={handleOpen}>
         <BsPlusLg/>
-        Tạo Claim mới
+        Tạo đơn mới
       </Button>
       <AnimatePresence>
         {isOpen &&
                     <PopupBasic title='Tạo claim mới' onClose={handleOpen} size='md'>
-                      <p className='text-soft-gray'>Tạo yêu cầu claim mới cho quản lí</p>
+                      <p className='text-soft-gray'>Tạo yêu cầu đơn mới cho quản lí</p>
                       <div className='mt-10 text-sm-body-desktop text-sm/9'>
-                        <label htmlFor="claim-select" className='font-medium'>Loại claim</label>
+                        <label htmlFor="claim-select" className='font-medium'>Loại đơn</label>
                         <Controller
                           control={control}
                           name='claimTypeId'
@@ -49,7 +49,7 @@ export default function ClaimInfoSection() {
                               }}
                             >
                               <SelectTrigger>
-                                <SelectValue placeholder='Chọn loại claim'/>
+                                <SelectValue placeholder='Chọn loại đơn'/>
                               </SelectTrigger>
                               <SelectContent>
                                 { claimCategories ?
@@ -101,7 +101,7 @@ export default function ClaimInfoSection() {
                                   Hủy
                             </Button>
                             <Button onClick={handleSubmit(onSubmit)}>
-                                  Gửi Claim
+                                  Gửi đơn
                             </Button>
                           </>
                         }
