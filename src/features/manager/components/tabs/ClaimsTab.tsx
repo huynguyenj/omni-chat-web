@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Loader2, Search, X } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
@@ -123,6 +123,11 @@ async function mapRawToChangeTaskClaimsWithIntents(rawItems: unknown[]): Promise
   return enrichChangeTaskClaimsWithStaffIntents(items)
 }
 
+function staffHasIntentType(staff: StaffDetailType, intentTypeId: string): boolean {
+  const intents = staff.staffIntentTypes ?? []
+  return intents.some((intent) => intent.id === intentTypeId)
+}
+
 function ChangeTaskStaffIntentChips({ intents }: { intents: StaffIntentType[] }) {
   if (!intents.length) {
     return <p className="text-xs text-gray-500">Chưa xác định loại chức năng cho nhân viên.</p>
@@ -180,8 +185,6 @@ function StaffPickerModal({
 }) {
   const pageSize = 10
   const [page, setPage] = useState(1)
-  const [searchDraft, setSearchDraft] = useState('')
-  const [search, setSearch] = useState('')
   const [items, setItems] = useState<StaffDetailType[]>([])
   const [intentTypes, setIntentTypes] = useState<ManagerIntentType[]>([])
   const [intentLoading, setIntentLoading] = useState(false)
@@ -196,16 +199,21 @@ function StaffPickerModal({
       setLoading(true)
       setError(null)
       try {
+        const intentFilterId = selectedIntentId !== 'all' ? selectedIntentId : undefined
         const res = await ManagerStaffApi.getStaffs({
           pageNumber: page,
           pageSize,
-          search: search.trim() || undefined,
+          departmentIds: intentFilterId ? [intentFilterId] : undefined,
           descending: false
         })
         if (res.is_success === false || res.data == null) {
           throw new Error(res.message || 'Không tải được danh sách nhân viên.')
         }
-        setItems(Array.isArray(res.data.items) ? res.data.items : [])
+        let list = Array.isArray(res.data.items) ? res.data.items : []
+        if (intentFilterId) {
+          list = list.filter((staff) => staffHasIntentType(staff, intentFilterId))
+        }
+        setItems(list)
         setTotalPages(Math.max(1, Number(res.data.meta?.total_pages ?? 1)))
       } catch {
         setError('Không thể tải danh sách nhân viên.')
@@ -216,7 +224,7 @@ function StaffPickerModal({
       }
     }
     void fetchStaffs()
-  }, [open, page, search])
+  }, [open, page, selectedIntentId])
 
   useEffect(() => {
     if (!open) return
@@ -240,15 +248,14 @@ function StaffPickerModal({
   useEffect(() => {
     if (!open) {
       setPage(1)
-      setSearchDraft('')
-      setSearch('')
       setSelectedIntentId('all')
     }
   }, [open])
 
-  const filteredItems = selectedIntentId === 'all'
-    ? items
-    : items.filter((staff) => Array.isArray(staff.staffIntentTypes) && staff.staffIntentTypes.some((intent) => intent.id === selectedIntentId))
+  const selectIntentFilter = (intentId: string) => {
+    setSelectedIntentId(intentId)
+    setPage(1)
+  }
 
   if (!open) return null
 
@@ -274,67 +281,36 @@ function StaffPickerModal({
         </div>
 
         <div className="px-5 py-3 border-b border-gray-100 shrink-0">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchDraft}
-                onChange={(e) => setSearchDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setSearch(searchDraft)
-                    setPage(1)
-                  }
-                }}
-                placeholder="Tìm theo tên, email, số điện thoại..."
-                className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-[#003366] outline-none focus:border-[#3366CC]"
-              />
-            </div>
-            <Button
+          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Lọc theo loại chức năng</p>
+          <div className="flex flex-wrap gap-2">
+            <button
               type="button"
-              size="sm"
-              className="shrink-0 h-10 px-4 bg-[#3366CC] hover:bg-[#2952A3] text-white"
-              onClick={() => {
-                setSearch(searchDraft)
-                setPage(1)
-              }}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                selectedIntentId === 'all'
+                  ? 'bg-[#3366CC] text-white border-[#3366CC]'
+                  : 'bg-white text-[#003366] border-gray-200 hover:border-[#3366CC]/40'
+              }`}
+              onClick={() => selectIntentFilter('all')}
             >
-              Tìm
-            </Button>
-          </div>
-          <div className="mt-3">
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Lọc theo loại chức năng</p>
-            <div className="flex flex-wrap gap-2">
+              Tất cả
+            </button>
+            {intentLoading && (
+              <span className="text-xs text-gray-500">Đang tải loại chức năng...</span>
+            )}
+            {!intentLoading && intentTypes.map((intent) => (
               <button
+                key={intent.id}
                 type="button"
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
-                  selectedIntentId === 'all'
+                  selectedIntentId === intent.id
                     ? 'bg-[#3366CC] text-white border-[#3366CC]'
                     : 'bg-white text-[#003366] border-gray-200 hover:border-[#3366CC]/40'
                 }`}
-                onClick={() => setSelectedIntentId('all')}
+                onClick={() => selectIntentFilter(intent.id)}
               >
-                Tất cả
+                {intent.typeName}
               </button>
-              {intentLoading && (
-                <span className="text-xs text-gray-500">Đang tải intent...</span>
-              )}
-              {!intentLoading && intentTypes.map((intent) => (
-                <button
-                  key={intent.id}
-                  type="button"
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
-                    selectedIntentId === intent.id
-                      ? 'bg-[#3366CC] text-white border-[#3366CC]'
-                      : 'bg-white text-[#003366] border-gray-200 hover:border-[#3366CC]/40'
-                  }`}
-                  onClick={() => setSelectedIntentId(intent.id)}
-                >
-                  {intent.typeName}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
 
@@ -351,12 +327,12 @@ function StaffPickerModal({
               Đang tải...
             </div>
           )}
-          {!loading && filteredItems.length === 0 && (
+          {!loading && items.length === 0 && (
             <p className="text-center text-sm text-gray-500 py-10">Không có nhân viên phù hợp.</p>
           )}
-          {!loading && filteredItems.length > 0 && (
+          {!loading && items.length > 0 && (
             <ul className="space-y-2">
-              {filteredItems.map((staff) => (
+              {items.map((staff) => (
                 <li key={staff.id}>
                   <button
                     type="button"
