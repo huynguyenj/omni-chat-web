@@ -556,7 +556,7 @@ export default function StaffTab() {
       name: staff.name,
       email: staff.email,
       phone: staff.phone,
-      role: staff.staffIntentTypes.length > 0 ? 'Staff' : 'Manager',
+      role: staff.roleName,
       department: staff.staffIntentTypes.length > 0 ? staff.staffIntentTypes.map((i) => i.intentTypeName).join(', ') : 'Chưa phân loại',
       status: staff.status.toLowerCase() === 'online' ? 'active' : 'inactive',
       joinDate: '-'
