@@ -330,7 +330,11 @@ export default function StaffTab() {
     const intentTypeIds =
       types.length > 0 && matchedStaff?.staffIntentTypes?.length
         ? types
-          .filter((it) => matchedStaff.staffIntentTypes.some((s) => s.intentTypeName === it.typeName))
+          .filter((it) =>
+            matchedStaff.staffIntentTypes.some(
+              (s) => s.id === it.id || s.intentTypeName === it.typeName
+            )
+          )
           .map((it) => it.id)
         : []
     setEditForm({
@@ -344,8 +348,8 @@ export default function StaffTab() {
 
   const fetchStaffs = async () => {
     try {
-      const response = await StaffApi.getStaffs(1, 50)
-      setApiStaffs(extractStaffItemsFromResponse(response))
+      const data = await StaffApi.getStaffs({ pageNumber: 1, pageSize: 100, descending: false })
+      setApiStaffs(extractStaffItemsFromResponse(data))
     } catch {
       // Failed to refresh list; existing data unchanged
     }
@@ -383,9 +387,9 @@ export default function StaffTab() {
     let cancelled = false
     const loadInitialStaffs = async () => {
       try {
-        const response = await StaffApi.getStaffs(1, 50)
+        const data = await StaffApi.getStaffs({ pageNumber: 1, pageSize: 100, descending: false })
         if (cancelled) return
-        setApiStaffs(extractStaffItemsFromResponse(response))
+        setApiStaffs(extractStaffItemsFromResponse(data))
       } catch {
         if (cancelled) return
         toast.error('Không tải được danh sách nhân viên.')
@@ -602,7 +606,13 @@ export default function StaffTab() {
               <div className="space-y-3 mb-4">
                 <div className="flex flex-wrap gap-2">
                   <span
-                    className={`text-xs sm:text-sm px-2.5 py-1 min-h-[26px] inline-flex items-center rounded-md text-white font-medium ${staff.role === 'Manager' ? 'bg-purple-500' : 'bg-[#3366CC]'}`}
+                    className={`text-xs sm:text-sm px-2.5 py-1 min-h-[26px] inline-flex items-center rounded-md text-white font-medium ${
+                      staff.role === 'Manager'
+                        ? 'bg-purple-500'
+                        : staff.role === 'Shipper'
+                          ? 'bg-amber-600'
+                          : 'bg-[#3366CC]'
+                    }`}
                   >
                     {staff.role}
                   </span>
@@ -615,7 +625,7 @@ export default function StaffTab() {
 
                 <div className="grid grid-cols-1 gap-2 p-3 bg-gray-50 rounded-lg text-sm sm:text-base">
                   <div className="flex flex-col gap-1">
-                    <span className="text-gray-500 uppercase font-semibold tracking-wide text-xs sm:text-sm">Phòng ban</span>
+                    <span className="text-gray-500 uppercase font-semibold tracking-wide text-xs sm:text-sm">Loại chức năng</span>
                     <span className="text-[#003366] font-semibold leading-snug">{staff.department}</span>
                   </div>
                 </div>
