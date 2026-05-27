@@ -16,7 +16,7 @@ export default function ClaimPage() {
         </Button>
         <div className="flex justify-between">
           <div>
-            <p className="text-m-title-desktop text-primary font-bold">Quản lí Claim</p>
+            <p className="text-m-title-desktop text-primary font-bold">Quản lí đơn</p>
             <p className="text-m-body-desktop">Tạo và theo dõi các yêu câu nghỉ phép của bạn</p>
           </div>
           <ClaimInfoSection/>

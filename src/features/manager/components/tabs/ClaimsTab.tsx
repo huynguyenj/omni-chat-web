@@ -845,7 +845,7 @@ export default function ClaimsTab() {
 
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-primary text-sm-title-desktop font-semibold">Danh sách khiếu nại</h3>
+          <h3 className="text-primary text-sm-title-desktop font-semibold">Danh sách yêu cầu đổi nhiệm vụ</h3>
         </div>
 
         {changeTaskError && (
