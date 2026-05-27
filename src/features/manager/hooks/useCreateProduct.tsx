@@ -6,20 +6,20 @@ import { z } from 'zod'
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 
 export const createProductSchema = z.object({
-  name: z.string({ error: 'Tên không được để trống' }),
+  name: z.string().min(1, { error: 'Tên không được để trống' }),
 
   productPackagingType: z.string({ error: 'Loại hộp không được để trống' }),
   productKind: z.string({ error: 'Loại sữa không được để trống' }),
 
-  volumeMl: z.string(),
+  volumeMl: z.string({ error: 'Dung tích không được để trống' }),
 
   description: z.string().optional(),
 
   brandId: z.string({ error: 'Hãng sữa không được để trống' }),
 
-  price: z.number().min(0),
+  price: z.number({ error: 'Giá không được để trống' }),
 
-  lifeSpan: z.number().min(0),
+  lifeSpan: z.number({ error: 'Hạn sử dụng không được để trống' }),
 
   image: z
     .any()

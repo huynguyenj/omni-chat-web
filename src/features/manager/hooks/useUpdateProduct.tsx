@@ -7,9 +7,9 @@ import { toast } from 'react-toastify'
 import z from 'zod'
 
 const updateProductSchema = z.object({
-  name: z.string({ error: 'Tên không được để trống' }),
+  name: z.string().min(1, { error: 'Tên không được để trống' }),
   description: z.string().optional(),
-  price: z.number().min(0)
+  price: z.number({ error: 'Giá không được để trống' })
 })
 
 const updateProductImageSchema = z.object({

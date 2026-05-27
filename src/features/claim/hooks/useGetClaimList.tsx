@@ -9,6 +9,7 @@ export default function useGetClaimList({ currentPage }: { currentPage: number }
   const staffId = useAuthStore((s) => s.staffId)
   const [listClaims, setListClaims] = useState<PaginationStructure<ClaimType>>()
   const { execute, loading } = useApiCall<PaginationStructure<ClaimType>>()
+  const [isRefresh, setIsRefresh] = useState(false)
   useEffect(() => {
     if (!staffId) {
       toast.error('Hãy đăng nhập để lấy danh sách đơn!')
@@ -24,7 +25,9 @@ export default function useGetClaimList({ currentPage }: { currentPage: number }
       if (error) toast.error(error)
     }
     fetchListClaims()
-  }, [currentPage])
-
-  return { listClaims, loading }
+  }, [currentPage, isRefresh])
+  const handleRefresh = () => {
+    setIsRefresh(prevState => !prevState)
+  }
+  return { listClaims, loading, handleRefresh }
 }
