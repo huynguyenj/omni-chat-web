@@ -7,9 +7,9 @@ import useApiCall from '@/config/useApiCall'
 import { toast } from 'react-toastify'
 
 const updateStaffInfoSchema = z.object({
-  name: z.string({ error: 'Tên không được để trống' }),
-  email: z.string({ error: 'Email không được để trống' }),
-  phone: z.string({ error: 'Số điện thoại không được để trống' })
+  name: z.string().min(1, { error: 'Tên không được để trống' }),
+  email: z.email({ error: 'Email không được để trống' }),
+  phone: z.string().min(1, { error: 'Số điện thoại không được để trống' }).max(11, { error: 'Số điện thoại tối đa 11 số' }).regex(/^\d+$/, { error: 'Số điện thoại không được chứa ký tự' })
 })
 
 type UpdateStaffInfoForm = z.infer<typeof updateStaffInfoSchema>

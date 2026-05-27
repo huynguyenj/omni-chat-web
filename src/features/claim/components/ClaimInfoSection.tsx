@@ -15,11 +15,15 @@ import Card from '@/components/ui/card/Card'
 import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 
-export default function ClaimInfoSection() {
+type ClaimInfoSectionProps = {
+   onRefresh: () => void
+}
+
+export default function ClaimInfoSection({ onRefresh }: ClaimInfoSectionProps) {
   const [isOpen, setIsOpen] = useState(false)
   const { claimCategories } = useGetAllClaimType()
   const [isChangeTaskSelected, setIsChangeTaskSelected] = useState(false)
-  const { control, handleSubmit, register, onSubmit, errors, loading, setConversationId, conversationId } = useCreateClaim()
+  const { control, handleSubmit, register, onSubmit, errors, loading, setConversationId, conversationId } = useCreateClaim({ onRefresh })
   const { listConversation, loading: loadingConversation, setCurrentPage, currentPage } = useGetListConversationByStaffId({ isChangeTaskTypeSelected: isChangeTaskSelected })
   const handleOpen = () => {
     setIsOpen((state) => !state)
