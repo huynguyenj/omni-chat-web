@@ -1,5 +1,4 @@
 import Button from '@/components/ui/button/Button'
-import ClaimInfoSection from '@/features/claim/components/ClaimInfoSection'
 import ListClaimSection from '@/features/claim/components/ListClaimSection'
 import { PRIVATE_PATH } from '@/router/path'
 import { FaArrowLeft } from 'react-icons/fa6'
@@ -14,13 +13,6 @@ export default function ClaimPage() {
           <FaArrowLeft/>
                 Quay lại trang chat
         </Button>
-        <div className="flex justify-between">
-          <div>
-            <p className="text-m-title-desktop text-primary font-bold">Quản lí đơn</p>
-            <p className="text-m-body-desktop">Tạo và theo dõi các yêu câu nghỉ phép của bạn</p>
-          </div>
-          <ClaimInfoSection/>
-        </div>
         <ListClaimSection/>
       </div>
     </div>

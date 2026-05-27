@@ -283,9 +283,9 @@ export default function ProductsTab() {
       <AnimatePresence>
         { isOpenCreateProduct &&
         <PopupBasic title='Thêm sản phẩm mới' onClose={handleOpenCreateProduct}>
-          <div className='text-sm-body-desktop'>
+          <div className='text-sm-body-desktop lg:w-150'>
             <p className='text-soft-gray'>Nhập thông tin sản phẩm</p>
-            <div className='flex items-center gap-2 my-5'>
+            <div className='flex flex-col sm:flex-row items-center gap-2 my-5'>
               <Input {...registerProduct('name')} variant='gray' label='Tên sản phẩm' placeholder='Sữa tưới Vinamlk...' error={errors.name?.message}/>
               <div className='w-full'>
                 <p className='text-primary font-medium'>Hãng</p>
@@ -312,47 +312,51 @@ export default function ProductsTab() {
               </div>
             </div>
             <div className='flex gap-2 items-center my-3'>
-              <p className='text-primary font-medium'>Loại sữa</p>
-              <Controller
-                control={control}
-                name='productKind'
-                render={({ field }) => (
-                  <AdvSelect
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Chọn loại sữa'/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='Sugar'>Sữa có đường</SelectItem>
-                      <SelectItem value='NoSugar'>Sữa không đường</SelectItem>
-                      <SelectItem value='Yogurt'>Sữa chua</SelectItem>
-                    </SelectContent>
-                  </AdvSelect>
-                )}
-              />
-              { errors.productKind?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.productKind?.message}</p> }
-              <p className='text-primary font-medium'>Loại hộp</p>
-              <Controller
-                control={control}
-                name='productPackagingType'
-                render={({ field }) => (
-                  <AdvSelect
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Chọn loại hộp'/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='Bottle'>Chai</SelectItem>
-                      <SelectItem value='Carton'>Hộp giấy</SelectItem>
-                    </SelectContent>
-                  </AdvSelect>
-                )}
-              />
-              { errors.productPackagingType?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.productPackagingType?.message}</p> }
+              <div className='w-full'>
+                <p className='text-primary font-medium'>Loại sữa</p>
+                <Controller
+                  control={control}
+                  name='productKind'
+                  render={({ field }) => (
+                    <AdvSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Chọn loại sữa'/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='Sugar'>Sữa có đường</SelectItem>
+                        <SelectItem value='NoSugar'>Sữa không đường</SelectItem>
+                        <SelectItem value='Yogurt'>Sữa chua</SelectItem>
+                      </SelectContent>
+                    </AdvSelect>
+                  )}
+                />
+                { errors.productKind?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.productKind?.message}</p> }
+              </div>
+              <div className='w-full'>
+                <p className='text-primary font-medium'>Loại hộp</p>
+                <Controller
+                  control={control}
+                  name='productPackagingType'
+                  render={({ field }) => (
+                    <AdvSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Chọn loại hộp'/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='Bottle'>Chai</SelectItem>
+                        <SelectItem value='Carton'>Hộp giấy</SelectItem>
+                      </SelectContent>
+                    </AdvSelect>
+                  )}
+                />
+                { errors.productPackagingType?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.productPackagingType?.message}</p> }
+              </div>
             </div>
             <p className='text-primary font-medium'>Dung tích</p>
             <Controller
@@ -375,8 +379,8 @@ export default function ProductsTab() {
                 </AdvSelect>
               )}
             />
+            { errors.volumeMl?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.volumeMl.message}</p> }
             <div className='flex items-center gap-2'>
-              { errors.productPackagingType?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.productPackagingType?.message}</p> }
               <Input type='number' {...registerProduct('lifeSpan', { valueAsNumber: true })} variant='gray' placeholder='14' label='Hạn sử dụng' error={errors.lifeSpan?.message}/>
               <Input {...registerProduct('price', { valueAsNumber: true })} type='number' variant='gray' label='Giá' placeholder='100000' error={errors.price?.message}/>
             </div>
