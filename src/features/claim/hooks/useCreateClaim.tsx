@@ -20,7 +20,7 @@ type UseCreateClaimProps = {
 }
 
 export default function useCreateClaim({ onRefresh }: UseCreateClaimProps) {
-  const { control, register, handleSubmit, formState: { errors } } = useForm<ClaimFormType>({ resolver: zodResolver(ClaimFormSchema) })
+  const { control, register, handleSubmit, formState: { errors }, reset } = useForm<ClaimFormType>({ resolver: zodResolver(ClaimFormSchema) })
   const staffId = useAuthStore((s) => s.staffId)
   const { execute, loading } = useApiCall<null>()
   const [conversationId, setConversationId] = useState('')
@@ -49,6 +49,7 @@ export default function useCreateClaim({ onRefresh }: UseCreateClaimProps) {
     else { 
       toast.success('Tạo đơn thành công')
       onRefresh()
+      reset()
     }
   }
   return { onSubmit, loading, register, handleSubmit, errors, control, setConversationId, conversationId }

@@ -28,7 +28,7 @@ export default function KeywordsTab() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
   const [isCreateKeywordOpen, setIsCreateKeywordOpen] = useState(false)
-  const { handleSubmit, loading: updateLoading, onSubmit, register, reset, setKeywordSelected, keywordSelected } = useUpdateKeyword({ onRefresh: setOnRefresh })
+  const { handleSubmit, loading: updateLoading, onSubmit, register, reset, setKeywordSelected, keywordSelected, errors: updateError } = useUpdateKeyword({ onRefresh: setOnRefresh })
   const { intentType } = useGetIntentType()
   const { handleDelete, loading: deleteLoading, setKeywordId } = useDeleteKeyword({ onRefresh: setOnRefresh, onCloseModalDelete: setIsAlertOpen })
   const { control, errors, handleSubmit: handleSubmitCreate, loading:createLoading, onSubmit:onSubmitCreate, register:registerCreate, reset:resetCreate } = useCreateKeyword({ onRefresh: setOnRefresh })
@@ -152,7 +152,7 @@ export default function KeywordsTab() {
                         </td>
                         <td className='py-2 px-5 w-1/6 border-r border-b-2 border-border-primary'>
                           { isEditOpen && keywordSelected?.id == keyword.id ?
-                            <Input {...register('weight', { valueAsNumber: true })} variant='gray' error={errors.weight?.message}/>
+                            <Input {...register('weight', { valueAsNumber: true })} variant='gray' error={updateError.weight?.message}/>
                             :
                             <p>{keyword.weight}</p>
                           }

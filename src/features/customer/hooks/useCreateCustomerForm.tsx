@@ -14,7 +14,7 @@ const customerFormSchema = z.object({
 type CustomerFormType = z.infer<typeof customerFormSchema>
 
 export default function useCreateCustomerForm({ activeCustomerId }: { activeCustomerId?: string }) {
-  const { formState: { errors }, handleSubmit, register } = useForm<CustomerFormType>({ resolver: zodResolver(customerFormSchema) })
+  const { formState: { errors }, handleSubmit, register, reset } = useForm<CustomerFormType>({ resolver: zodResolver(customerFormSchema) })
   const { execute, loading } = useApiCall<null>()
   const onSubmit = async (formData: CustomerFormType) => {
     if (!activeCustomerId) return
@@ -33,6 +33,7 @@ export default function useCreateCustomerForm({ activeCustomerId }: { activeCust
       return
     }
     toast.success('Gửi đơn thông tin thành công')
+    reset()
   }
   return { errors, register, onSubmit, loading, handleSubmit }
 }
