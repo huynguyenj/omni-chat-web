@@ -31,8 +31,8 @@ export const actionConfig: Record<string, ActionConfigType> = {
     label: 'Nhập kho',
     icon: PackagePlus
   },
-  Adjust: {
-    label: 'Xóa',
+  Remove: {
+    label: 'Xóa kho',
     icon: RotateCcw
   }
 }
