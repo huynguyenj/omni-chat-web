@@ -24,9 +24,15 @@ export default function useCreateClaim({ onRefresh }: UseCreateClaimProps) {
   const staffId = useAuthStore((s) => s.staffId)
   const { execute, loading } = useApiCall<null>()
   const [conversationId, setConversationId] = useState('')
+  const [isChangeTaskSelected, setIsChangeTaskSelected] = useState(false)
+  const [messageError, setMessageError] = useState('')
   const onSubmit = async (formData: ClaimFormType) => {
     if (!staffId) {
       toast.error('Hãy đăng nhập trước khi tạo đơn!')
+      return
+    }
+    if (isChangeTaskSelected && !conversationId) {
+      setMessageError('Hãy chọn cuộc trò chuyện')
       return
     }
     const finalForm: ClaimCreation = {
@@ -46,11 +52,11 @@ export default function useCreateClaim({ onRefresh }: UseCreateClaimProps) {
 
     const { error } = apiData
     if (error) toast.error(error)
-    else { 
+    else {
       toast.success('Tạo đơn thành công')
       onRefresh()
       reset()
     }
   }
-  return { onSubmit, loading, register, handleSubmit, errors, control, setConversationId, conversationId }
+  return { onSubmit, loading, register, handleSubmit, errors, control, setConversationId, conversationId, isChangeTaskSelected, setIsChangeTaskSelected, messageError }
 }
