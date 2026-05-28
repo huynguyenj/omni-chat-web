@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Loader2, Search, X } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
 import Tag from '@/components/ui/tag/Tag'
@@ -12,12 +12,12 @@ import type { StaffDetailType, StaffIntentType } from '../../types/staff-type'
 import type { ManagerIntentType } from '../../api/manager-staff-api'
 import type {
   ManagerChangeTaskClaimItem,
-  ManagerClaimDashboardData,
-  ManagerClaimItem,
+  // ManagerClaimDashboardData,
+  // ManagerClaimItem,
   ManagerClaimStatus
 } from '../../types/claim-type'
-import { DashboardClaimSkeleton } from '@/components/ui/skeleton/DashboardClaimSkeleton'
-import { ClaimCardSkeleton } from '@/components/ui/skeleton/ClaimCardSkeleton'
+// import { DashboardClaimSkeleton } from '@/components/ui/skeleton/DashboardClaimSkeleton'
+// import { ClaimCardSkeleton } from '@/components/ui/skeleton/ClaimCardSkeleton'
 import { ChangeTaskClaimCardSkeleton } from '@/components/ui/skeleton/ChangeTaskClaimCardSkeleton'
 
 function toClaimStatus(raw: unknown, mode: 'pending' | 'history'): ManagerClaimStatus {
@@ -27,54 +27,54 @@ function toClaimStatus(raw: unknown, mode: 'pending' | 'history'): ManagerClaimS
   return mode === 'pending' ? 'pending' : 'approved'
 }
 
-function normalizeClaim(raw: unknown, mode: 'pending' | 'history'): ManagerClaimItem {
-  const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-  const description = String(item.description ?? item.claimName ?? item.name ?? item.title ?? item.note ?? 'Không có mô tả')
-  return {
-    id: String(item.id ?? item.claimId ?? ''),
-    staff: String(item.staff ?? item.staffName ?? item.createdBy ?? description ?? 'Chưa rõ'),
-    type: String(item.type ?? item.claimType ?? item.category ?? 'Yêu cầu'),
-    submitDate: String(item.submitDate ?? item.createdAt ?? item.startDate ?? item.startAt ?? '-'),
-    description,
-    reason: String(item.reason ?? item.note ?? item.description ?? 'Không có lý do'),
-    status: toClaimStatus(item.status ?? item.claimStatus, mode)
-  }
-}
+// function normalizeClaim(raw: unknown, mode: 'pending' | 'history'): ManagerClaimItem {
+//   const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+//   const description = String(item.description ?? item.claimName ?? item.name ?? item.title ?? item.note ?? 'Không có mô tả')
+//   return {
+//     id: String(item.id ?? item.claimId ?? ''),
+//     staff: String(item.staff ?? item.staffName ?? item.createdBy ?? description ?? 'Chưa rõ'),
+//     type: String(item.type ?? item.claimType ?? item.category ?? 'Yêu cầu'),
+//     submitDate: String(item.submitDate ?? item.createdAt ?? item.startDate ?? item.startAt ?? '-'),
+//     description,
+//     reason: String(item.reason ?? item.note ?? item.description ?? 'Không có lý do'),
+//     status: toClaimStatus(item.status ?? item.claimStatus, mode)
+//   }
+// }
 
 /** Mỗi nguồn pending/history tối đa bản ghi khi gộp "Tất cả" (API không có endpoint all). */
-const CLAIMS_ALL_SOURCE_LIMIT = 200
+// const CLAIMS_ALL_SOURCE_LIMIT = 200
 
-type ClaimListMode = 'all' | 'pending' | 'history'
+// type ClaimListMode = 'all' | 'pending' | 'history'
 
-function claimSubmitTimeMs(c: ManagerClaimItem): number {
-  const t = new Date(c.submitDate).getTime()
-  return Number.isNaN(t) ? 0 : t
-}
+// function claimSubmitTimeMs(c: ManagerClaimItem): number {
+//   const t = new Date(c.submitDate).getTime()
+//   return Number.isNaN(t) ? 0 : t
+// }
 
 /** Gộp pending + history, sắp xếp mới nhất trước, phân trang client. */
-async function fetchMergedClaimsPageSlice(
-  pageIndex: number,
-  pageSize: number
-): Promise<{ items: ManagerClaimItem[]; total: number }> {
-  const [pRes, hRes] = await Promise.all([
-    ClaimApi.getPendingClaims(1, CLAIMS_ALL_SOURCE_LIMIT),
-    ClaimApi.getHistoryClaims(1, CLAIMS_ALL_SOURCE_LIMIT)
-  ])
-  const pendingItems = (Array.isArray(pRes?.items) ? pRes.items : []).map((item) => normalizeClaim(item, 'pending'))
-  const historyItems = (Array.isArray(hRes?.items) ? hRes.items : []).map((item) => normalizeClaim(item, 'history'))
-  const byId = new Map<string, ManagerClaimItem>()
-  for (const c of pendingItems) {
-    if (c.id) byId.set(c.id, c)
-  }
-  for (const c of historyItems) {
-    if (c.id) byId.set(c.id, c)
-  }
-  const merged = [...byId.values()].sort((a, b) => claimSubmitTimeMs(b) - claimSubmitTimeMs(a))
-  const total = merged.length
-  const start = (pageIndex - 1) * pageSize
-  const items = merged.slice(start, start + pageSize)
-  return { items, total }
-}
+// async function fetchMergedClaimsPageSlice(
+//   pageIndex: number,
+//   pageSize: number
+// ): Promise<{ items: ManagerClaimItem[]; total: number }> {
+//   const [pRes, hRes] = await Promise.all([
+//     ClaimApi.getPendingClaims(1, CLAIMS_ALL_SOURCE_LIMIT),
+//     ClaimApi.getHistoryClaims(1, CLAIMS_ALL_SOURCE_LIMIT)
+//   ])
+//   const pendingItems = (Array.isArray(pRes?.items) ? pRes.items : []).map((item) => normalizeClaim(item, 'pending'))
+//   const historyItems = (Array.isArray(hRes?.items) ? hRes.items : []).map((item) => normalizeClaim(item, 'history'))
+//   const byId = new Map<string, ManagerClaimItem>()
+//   for (const c of pendingItems) {
+//     if (c.id) byId.set(c.id, c)
+//   }
+//   for (const c of historyItems) {
+//     if (c.id) byId.set(c.id, c)
+//   }
+//   const merged = [...byId.values()].sort((a, b) => claimSubmitTimeMs(b) - claimSubmitTimeMs(a))
+//   const total = merged.length
+//   const start = (pageIndex - 1) * pageSize
+//   const items = merged.slice(start, start + pageSize)
+//   return { items, total }
+// }
 
 function parseStaffIntentTypesFromClaim(raw: unknown): StaffIntentType[] {
   if (!Array.isArray(raw)) return []
@@ -121,6 +121,11 @@ async function enrichChangeTaskClaimsWithStaffIntents(
 async function mapRawToChangeTaskClaimsWithIntents(rawItems: unknown[]): Promise<ManagerChangeTaskClaimItem[]> {
   const items = Array.isArray(rawItems) ? rawItems.map((item) => normalizeChangeTaskClaim(item)) : []
   return enrichChangeTaskClaimsWithStaffIntents(items)
+}
+
+function staffHasIntentType(staff: StaffDetailType, intentTypeId: string): boolean {
+  const intents = staff.staffIntentTypes ?? []
+  return intents.some((intent) => intent.id === intentTypeId)
 }
 
 function ChangeTaskStaffIntentChips({ intents }: { intents: StaffIntentType[] }) {
@@ -180,8 +185,6 @@ function StaffPickerModal({
 }) {
   const pageSize = 10
   const [page, setPage] = useState(1)
-  const [searchDraft, setSearchDraft] = useState('')
-  const [search, setSearch] = useState('')
   const [items, setItems] = useState<StaffDetailType[]>([])
   const [intentTypes, setIntentTypes] = useState<ManagerIntentType[]>([])
   const [intentLoading, setIntentLoading] = useState(false)
@@ -196,16 +199,21 @@ function StaffPickerModal({
       setLoading(true)
       setError(null)
       try {
+        const intentFilterId = selectedIntentId !== 'all' ? selectedIntentId : undefined
         const res = await ManagerStaffApi.getStaffs({
           pageNumber: page,
           pageSize,
-          search: search.trim() || undefined,
+          departmentIds: intentFilterId ? [intentFilterId] : undefined,
           descending: false
         })
         if (res.is_success === false || res.data == null) {
           throw new Error(res.message || 'Không tải được danh sách nhân viên.')
         }
-        setItems(Array.isArray(res.data.items) ? res.data.items : [])
+        let list = Array.isArray(res.data.items) ? res.data.items : []
+        if (intentFilterId) {
+          list = list.filter((staff) => staffHasIntentType(staff, intentFilterId))
+        }
+        setItems(list)
         setTotalPages(Math.max(1, Number(res.data.meta?.total_pages ?? 1)))
       } catch {
         setError('Không thể tải danh sách nhân viên.')
@@ -216,7 +224,7 @@ function StaffPickerModal({
       }
     }
     void fetchStaffs()
-  }, [open, page, search])
+  }, [open, page, selectedIntentId])
 
   useEffect(() => {
     if (!open) return
@@ -240,15 +248,14 @@ function StaffPickerModal({
   useEffect(() => {
     if (!open) {
       setPage(1)
-      setSearchDraft('')
-      setSearch('')
       setSelectedIntentId('all')
     }
   }, [open])
 
-  const filteredItems = selectedIntentId === 'all'
-    ? items
-    : items.filter((staff) => Array.isArray(staff.staffIntentTypes) && staff.staffIntentTypes.some((intent) => intent.id === selectedIntentId))
+  const selectIntentFilter = (intentId: string) => {
+    setSelectedIntentId(intentId)
+    setPage(1)
+  }
 
   if (!open) return null
 
@@ -261,82 +268,49 @@ function StaffPickerModal({
         <div className="flex items-start justify-between gap-3 border-b border-amber-700 bg-amber-600 px-5 py-4 shrink-0">
           <div>
             <h3 className="text-lg font-semibold text-white">Thay nhân viên</h3>
-            <p className="text-xs text-amber-50/90 mt-0.5">Chỉ hiển thị tên, số điện thoại và email</p>
+            <p className="text-xs text-amber-50/90 mt-0.5">Tên, số điện thoại, email và loại chức năng</p>
           </div>
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="sm"
-            className="h-9 w-9 shrink-0 p-0 border-white/50 text-white hover:bg-white/15 hover:text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-white/60 text-white transition-colors hover:bg-white/15"
             onClick={onClose}
             aria-label="Đóng"
           >
-            <X className="h-4 w-4" />
-          </Button>
+            <X className="h-4 w-4 stroke-[2.5]" aria-hidden />
+          </button>
         </div>
 
         <div className="px-5 py-3 border-b border-gray-100 shrink-0">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchDraft}
-                onChange={(e) => setSearchDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setSearch(searchDraft)
-                    setPage(1)
-                  }
-                }}
-                placeholder="Tìm theo tên, email, số điện thoại..."
-                className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-[#003366] outline-none focus:border-[#3366CC]"
-              />
-            </div>
-            <Button
+          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Lọc theo loại chức năng</p>
+          <div className="flex flex-wrap gap-2">
+            <button
               type="button"
-              size="sm"
-              className="shrink-0 h-10 px-4 bg-[#3366CC] hover:bg-[#2952A3] text-white"
-              onClick={() => {
-                setSearch(searchDraft)
-                setPage(1)
-              }}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                selectedIntentId === 'all'
+                  ? 'bg-[#3366CC] text-white border-[#3366CC]'
+                  : 'bg-white text-[#003366] border-gray-200 hover:border-[#3366CC]/40'
+              }`}
+              onClick={() => selectIntentFilter('all')}
             >
-              Tìm
-            </Button>
-          </div>
-          <div className="mt-3">
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Lọc theo loại chức năng</p>
-            <div className="flex flex-wrap gap-2">
+              Tất cả
+            </button>
+            {intentLoading && (
+              <span className="text-xs text-gray-500">Đang tải loại chức năng...</span>
+            )}
+            {!intentLoading && intentTypes.map((intent) => (
               <button
+                key={intent.id}
                 type="button"
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
-                  selectedIntentId === 'all'
+                  selectedIntentId === intent.id
                     ? 'bg-[#3366CC] text-white border-[#3366CC]'
                     : 'bg-white text-[#003366] border-gray-200 hover:border-[#3366CC]/40'
                 }`}
-                onClick={() => setSelectedIntentId('all')}
+                onClick={() => selectIntentFilter(intent.id)}
               >
-                Tất cả
+                {intent.typeName}
               </button>
-              {intentLoading && (
-                <span className="text-xs text-gray-500">Đang tải intent...</span>
-              )}
-              {!intentLoading && intentTypes.map((intent) => (
-                <button
-                  key={intent.id}
-                  type="button"
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
-                    selectedIntentId === intent.id
-                      ? 'bg-[#3366CC] text-white border-[#3366CC]'
-                      : 'bg-white text-[#003366] border-gray-200 hover:border-[#3366CC]/40'
-                  }`}
-                  onClick={() => setSelectedIntentId(intent.id)}
-                >
-                  {intent.typeName}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
 
@@ -353,12 +327,12 @@ function StaffPickerModal({
               Đang tải...
             </div>
           )}
-          {!loading && filteredItems.length === 0 && (
+          {!loading && items.length === 0 && (
             <p className="text-center text-sm text-gray-500 py-10">Không có nhân viên phù hợp.</p>
           )}
-          {!loading && filteredItems.length > 0 && (
+          {!loading && items.length > 0 && (
             <ul className="space-y-2">
-              {filteredItems.map((staff) => (
+              {items.map((staff) => (
                 <li key={staff.id}>
                   <button
                     type="button"
@@ -368,6 +342,8 @@ function StaffPickerModal({
                     <p className="font-semibold text-[#003366]">{staff.name || '—'}</p>
                     <p className="text-sm text-gray-600 mt-0.5">{staff.phone || '—'}</p>
                     <p className="text-sm text-gray-600 break-all">{staff.email || '—'}</p>
+                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-2">Loại chức năng</p>
+                    <ChangeTaskStaffIntentChips intents={staff.staffIntentTypes ?? []} />
                   </button>
                 </li>
               ))}
@@ -502,9 +478,12 @@ function ChangeTaskClaimDetailModal({
               <p className="bg-amber-600 px-4 py-2.5 text-xs font-semibold text-white uppercase tracking-wide">Thay nhân viên</p>
               <div className="space-y-2 bg-amber-50/50 p-4">
                 {pickedStaff ? (
-                  <p className="text-sm text-gray-800">
-                    {pickedStaff.name} · {pickedStaff.phone} · {pickedStaff.email}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-800">
+                      {pickedStaff.name} · {pickedStaff.phone} · {pickedStaff.email}
+                    </p>
+                    <ChangeTaskStaffIntentChips intents={pickedStaff.staffIntentTypes ?? []} />
+                  </div>
                 ) : (
                   <p className="text-xs text-gray-500">Chưa chọn nhân viên mới.</p>
                 )}
@@ -557,21 +536,21 @@ function ChangeTaskClaimDetailModal({
 }
 
 export default function ClaimsTab() {
-  const pageSize = 9
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [claims, setClaims] = useState<ManagerClaimItem[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<ClaimListMode>('pending')
-  const [processingClaimId, setProcessingClaimId] = useState<string | null>(null)
-  const [dashboard, setDashboard] = useState<ManagerClaimDashboardData>({
-    total: 0,
-    pending: 0,
-    approved: 0,
-    rejected: 0
-  })
-  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false)
+  // const pageSize = 9
+  // const [page, setPage] = useState(1)
+  // const [totalPages, setTotalPages] = useState(1)
+  // const [claims, setClaims] = useState<ManagerClaimItem[]>([])
+  // const [isLoading, setIsLoading] = useState(false)
+  // const [error, setError] = useState<string | null>(null)
+  // const [mode, setMode] = useState<ClaimListMode>('pending')
+  // const [processingClaimId, setProcessingClaimId] = useState<string | null>(null)
+  // const [dashboard, setDashboard] = useState<ManagerClaimDashboardData>({
+  //   total: 0,
+  //   pending: 0,
+  //   approved: 0,
+  //   rejected: 0
+  // })
+  // const [isLoadingDashboard, setIsLoadingDashboard] = useState(false)
   const [changeTaskPage, setChangeTaskPage] = useState(1)
   const [changeTaskTotalPages, setChangeTaskTotalPages] = useState(1)
   const [changeTaskClaims, setChangeTaskClaims] = useState<ManagerChangeTaskClaimItem[]>([])
@@ -579,61 +558,61 @@ export default function ClaimsTab() {
   const [changeTaskError, setChangeTaskError] = useState<string | null>(null)
   const [selectedChangeTaskClaim, setSelectedChangeTaskClaim] = useState<ManagerChangeTaskClaimItem | null>(null)
   const changeTaskPageSize = 10
-  const visibleClaims = claims.slice(0, pageSize)
-  const totalClaims = dashboard.pending + dashboard.approved + dashboard.rejected
+  // const visibleClaims = claims.slice(0, pageSize)
+  // const totalClaims = dashboard.pending + dashboard.approved + dashboard.rejected
 
-  const setClaimListMode = (next: ClaimListMode) => {
-    setMode(next)
-    setPage(1)
-  }
+  // const setClaimListMode = (next: ClaimListMode) => {
+  //   setMode(next)
+  //   setPage(1)
+  // }
 
-  const fetchClaims = useCallback(async (nextMode: ClaimListMode, nextPage: number) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      if (nextMode === 'all') {
-        const { items, total } = await fetchMergedClaimsPageSlice(nextPage, pageSize)
-        setClaims(items)
-        setTotalPages(Math.max(1, Math.ceil(total / pageSize)))
-      } else {
-        const response =
-          nextMode === 'pending'
-            ? await ClaimApi.getPendingClaims(nextPage, pageSize)
-            : await ClaimApi.getHistoryClaims(nextPage, pageSize)
-        const items = Array.isArray(response?.items)
-          ? response.items.map((item) => normalizeClaim(item, nextMode)).slice(0, pageSize)
-          : []
-        setClaims(items)
-        setTotalPages(Math.max(1, Math.ceil((response?.meta?.total_items ?? items.length) / pageSize)))
-      }
-    } catch {
-      setError('Không thể tải danh sách claim. Vui lòng thử lại.')
-      setClaims([])
-      setTotalPages(1)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [pageSize])
+  // const fetchClaims = useCallback(async (nextMode: ClaimListMode, nextPage: number) => {
+  //   setIsLoading(true)
+  //   setError(null)
+  //   try {
+  //     if (nextMode === 'all') {
+  //       const { items, total } = await fetchMergedClaimsPageSlice(nextPage, pageSize)
+  //       setClaims(items)
+  //       setTotalPages(Math.max(1, Math.ceil(total / pageSize)))
+  //     } else {
+  //       const response =
+  //         nextMode === 'pending'
+  //           ? await ClaimApi.getPendingClaims(nextPage, pageSize)
+  //           : await ClaimApi.getHistoryClaims(nextPage, pageSize)
+  //       const items = Array.isArray(response?.items)
+  //         ? response.items.map((item) => normalizeClaim(item, nextMode)).slice(0, pageSize)
+  //         : []
+  //       setClaims(items)
+  //       setTotalPages(Math.max(1, Math.ceil((response?.meta?.total_items ?? items.length) / pageSize)))
+  //     }
+  //   } catch {
+  //     setError('Không thể tải danh sách claim. Vui lòng thử lại.')
+  //     setClaims([])
+  //     setTotalPages(1)
+  //   } finally {
+  //     setIsLoading(false)
+  //   }
+  // }, [pageSize])
 
-  useEffect(() => {
-    void fetchClaims(mode, page)
-  }, [mode, page, fetchClaims])
+  // useEffect(() => {
+  //   void fetchClaims(mode, page)
+  // }, [mode, page, fetchClaims])
 
-  const fetchDashboard = async () => {
-    setIsLoadingDashboard(true)
-    try {
-      const data = await ClaimApi.getDashboard()
-      setDashboard(data)
-    } catch {
-      // Keep UI usable even if dashboard endpoint fails.
-    } finally {
-      setIsLoadingDashboard(false)
-    }
-  }
+  // const fetchDashboard = async () => {
+  //   setIsLoadingDashboard(true)
+  //   try {
+  //     const data = await ClaimApi.getDashboard()
+  //     setDashboard(data)
+  //   } catch {
+  //     // Keep UI usable even if dashboard endpoint fails.
+  //   } finally {
+  //     setIsLoadingDashboard(false)
+  //   }
+  // }
 
-  useEffect(() => {
-    void fetchDashboard()
-  }, [])
+  // useEffect(() => {
+  //   void fetchDashboard()
+  // }, [])
 
   const refreshChangeTaskClaims = useCallback(async () => {
     setChangeTaskLoading(true)
@@ -661,45 +640,45 @@ export default function ClaimsTab() {
     void refreshChangeTaskClaims()
   }, [refreshChangeTaskClaims])
 
-  const handleApproveClaim = async (id: string) => {
-    if (!id) return
-    setProcessingClaimId(id)
-    setError(null)
-    try {
-      await ClaimApi.approveClaim(id)
-      await fetchClaims(mode, page)
-      await fetchDashboard()
-      await refreshChangeTaskClaims()
-      toast.success('Đã duyệt claim thành công.')
-    } catch {
-      setError('Không thể duyệt claim. Vui lòng thử lại.')
-      toast.error('Duyệt claim thất bại. Vui lòng thử lại.')
-    } finally {
-      setProcessingClaimId(null)
-    }
-  }
+  // const handleApproveClaim = async (id: string) => {
+  //   if (!id) return
+  //   setProcessingClaimId(id)
+  //   setError(null)
+  //   try {
+  //     await ClaimApi.approveClaim(id)
+  //     await fetchClaims(mode, page)
+  //     await fetchDashboard()
+  //     await refreshChangeTaskClaims()
+  //     toast.success('Đã duyệt claim thành công.')
+  //   } catch {
+  //     setError('Không thể duyệt claim. Vui lòng thử lại.')
+  //     toast.error('Duyệt claim thất bại. Vui lòng thử lại.')
+  //   } finally {
+  //     setProcessingClaimId(null)
+  //   }
+  // }
 
-  const handleRejectClaim = async (id: string) => {
-    if (!id) return
-    setProcessingClaimId(id)
-    setError(null)
-    try {
-      await ClaimApi.rejectClaim(id)
-      await fetchClaims(mode, page)
-      await fetchDashboard()
-      await refreshChangeTaskClaims()
-      toast.success('Đã từ chối claim thành công.')
-    } catch {
-      setError('Không thể từ chối claim. Vui lòng thử lại.')
-      toast.error('Từ chối claim thất bại. Vui lòng thử lại.')
-    } finally {
-      setProcessingClaimId(null)
-    }
-  }
+  // const handleRejectClaim = async (id: string) => {
+  //   if (!id) return
+  //   setProcessingClaimId(id)
+  //   setError(null)
+  //   try {
+  //     await ClaimApi.rejectClaim(id)
+  //     await fetchClaims(mode, page)
+  //     await fetchDashboard()
+  //     await refreshChangeTaskClaims()
+  //     toast.success('Đã từ chối claim thành công.')
+  //   } catch {
+  //     setError('Không thể từ chối claim. Vui lòng thử lại.')
+  //     toast.error('Từ chối claim thất bại. Vui lòng thử lại.')
+  //   } finally {
+  //     setProcessingClaimId(null)
+  //   }
+  // }
 
   return (
     <div className="space-y-4">
-      <Card className="p-6">
+      {/* <Card className="p-6">
         <div className="mb-4">
           <h2 className="text-primary text-sm-title-desktop font-semibold">Danh sách yêu cầu</h2>
           <p className="text-sm-body-desktop text-soft-gray mt-1">Yêu cầu của nhân viên</p>
@@ -838,7 +817,7 @@ export default function ClaimsTab() {
             totalPage={totalPages}
           />
         </div>
-      </Card>
+      </Card> */}
 
       <Card className="p-6">
         <div className="mb-4">

@@ -9,12 +9,26 @@ function resolveStaffGetEndpoint() {
 }
 
 export type ManagerStaffListQuery = {
+  /** Intent type id(s) — backend nhận qua query `departmentIds`. */
   departmentIds?: string[]
   search?: string
   pageNumber?: number
   pageSize?: number
   sortBy?: string
   descending?: boolean
+}
+
+function serializeStaffListParams(inputParams: Record<string, unknown>): string {
+  const query = new URLSearchParams()
+  Object.entries(inputParams).forEach(([key, value]) => {
+    if (value == null) return
+    if (Array.isArray(value)) {
+      value.forEach((entry) => query.append(key, String(entry)))
+      return
+    }
+    query.append(key, String(value))
+  })
+  return query.toString()
 }
 
 export type ManagerIntentType = {
@@ -49,14 +63,17 @@ export const ManagerStaffApi = {
     if (departmentIds?.length) params.departmentIds = departmentIds
 
     const response = await apiPublic.get<ApiResponseStructure<PaginationStructure<StaffDetailType>>>(endpoint, {
-      params
+      params,
+      paramsSerializer: serializeStaffListParams
     })
     return response as unknown as ApiResponseStructure<PaginationStructure<StaffDetailType>>
   },
   getIntentTypes: async (): Promise<ApiResponseStructure<ManagerIntentType[]>> => {
     const endpoint = resolveIntentTypesEndpoint()
-    const response = await apiPublic.get<ApiResponseStructure<ManagerIntentType[]>>(endpoint)
-    return response as unknown as ApiResponseStructure<ManagerIntentType[]>
+    const response = (await apiPublic.get<ApiResponseStructure<ManagerIntentType[]>>(endpoint)) as unknown as ApiResponseStructure<
+      ManagerIntentType[]
+    >
+    return response
   },
 
   /**
