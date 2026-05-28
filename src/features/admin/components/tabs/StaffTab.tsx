@@ -61,6 +61,29 @@ function staffIntentPayloadFromIds(ids: string[]) {
   return ids.map((intentId) => ({ intentId }))
 }
 
+const EXCLUDED_ADD_ROLE_NAMES = new Set(['admin'])
+
+function isRoleExcludedFromAdd(roleName: string) {
+  return EXCLUDED_ADD_ROLE_NAMES.has(roleName.trim().toLowerCase())
+}
+
+function isShipperRoleName(roleName: string) {
+  return roleName.trim().toLowerCase() === 'shipper'
+}
+
+function isManagerRoleName(roleName: string) {
+  return roleName.trim().toLowerCase() === 'manager'
+}
+
+function isRoleWithoutIntent(roleName: string) {
+  const normalized = roleName.trim().toLowerCase()
+  return normalized === 'shipper' || normalized === 'manager'
+}
+
+function isStaffRoleName(roleName: string) {
+  return roleName.trim().toLowerCase() === 'staff'
+}
+
 const NAME_MIN_LEN = 2
 const NAME_MAX_LEN = 50
 const EMAIL_MIN_LEN = 5
@@ -310,6 +333,24 @@ export default function StaffTab() {
   const [addFormErrors, setAddFormErrors] = useState<StaffFormErrors>({})
   const [editFormErrors, setEditFormErrors] = useState<StaffFormErrors>({})
 
+  const addableRoles = useMemo(
+    () => roles.filter((r) => !isRoleExcludedFromAdd(r.name)),
+    [roles]
+  )
+
+  const selectedAddRole = useMemo(
+    () => addableRoles.find((r) => r.id === addForm.roleId),
+    [addableRoles, addForm.roleId]
+  )
+
+  const addFormRequiresIntent = Boolean(
+    selectedAddRole && !isRoleWithoutIntent(selectedAddRole.name)
+  )
+
+  const editFormRequiresIntent = Boolean(
+    selectedStaff && !isRoleWithoutIntent(selectedStaff.role)
+  )
+
   // Staff tab: list staff accounts and manage add/edit dialogs.
   const openEdit = async (staff: StaffAccount) => {
     setEditFormErrors({})
@@ -330,7 +371,11 @@ export default function StaffTab() {
     const intentTypeIds =
       types.length > 0 && matchedStaff?.staffIntentTypes?.length
         ? types
-          .filter((it) => matchedStaff.staffIntentTypes.some((s) => s.intentTypeName === it.typeName))
+          .filter((it) =>
+            matchedStaff.staffIntentTypes.some(
+              (s) => s.id === it.id || s.intentTypeName === it.typeName
+            )
+          )
           .map((it) => it.id)
         : []
     setEditForm({
@@ -344,8 +389,8 @@ export default function StaffTab() {
 
   const fetchStaffs = async () => {
     try {
-      const response = await StaffApi.getStaffs(1, 50)
-      setApiStaffs(extractStaffItemsFromResponse(response))
+      const data = await StaffApi.getStaffs({ pageNumber: 1, pageSize: 100, descending: false })
+      setApiStaffs(extractStaffItemsFromResponse(data))
     } catch {
       // Failed to refresh list; existing data unchanged
     }
@@ -383,9 +428,9 @@ export default function StaffTab() {
     let cancelled = false
     const loadInitialStaffs = async () => {
       try {
-        const response = await StaffApi.getStaffs(1, 50)
+        const data = await StaffApi.getStaffs({ pageNumber: 1, pageSize: 100, descending: false })
         if (cancelled) return
-        setApiStaffs(extractStaffItemsFromResponse(response))
+        setApiStaffs(extractStaffItemsFromResponse(data))
       } catch {
         if (cancelled) return
         toast.error('Không tải được danh sách nhân viên.')
@@ -472,13 +517,16 @@ export default function StaffTab() {
 
     if (!nameResult.ok || !emailResult.ok || !phoneResult.ok) return
 
+    const intentIds =
+      selectedAddRole && isRoleWithoutIntent(selectedAddRole.name) ? [] : addForm.intentTypeIds
+
     try {
       await StaffApi.createStaff({
         name: nameResult.value,
         email: emailResult.value,
         phone: phoneResult.value,
         roleId: addForm.roleId,
-        staffIntentTypes: staffIntentPayloadFromIds(addForm.intentTypeIds)
+        staffIntentTypes: staffIntentPayloadFromIds(intentIds)
       })
       setAddStaffDialogOpen(false)
       setAddForm({ name: '', email: '', phone: '', roleId: '', intentTypeIds: [] })
@@ -523,12 +571,14 @@ export default function StaffTab() {
 
     if (!nameResult.ok || !emailResult.ok || !phoneResult.ok) return
 
+    const intentIds = isRoleWithoutIntent(selectedStaff.role) ? [] : editForm.intentTypeIds
+
     try {
       await StaffApi.updateStaff(selectedStaff.id, {
         name: nameResult.value,
         email: emailResult.value,
         phone: phoneResult.value,
-        staffIntentTypes: staffIntentPayloadFromIds(editForm.intentTypeIds)
+        staffIntentTypes: staffIntentPayloadFromIds(intentIds)
       })
       setEditStaffDialogOpen(false)
       toast.success('Cập nhật thành công')
@@ -557,7 +607,11 @@ export default function StaffTab() {
       email: staff.email,
       phone: staff.phone,
       role: staff.roleName,
-      department: staff.staffIntentTypes.length > 0 ? staff.staffIntentTypes.map((i) => i.intentTypeName).join(', ') : 'Chưa phân loại',
+      department: isStaffRoleName(staff.roleName)
+        ? staff.staffIntentTypes.length > 0
+          ? staff.staffIntentTypes.map((i) => i.intentTypeName).join(', ')
+          : 'Chưa phân loại'
+        : '',
       status: staff.status.toLowerCase() === 'online' ? 'active' : 'inactive',
       joinDate: '-'
     }))
@@ -602,7 +656,13 @@ export default function StaffTab() {
               <div className="space-y-3 mb-4">
                 <div className="flex flex-wrap gap-2">
                   <span
-                    className={`text-xs sm:text-sm px-2.5 py-1 min-h-[26px] inline-flex items-center rounded-md text-white font-medium ${staff.role === 'Manager' ? 'bg-purple-500' : 'bg-[#3366CC]'}`}
+                    className={`text-xs sm:text-sm px-2.5 py-1 min-h-[26px] inline-flex items-center rounded-md text-white font-medium ${
+                      staff.role === 'Manager'
+                        ? 'bg-purple-500'
+                        : staff.role === 'Shipper'
+                          ? 'bg-amber-600'
+                          : 'bg-[#3366CC]'
+                    }`}
                   >
                     {staff.role}
                   </span>
@@ -613,12 +673,16 @@ export default function StaffTab() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 p-3 bg-gray-50 rounded-lg text-sm sm:text-base">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-gray-500 uppercase font-semibold tracking-wide text-xs sm:text-sm">Phòng ban</span>
-                    <span className="text-[#003366] font-semibold leading-snug">{staff.department}</span>
+                {isStaffRoleName(staff.role) && (
+                  <div className="grid grid-cols-1 gap-2 rounded-lg bg-gray-50 p-3 text-sm sm:text-base">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 sm:text-sm">
+                        Loại chức năng
+                      </span>
+                      <span className="font-semibold leading-snug text-[#003366]">{staff.department}</span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -663,7 +727,9 @@ export default function StaffTab() {
           <div className="relative mb-6 flex items-start justify-between gap-3 pr-14 sm:pr-16">
             <div className="min-w-0">
               <h3 className="text-[15px] font-bold uppercase leading-tight tracking-wide text-[#003366] sm:text-base">Thêm tài khoản mới</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-gray-500 sm:text-sm">Tạo tài khoản Staff hoặc Manager và gán loại chức năng phù hợp.</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-gray-500 sm:text-sm">
+                Tạo tài khoản Staff, Manager hoặc Shipper. Shipper không cần chọn loại chức năng.
+              </p>
             </div>
             <span
               className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-full bg-[#EBF1FF] text-[#3366CC] sm:h-12 sm:w-12"
@@ -739,14 +805,21 @@ export default function StaffTab() {
                     id="role"
                     value={addForm.roleId}
                     onChange={(e) => {
+                      const roleId = e.target.value
+                      const role = addableRoles.find((r) => r.id === roleId)
                       setAddFormErrors((prev) => ({ ...prev, role: undefined }))
-                      setAddForm((prev) => ({ ...prev, roleId: e.target.value }))
+                      setAddForm((prev) => ({
+                        ...prev,
+                        roleId,
+                        intentTypeIds:
+                          role && isRoleWithoutIntent(role.name) ? [] : prev.intentTypeIds
+                      }))
                     }}
                     disabled={rolesLoading}
                     className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm font-medium text-[#003366] shadow-sm focus:border-[#3366CC] focus:outline-none focus:ring-[3px] focus:ring-[#3366CC]/15 disabled:opacity-60 ${addFormErrors.role ? 'border-red-400 ring-1 ring-red-200' : 'border-gray-200'}`}
                   >
                     <option value="">-- Chọn vai trò --</option>
-                    {roles.map((r) => (
+                    {addableRoles.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.name}
                       </option>
@@ -754,15 +827,23 @@ export default function StaffTab() {
                   </select>
                 </AccountFormField>
               </div>
-              <aside className="flex min-h-0 min-w-0 flex-1 flex-col border-t border-gray-100 pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-                <IntentTypeChecklist
-                  heightMode="fill"
-                  intentTypes={intentTypes}
-                  loading={intentTypesLoading}
-                  selectedIds={addForm.intentTypeIds}
-                  onChange={(next) => setAddForm((prev) => ({ ...prev, intentTypeIds: next }))}
-                />
-              </aside>
+              {addFormRequiresIntent ? (
+                <aside className="flex min-h-0 min-w-0 flex-1 flex-col border-t border-gray-100 pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                  <IntentTypeChecklist
+                    heightMode="fill"
+                    intentTypes={intentTypes}
+                    loading={intentTypesLoading}
+                    selectedIds={addForm.intentTypeIds}
+                    onChange={(next) => setAddForm((prev) => ({ ...prev, intentTypeIds: next }))}
+                  />
+                </aside>
+              ) : selectedAddRole && isRoleWithoutIntent(selectedAddRole.name) ? (
+                <aside className="flex min-h-0 min-w-0 flex-1 flex-col justify-center border-t border-gray-100 pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                  <p className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
+                    Vai trò Shipper và Manager không cần gán loại chức năng.
+                  </p>
+                </aside>
+              ) : null}
             </div>
             <div className="flex gap-3 border-t border-gray-100 pt-5">
               <Button
@@ -859,15 +940,23 @@ export default function StaffTab() {
                   />
                 </AccountFormField>
               </div>
-              <aside className="flex min-h-0 min-w-0 flex-1 flex-col border-t border-gray-100 pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-                <IntentTypeChecklist
-                  heightMode="fill"
-                  intentTypes={intentTypes}
-                  loading={intentTypesLoading}
-                  selectedIds={editForm.intentTypeIds}
-                  onChange={(next) => setEditForm((prev) => ({ ...prev, intentTypeIds: next }))}
-                />
-              </aside>
+              {editFormRequiresIntent ? (
+                <aside className="flex min-h-0 min-w-0 flex-1 flex-col border-t border-gray-100 pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                  <IntentTypeChecklist
+                    heightMode="fill"
+                    intentTypes={intentTypes}
+                    loading={intentTypesLoading}
+                    selectedIds={editForm.intentTypeIds}
+                    onChange={(next) => setEditForm((prev) => ({ ...prev, intentTypeIds: next }))}
+                  />
+                </aside>
+              ) : (
+                <aside className="flex min-h-0 min-w-0 flex-1 flex-col justify-center border-t border-gray-100 pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                  <p className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
+                    Vai trò Shipper và Manager không cần gán loại chức năng.
+                  </p>
+                </aside>
+              )}
             </div>
             <div className="flex gap-3 border-t border-gray-100 pt-5">
               <Button
