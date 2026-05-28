@@ -7,7 +7,10 @@ import { type KeywordDetailType } from '../types/keyword-type'
 import { toast } from 'react-toastify'
 
 const updateKeywordInfoSchema = z.object({
-  weight: z.number()
+  weight: z.number( { error: 'Độ ưu tiên không được để trống' })
+    .refine((val) => !isNaN(val), {
+      error: 'Đô ưu tiên không được để trống'
+    })
 })
 
 type UpdateKeywordFormType = z.infer<typeof updateKeywordInfoSchema>
@@ -18,7 +21,7 @@ type UseUpdateKeywordProps = {
 
 export default function useUpdateKeyword({ onRefresh }: UseUpdateKeywordProps) {
   const { execute, loading } = useApiCall<null>()
-  const { handleSubmit, reset, register } = useForm<UpdateKeywordFormType>({ resolver: zodResolver(updateKeywordInfoSchema) })
+  const { handleSubmit, reset, register, formState: { errors } } = useForm<UpdateKeywordFormType>({ resolver: zodResolver(updateKeywordInfoSchema) })
   const [keywordSelected, setKeywordSelected] = useState<KeywordDetailType>()
 
   const onSubmit = async (formData: UpdateKeywordFormType) => {
@@ -36,5 +39,5 @@ export default function useUpdateKeyword({ onRefresh }: UseUpdateKeywordProps) {
     toast.success('Cập nhật keyword thành công')
     onRefresh((prev) => !prev)
   }
-  return { handleSubmit, register, onSubmit, setKeywordSelected, reset, loading, keywordSelected }
+  return { handleSubmit, register, onSubmit, setKeywordSelected, reset, loading, keywordSelected, errors }
 }
