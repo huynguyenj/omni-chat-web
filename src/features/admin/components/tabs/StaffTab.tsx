@@ -67,14 +67,6 @@ function isRoleExcludedFromAdd(roleName: string) {
   return EXCLUDED_ADD_ROLE_NAMES.has(roleName.trim().toLowerCase())
 }
 
-function isShipperRoleName(roleName: string) {
-  return roleName.trim().toLowerCase() === 'shipper'
-}
-
-function isManagerRoleName(roleName: string) {
-  return roleName.trim().toLowerCase() === 'manager'
-}
-
 function isRoleWithoutIntent(roleName: string) {
   const normalized = roleName.trim().toLowerCase()
   return normalized === 'shipper' || normalized === 'manager'
