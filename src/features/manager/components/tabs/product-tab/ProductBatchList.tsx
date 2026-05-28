@@ -110,102 +110,105 @@ export default function ProductBatchList({ productId }: { productId: string }) {
       }
       <AnimatePresence>
         { isListAuditOpen &&
-            <PopupBasic onClose={() => setIsListAuditOpen(false)} title='Lịch sử xuất nhập kho của lô'>
-              <div className='flex justify-between items-center mt-5'>
-                <div className='flex gap-2 items-center mb-3 w-[70%]'>
-                  <p className='text-nowrap'>Sắp xếp:</p>
-                  <AdvSelect
-                    value={sortBy}
-                    onValueChange={handleSortBy}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Sắp xếp theo'/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LIST_SORT_AUDIT_BY.map((sort, i) => (
-                        <SelectItem key={i} value={sort.value}>{sort.label}</SelectItem>
-                      )) }
-                    </SelectContent>
-                  </AdvSelect>
-                  <AdvSelect
-                    onValueChange={handleSortDescending}
-                    value={String(isDescending)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Thứ tự'/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='true'>{ sortBy !== 'createDate' ? 'Giảm dần' : 'Mới nhất' }</SelectItem>
-                      <SelectItem value='false'>{ sortBy !== 'createDate' ? 'Tăng dần' : 'Cũ nhất' }</SelectItem>
-                    </SelectContent>
-                  </AdvSelect>
+            <PopupBasic onClose={() => setIsListAuditOpen(false)} title='Lịch sử xuất nhập kho của lô' size='lg'>
+              <div>
+                <div className='flex justify-between items-center mt-5'>
+                  <div className='flex gap-2 items-center mb-3 w-[70%]'>
+                    <p className='text-nowrap'>Sắp xếp:</p>
+                    <AdvSelect
+                      value={sortBy}
+                      onValueChange={handleSortBy}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Sắp xếp theo'/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LIST_SORT_AUDIT_BY.map((sort, i) => (
+                          <SelectItem key={i} value={sort.value}>{sort.label}</SelectItem>
+                        )) }
+                      </SelectContent>
+                    </AdvSelect>
+                    <AdvSelect
+                      onValueChange={handleSortDescending}
+                      value={String(isDescending)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Thứ tự'/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='true'>{ sortBy !== 'createDate' ? 'Giảm dần' : 'Mới nhất' }</SelectItem>
+                        <SelectItem value='false'>{ sortBy !== 'createDate' ? 'Tăng dần' : 'Cũ nhất' }</SelectItem>
+                      </SelectContent>
+                    </AdvSelect>
+                  </div>
+                  <div className='flex gap-2 items-center mb-3 '>
+                    <AdvSelect
+                      value={filterAction}
+                      onValueChange={handleFilterAction}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Chức năng'/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={'all'}>Tất cả</SelectItem>
+                        {LIST_FILTER_ACTION.map((action, i) => (
+                          <SelectItem key={i} value={action.value}>{action.label}</SelectItem>
+                        )) }
+                      </SelectContent>
+                    </AdvSelect>
+                  </div>
                 </div>
-                <div className='flex gap-2 items-center mb-3 '>
-                  <AdvSelect
-                    value={filterAction}
-                    onValueChange={handleFilterAction}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Chức năng'/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={'all'}>Tất cả</SelectItem>
-                      {LIST_FILTER_ACTION.map((action, i) => (
-                        <SelectItem key={i} value={action.value}>{action.label}</SelectItem>
-                      )) }
-                    </SelectContent>
-                  </AdvSelect>
-                </div>
-              </div>
-              { loading ?
-                <TableSkeleton numberOfColumn={6} />
-                :
-                <>
-                  { listBatchAudit && listBatchAudit.items.length > 0 ?
-                    <div className='overflow-x-auto'>
-                      <table className='w-full border border-border-primary my-3 table-fixed min-w-230'>
-                        <thead className='bg-secondary'>
-                          <tr className='text-white'>
-                            <th className='py-2 text-start px-5 w-1/7'>STT</th>
-                            <th className='py-2 text-start px-5 w-1/4'>Nhân viên</th>
-                            <th className='py-2 text-start px-5 w-1/4'>Phương thức</th>
-                            <th className='py-2 text-start px-5 w-1/2'> Ngày thực hiện</th>
-                            <th className='py-2 text-start px-5 w-1/3'>Số lượng</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {listBatchAudit.items.map((audit, i) => (
-                            <tr key={audit.id}>
-                              <td className='py-2 px-5 w-1/3 border-r border-b-2 border-border-primary'>
-                                <p>{i+1}</p>
-                              </td>
-                              <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
-                                <p>{audit.staffName}</p>
-                              </td>
-                              <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
-                                <p>{actionConfig[audit.action].label}</p>
-                              </td>
-                              <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
-                                <p>{formatDate(audit.createDate)} - {formatTime(audit.createDate)}</p>
-                              </td>
-                              <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
-                                <p>{quantityText(audit.oldValue, audit.newValue)}</p>
-                              </td>
+                { loading ?
+                  <TableSkeleton numberOfColumn={6} />
+                  :
+                  <>
+                    { listBatchAudit && listBatchAudit.items.length > 0 ?
+                      <div className='overflow-x-auto'>
+                        <table className='w-full border border-border-primary my-3 table-fixed min-w-230'>
+                          <thead className='bg-secondary'>
+                            <tr className='text-white'>
+                              <th className='py-2 text-start px-5 w-1/7'>STT</th>
+                              <th className='py-2 text-start px-5 w-1/4'>Nhân viên</th>
+                              <th className='py-2 text-start px-5 w-1/4'>Phương thức</th>
+                              <th className='py-2 text-start px-5 w-1/2'> Ngày thực hiện</th>
+                              <th className='py-2 text-start px-5 w-1/3'>Số lượng</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <PaginationBar
-                        currentPage={currentPage}
-                        setPage={setCurrentPage}
-                        totalPage={listBatchAudit.meta.total_pages}
-                      />
-                    </div>
-                    :
-                    <NodataCard/>
-                  }
-                </>
-              }
+                          </thead>
+                          <tbody>
+                            {listBatchAudit.items.map((audit, i) => (
+                              <tr key={audit.id}>
+                                <td className='py-2 px-5 w-1/3 border-r border-b-2 border-border-primary'>
+                                  <p>{i+1}</p>
+                                </td>
+                                <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
+                                  <p>{audit.staffName}</p>
+                                </td>
+                                <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
+                                  <p>{actionConfig[audit.action].label}</p>
+                                </td>
+                                <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
+                                  <p>{formatDate(audit.createDate)} - {formatTime(audit.createDate)}</p>
+                                </td>
+                                <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
+                                  <p>{quantityText(audit.oldValue, audit.newValue)}</p>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <PaginationBar
+                          currentPage={currentPage}
+                          setPage={setCurrentPage}
+                          totalPage={listBatchAudit.meta.total_pages}
+                        />
+                      </div>
+                      :
+                      <NodataCard/>
+                    }
+                  </>
+                }
+
+              </div>
             </PopupBasic>
         }
       </AnimatePresence>

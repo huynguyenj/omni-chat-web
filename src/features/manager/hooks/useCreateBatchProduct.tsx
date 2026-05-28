@@ -38,6 +38,7 @@ export default function useCreateBatchProduct({ onRefresh }: { onRefresh: () => 
     }
     toast.success('Thêm lô sản phẩm thành công')
     onRefresh()
+    reset()
   }
   const handleAddBatch = (formData: BatchItemType) => {
     setListBatchItems(prev => [...prev, formData])

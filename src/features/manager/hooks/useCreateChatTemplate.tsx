@@ -16,7 +16,7 @@ type UseCreateChatTemplateProps = {
 }
 
 export default function useCreateChatTemplate({ onRefresh }: UseCreateChatTemplateProps) {
-  const { formState: { errors }, handleSubmit, register } = useForm<CreateChatTemplateType>({ resolver: zodResolver(chatTemplateSchema) })
+  const { formState: { errors }, handleSubmit, register, reset } = useForm<CreateChatTemplateType>({ resolver: zodResolver(chatTemplateSchema) })
   const { execute, loading } = useApiCall<null>()
   const onSubmit = async (formData: CreateChatTemplateType) => {
     const apiData = await execute({
@@ -31,6 +31,7 @@ export default function useCreateChatTemplate({ onRefresh }: UseCreateChatTempla
     }
     toast.success('Tạo từ mẫu thành công')
     onRefresh()
+    reset()
   }
   return { errors, loading, onSubmit, handleSubmit, register }
 }

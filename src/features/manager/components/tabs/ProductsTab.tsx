@@ -283,7 +283,7 @@ export default function ProductsTab() {
       <AnimatePresence>
         { isOpenCreateProduct &&
         <PopupBasic title='Thêm sản phẩm mới' onClose={handleOpenCreateProduct}>
-          <div className='text-sm-body-desktop lg:w-150'>
+          <div className='text-sm-body-desktop xl:w-130'>
             <p className='text-soft-gray'>Nhập thông tin sản phẩm</p>
             <div className='flex flex-col sm:flex-row items-center gap-2 my-5'>
               <Input {...registerProduct('name')} variant='gray' label='Tên sản phẩm' placeholder='Sữa tưới Vinamlk...' error={errors.name?.message}/>
@@ -449,12 +449,12 @@ export default function ProductsTab() {
       <AnimatePresence>
         { isOpenProductInfoEdit &&
           <PopupBasic title='Cập nhật thông tin sản phẩm' onClose={() => setIsOpenProductInfoEdit(false)}>
-            <div className='text-sm-body-desktop'>
+            <div className='text-sm-body-desktop lg:w-110'>
               <p className='text-soft-gray'>Cập nhật lại thông tin cơ bản của sản phẩm</p>
               <div className='flex flex-col gap-3 my-5'>
                 <Input {...registerProductInfoUpdate('name')} variant='gray' label='Tên sản phẩm' error={errorUpdate.name?.message}/>
                 <Input {...registerProductInfoUpdate('description')} variant='gray' label='Mô tả sản phẩm' placeholder='Mô tả sản phẩm'/>
-                <Input type='number' {...registerProductInfoUpdate('price', { valueAsNumber: true })} variant='gray' label='Giá sản phẩm'/>
+                <Input min={0} type='number' {...registerProductInfoUpdate('price', { valueAsNumber: true })} variant='gray' label='Giá sản phẩm' error={errorUpdate.price?.message}/>
               </div>
               <div className='flex gap-2 items-center my-3 w-full justify-center'>
                 { loading ?
