@@ -1,6 +1,5 @@
 import Alert from '@/components/ui/alert/Alert'
 import Button from '@/components/ui/button/Button'
-import Input from '@/components/ui/input/Input'
 import PopupBasic from '@/components/ui/popup/PopupBasic'
 import { AlertCircle } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
@@ -11,7 +10,7 @@ import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 
 export default function AutoOrderButton() {
   const [isOpen, setIsOpen] = useState(false)
-  const { errors, loading, register, handleSubmit, onSubmit } = useAutoCreateOrder()
+  const { loading, handleAutoOrder } = useAutoCreateOrder()
   const handleOpen = () => {
     setIsOpen((prev) => !prev)
   }
@@ -25,8 +24,7 @@ export default function AutoOrderButton() {
       <AnimatePresence>
         {isOpen &&
             <PopupBasic onClose={handleOpen} title='Tạo đơn tự động'>
-              <p className='text-sm-body-desktop mb-2 text-soft-gray'>Điền nội dung tin nhắn để tiến hành tạo đơn tự động</p>
-              <Input {...register('message')} variant='gray' label='Tin nhắn' placeholder='Tôi muốn đặt sữa Long Thành, 180ml...' error={errors.message?.message}/>
+              <p className='text-sm-body-desktop mb-2 text-soft-gray'>Tiến hành tạo đơn tự động</p>
               <Alert variant='danger' className='rounded-[10px] my-2'>
                 <div className='flex gap-2 items-center'>
                   <AlertCircle className='size-4'/>
@@ -34,9 +32,11 @@ export default function AutoOrderButton() {
                 </div>
               </Alert>
               { loading ?
-                <LoadingSpinner/>
+                <div className='flex items-center justify-center w-full'>
+                  <LoadingSpinner/>
+                </div>
                 :
-                <Button className='w-full mt-5' onClick={handleSubmit(onSubmit)}>
+                <Button className='w-full mt-5' onClick={handleAutoOrder}>
                         Tạo đơn
                 </Button>
               }

@@ -16,17 +16,15 @@ export default function useAutoCreateOrder() {
   const { execute, loading } = useApiCall<null>()
   const context = useContextValid(SelectionMessageContext)
   const { formState: { errors }, register, handleSubmit } = useForm<AutoOrderType>({ resolver: zodResolver(autoOrderSchema) })
-  const handleAutoOrder = async (message: string) => {
-    if (!context.customerId) return
-    const data: { customerId: string, message: string } = {
-      customerId: context.customerId,
-      message: message
-    }
+  const handleAutoOrder = async () => {
+    if (!context.conversationId) return
     const apiData = await execute({
       apiUrl: '/orders/auto-draft',
       method: 'post',
       type: 'private',
-      body: data
+      body: {
+        conversationId: context.conversationId
+      }
     })
     if (apiData.error) {
       toast.error(apiData.error)
@@ -35,24 +33,22 @@ export default function useAutoCreateOrder() {
     toast.success('Tự động tạo đơn thành công')
   }
 
-  const onSubmit = async (formData: AutoOrderType) => {
-    if (!context.customerId) return
-    const data: { customerId: string, message: string } = {
-      customerId: context.customerId,
-      message: formData.message
-    }
-    const apiData = await execute({
-      apiUrl: '/orders/auto-draft',
-      method: 'post',
-      type: 'private',
-      body: data
-    })
-    if (apiData.error) {
-      toast.error(apiData.error)
-      return
-    }
-    toast.success('Tự động tạo đơn thành công')
-  }
+  // const onSubmit = async () => {
+  //   if (!context.conversationId) return
+  //   const apiData = await execute({
+  //     apiUrl: '/orders/auto-draft',
+  //     method: 'post',
+  //     type: 'private',
+  //     body: {
+  //       conversationId: context.conversationId
+  //     }
+  //   })
+  //   if (apiData.error) {
+  //     toast.error(apiData.error)
+  //     return
+  //   }
+  //   toast.success('Tự động tạo đơn thành công')
+  // }
 
-  return { handleAutoOrder, loading, onSubmit, handleSubmit, errors, register }
+  return { handleAutoOrder, loading, handleSubmit, errors, register }
 }

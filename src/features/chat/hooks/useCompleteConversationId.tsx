@@ -2,10 +2,12 @@ import useApiCall from '@/config/useApiCall'
 import useContextValid from '@/hooks/useContextValid'
 import SelectionMessageContext from '../context/SelectionMessageProvider'
 import { toast } from 'react-toastify'
+import ChatLayoutFuncContext from '../context/ChatLayoutFuncProvider'
 
 export default function useCompleteConversationId() {
   const { execute, loading } = useApiCall<null>()
   const context = useContextValid(SelectionMessageContext)
+  const contextLayout = useContextValid(ChatLayoutFuncContext)
   const handleCompleteConversation = async () => {
     if (!context.conversationId) {
       toast.error('Không có id của cuộc trò chuyện')
@@ -22,6 +24,7 @@ export default function useCompleteConversationId() {
       return
     }
     toast.success('Hoàn thành cuộc trò chuyện')
+    contextLayout.handleOpenScreenChat()
     context.handleChoose(null)
   }
   return { handleCompleteConversation, loading }
