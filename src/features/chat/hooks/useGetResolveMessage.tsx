@@ -33,6 +33,7 @@ export default function useGetResolveMessage(staffId: string | null) {
     }
     fetchResolveMessage()
   }, [staffId, context?.providerName])
+  console.log(context?.providerName)
 
   //set up signalr
   useEffect(() => {
@@ -49,7 +50,13 @@ export default function useGetResolveMessage(staffId: string | null) {
         console.log('connected')
         newConnection.on('SidebarUpdated', (data: ResolveMessageType[]) => {
           console.log(data)
-          setResolveMessageTab(data)
+          if (data.length === 0) {
+            setResolveMessageTab([])
+            return
+          }
+          if (data[0].providerName === context?.providerName) {
+            setResolveMessageTab(data)
+          }
         })
       })
         .catch(err => console.log('Signalr connected fail', err))

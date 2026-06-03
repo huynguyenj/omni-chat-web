@@ -9,11 +9,13 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useNavigate } from 'react-router'
 import { PRIVATE_PATH } from '@/router/path'
 import { IoChatbubblesOutline } from 'react-icons/io5'
+import useGetTotalConversation from '../../hooks/useGetTotalConversation'
 
 export default function ChatNavbar() {
   const [tabChoice, setTabChoice] = useState(messageItem[0].name)
   const [isOpen, setIsOpen] = useState(false)
   const context = useContext(SelectionMessageContext)
+  const { totalConversation } = useGetTotalConversation()
   const navigate = useNavigate()
   useEffect(() => {
     context?.handleChooseProviderName(tabChoice)
@@ -24,13 +26,19 @@ export default function ChatNavbar() {
   const handleOpen = () => {
     setIsOpen((prev) => !prev)
   }
+  const getTotalConversation = (providerName: string) => {
+    return totalConversation?.filter((c) => c.providerName === providerName)[0].total
+  }
   return (
     <div className="flex justify-between items-center h-15 gap-5 py-2 px-5 border-b border-gray-200 w-full">
       <div className='flex gap-2'>
         {messageItem.map((item) => (
-          <div key={item.name} className={`flex items-center gap-2 ${tabChoice === item.name ? 'bg-secondary text-white' : 'bg-white text-black'} px-3 py-2 rounded-[10px] cursor-pointer`} onClick={() => handleChoose(item.name)}>
+          <div key={item.name} className={`relative flex items-center gap-2 ${tabChoice === item.name ? 'bg-secondary text-white' : 'bg-white text-black'} px-3 py-2 rounded-[10px] cursor-pointer ml-2`} onClick={() => handleChoose(item.name)}>
             <item.icon className="text-[1.25rem]"/>
             <p className="font-bold">{item.name}</p>
+            <div className='absolute -top-1 -right-2 bg-red-500 w-5 aspect-square text-[12px] flex items-center justify-center rounded-full text-white font-bold'>
+              {getTotalConversation(item.name)}
+            </div>
           </div>
         ))}
       </div>

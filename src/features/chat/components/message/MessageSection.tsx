@@ -239,7 +239,7 @@ export default function MessageSection() {
             </AnimatePresence>
           </>
           :
-          <div className='w-full flex flex-col items-center justify-center'>
+          <div className={`w-full xl:flex flex-col items-center justify-center hidden`}>
             <img src={Logo} alt="Logo" className='w-40 h-40'/>
             <p className='text-m-body-desktop font-medium text-gray-600'>Chào mừng đến với Omni chat!</p>
             <p className='text-sm-body-desktop text-gray-500 w-[30%] text-center'>Chọn tin nhắn để phản hồi nhu cầu và mong muốn của khách hàng về sản phẩm</p>
