@@ -5,10 +5,9 @@ import CreateOrderSection from '../order/CreateOrderSection'
 import OrderHistorySection from '../order/OrderHistorySection'
 import ProductStorageSection from '../product/ProductStorageSection'
 import type { Recommendation } from '../../types/system-recommendation-type'
-import AutoCreateOrderButton from '../order/AutoCreateOrderButton'
 
 
-export default function SystemRecommendation({ recommends, message }: { recommends: Recommendation[] | [], message: string }) {
+export default function SystemRecommendation({ recommends }: { recommends: Recommendation[] | [], message: string }) {
   const button = (recommend: Recommendation) => {
     // if (recommend.recommendType === 'SearchCustomerInfo')
     //   return <CustomerProfileButton customerData={recommend.data} />
@@ -19,8 +18,8 @@ export default function SystemRecommendation({ recommends, message }: { recommen
     if (recommend.recommendType === 'SearchProduct')
       return <ProductStorageSection/>
 
-    if (recommend.recommendType === 'AutoCreateOrder')
-      return <AutoCreateOrderButton message={message}/>
+    // if (recommend.recommendType === 'AutoCreateOrder')
+    //   return <AutoCreateOrderButton message={message}/>
     if (recommend.recommendType === 'CreateOrder')
       return <CreateOrderSection/>
   }
