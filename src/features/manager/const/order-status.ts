@@ -99,7 +99,6 @@ export const MANAGER_ORDER_STATUS_FILTER_VALUES: ManagerOrderStatusFilter[] = [
   'PendingReturn',
   'Returned',
   'Completed',
-  'ReturnedDefective',
   'ReturnRejected',
   'RefundRejected',
   'RefundApproved',
