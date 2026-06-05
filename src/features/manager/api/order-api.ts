@@ -1,4 +1,4 @@
-import { apiPublic } from '@/config/axios'
+import { apiPrivate, apiPublic } from '@/config/axios'
 import type { ApiResponseStructure } from '@/types/api-response'
 import type { ManagerOrderDetail, ManagerOrderListQuery, ManagerOrderListResponse } from '../types/order-type'
 
@@ -77,7 +77,7 @@ export const ManagerOrderApi = {
 
   /** PATCH /api/v1/orders/{id}/cancel — hủy đơn (delivery pending), hoàn kho */
   cancelOrder: async (id: string): Promise<string> => {
-    const body = (await apiPublic.patch(resolveOrderActionEndpoint(id, 'cancel'))) as unknown as ApiResponseStructure<unknown>
+    const body = (await apiPrivate.patch(resolveOrderActionEndpoint(id, 'cancel'))) as unknown as ApiResponseStructure<unknown>
     if (body.is_success === false) {
       throw new Error(body.message || 'Không thể hủy đơn hàng.')
     }
