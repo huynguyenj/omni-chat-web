@@ -368,7 +368,7 @@ function ChangeTaskClaimDetailModal({
   onClose: () => void
   onReassignSuccess: () => Promise<void>
 }) {
-  const managerId = useAuthStore((s) => s.staffId ?? s.accountId)
+  const managerId = useAuthStore((s) => s.staffId)
   const [staffPickerOpen, setStaffPickerOpen] = useState(false)
   const [pickedStaff, setPickedStaff] = useState<StaffDetailType | null>(null)
   const [approving, setApproving] = useState(false)
