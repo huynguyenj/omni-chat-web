@@ -9,7 +9,7 @@ import z from 'zod'
 const updateProductSchema = z.object({
   name: z.string().min(1, { error: 'Tên không được để trống' }),
   description: z.string().optional(),
-  price: z.number({ error: 'Giá không được để trống' }).refine((val) => !isNaN(val), { error: 'Giá không được để trống' }).min(1, { error: 'Giá không được để trống' })
+  price: z.number({ error: 'Giá không được để trống' }).refine((val) => !isNaN(val), { error: 'Giá không được để trống' }).min(1, { error: 'Giá không được âm hoặc bằng 0' })
 })
 
 const updateProductImageSchema = z.object({

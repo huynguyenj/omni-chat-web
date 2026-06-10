@@ -17,9 +17,9 @@ export const createProductSchema = z.object({
 
   brandId: z.string({ error: 'Hãng sữa không được để trống' }),
 
-  price: z.number({ error: 'Giá không được để trống' }),
+  price: z.number({ error: 'Giá không được để trống' }).min(1, { error: 'Giá không được âm hoặc bằng 0' }),
 
-  lifeSpan: z.number({ error: 'Hạn sử dụng không được để trống' }),
+  lifeSpan: z.number({ error: 'Hạn sử dụng không được để trống' }).min(1, { error: 'Hạn sử dụng không được bằng 0 hoặc âm' }),
 
   image: z
     .any()
