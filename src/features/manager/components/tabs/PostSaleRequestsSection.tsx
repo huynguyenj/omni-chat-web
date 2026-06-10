@@ -119,7 +119,7 @@ export default function PostSaleRequestsSection({
   const [totalPages, setTotalPages] = useState(1)
   const [statusFilter, setStatusFilter] = useState<PostSaleFilterStatus>('all')
   const [processingAction, setProcessingAction] = useState<{ id: string; type: 'approve' | 'reject' } | null>(null)
-
+  // const [searchText, setSearchText] = useState('')
   const fetchList = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -183,12 +183,20 @@ export default function PostSaleRequestsSection({
     }
   }
 
+  // const handleSearch = (text: string) => {
+  //   setSearchText(text)
+  // }
+
+  // const debounce = useDebounce(handleSearch, 300)
   return (
     <Card className="p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h2 className="text-[#003366] text-xl font-semibold">Yêu cầu hoàn tiền</h2>
-          <p className="text-sm text-gray-500 mt-1">Các yêu cầu hoàn tiền từ nhân viên cần xử lý</p>
+          <h2 className="text-[#003366] text-sm-title-desktop font-medium">Yêu cầu hoàn trả</h2>
+          <p className="text-sm text-gray-500 mt-1">Các yêu cầu hoàn trả từ nhân viên cần xử lý</p>
+        </div>
+        <div className='mb-5'>
+          {/* <Input variant='gray' icon={Search} placeholder='Tìm đơn hàng theo mã đơn hàng, tên khách hàng' onChange={(e) => debounce(e.target.value)}/> */}
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           {STATUS_FILTERS.map((option) => {

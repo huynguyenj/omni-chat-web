@@ -25,8 +25,8 @@ export default function BatchItem({
   onSelect,
   setListOrderItems,
   listOrderItems,
-  isNewestBoxChecked = false,
-  indexItem
+  // isNewestBoxChecked = false,
+  // indexItem
 }: BatchItemProps) {
   const [quantity, setQuantity] = useState(listOrderItems.get(batch.id)?.quantity || 1)
   const handleAdd = () => {
@@ -75,11 +75,11 @@ export default function BatchItem({
                   HSD: {formatDate(batch.expiryDate)}
                 </p>
               </div>
-              { isNewestBoxChecked && indexItem === 0 &&
+              {/* { isNewestBoxChecked && indexItem === 0 &&
               <Tag variant='primary' className='py-0.5 px-3 text-[0.85rem]'>
-                Mới nhất
+                Cũ nhất
               </Tag>
-              }
+              } */}
             </div>
 
             <Tag variant='success' className='py-0.5 px-3'>

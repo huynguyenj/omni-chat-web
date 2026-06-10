@@ -24,9 +24,9 @@ export default function ProductBatchAuditTab() {
   }
   const quantityText = (oldValue: number, newValue: number) => {
     const isIncrease = newValue > oldValue
-    return <div className='flex gap-3'>
+    return <div className='flex gap-3 items-center'>
       <p className=''>{oldValue}</p>
-      <MoveRight />
+      <MoveRight className='size-3 xl:size-5'/>
       <p className={`${isIncrease ? 'text-green-accent' : 'text-red-400'} font-medium`}>{newValue}</p>
     </div>
   }
@@ -93,14 +93,16 @@ export default function ProductBatchAuditTab() {
           <>
             { listBatchAudit && listBatchAudit.items.length > 0 ?
               <div className='overflow-x-auto'>
-                <table className='w-full border border-border-primary my-3 table-fixed min-w-120 '>
+                <table className='w-full border border-border-primary my-3 table-fixed min-w-250 '>
                   <thead className='bg-secondary'>
                     <tr className='text-white'>
                       <th className='py-2 text-start px-5 w-1/3'>Id</th>
                       <th className='py-2 text-start px-5 w-1/4'>Nhân viên</th>
                       <th className='py-2 text-start px-5 w-1/4'>Phương thức</th>
                       <th className='py-2 text-start px-5 w-1/2'> Ngày thực hiện</th>
-                      <th className='py-2 text-start px-5 w-1/4'>Số lượng</th>
+                      <th className='py-2 text-start px-5 w-1/3'>Số lượng</th>
+                      <th className='py-2 text-start px-5 w-1/2'>Sản phẩm</th>
+                      <th className='py-2 text-start px-5 w-1/3'>Mã lô</th>
                       <th className='py-2 text-end px-5 w-1/5'>Hành động</th>
                     </tr>
                   </thead>
@@ -121,6 +123,12 @@ export default function ProductBatchAuditTab() {
                         </td>
                         <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
                           <p>{quantityText(audit.oldValue, audit.newValue)}</p>
+                        </td>
+                        <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
+                          <p>{audit.productName}</p>
+                        </td>
+                        <td className='py-2 px-5  border-r border-b-2 border-border-primary'>
+                          <p>{audit.batchCode}</p>
                         </td>
                         <td className='py-2 w-1/5 px-5 border-r border-b-2 border-border-primary'>
                           <Button className='py-2 px-2' onClick={() => handleDetailOpen(audit.id)}>
@@ -181,9 +189,9 @@ export default function ProductBatchAuditTab() {
                     <p className='flex gap-2 items-center font-medium'>Số lượng:
                       <span className='font-medium text-m-body-desktop'>{auditDetail.oldValue}</span>
                       {auditDetail.newValue > auditDetail.oldValue ?
-                        <ArrowUpRight className='text-green-accent size-5'/>
+                        <ArrowUpRight className='text-green-accent size-3 xl:size-5'/>
                         :
-                        <ArrowDownRight className='text-red-500 size-5'/>
+                        <ArrowDownRight className='text-red-500 size-3 xl:size-5'/>
                       }
                       <span className={`${auditDetail.newValue > auditDetail.oldValue ? 'text-green-accent' : 'text-red-500'} font-bold text-m-body-desktop`}>{auditDetail.newValue}</span>
                       <span className='text-soft-gray'>({formatDate(auditDetail.createDate)} - {formatTime(auditDetail.createDate)})</span>
