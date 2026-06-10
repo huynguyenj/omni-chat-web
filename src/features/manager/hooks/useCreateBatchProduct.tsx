@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 const batchSchema = z.object({
   manuFactureDate: z.date(),
-  quantity: z.number()
+  quantity: z.number({ error: 'Số lượng không được để trống' })
 })
 
 type BatchItemType = z.infer<typeof batchSchema>

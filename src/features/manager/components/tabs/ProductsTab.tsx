@@ -381,8 +381,8 @@ export default function ProductsTab() {
             />
             { errors.volumeMl?.message && <p className='text-sm-body-desktop text-red-400 mb-3 font-medium'>{errors.volumeMl.message}</p> }
             <div className='flex items-center gap-2'>
-              <Input type='number' {...registerProduct('lifeSpan', { valueAsNumber: true })} variant='gray' placeholder='14' label='Hạn sử dụng' error={errors.lifeSpan?.message}/>
-              <Input {...registerProduct('price', { valueAsNumber: true })} type='number' variant='gray' label='Giá' placeholder='100000' error={errors.price?.message}/>
+              <Input type='number' {...registerProduct('lifeSpan', { valueAsNumber: true })} variant='gray' placeholder='14' label='Hạn sử dụng' error={errors.lifeSpan?.message} min={1}/>
+              <Input {...registerProduct('price', { valueAsNumber: true })} type='number' variant='gray' label='Giá' placeholder='100000' error={errors.price?.message} min={1}/>
             </div>
             <hr className='border-2 border-border-primary my-5'/>
             <Input {...registerProduct('description')} variant='gray' placeholder='Mô tả sản phẩm' label='Mô tả sản phẩm'/>
@@ -454,7 +454,7 @@ export default function ProductsTab() {
               <div className='flex flex-col gap-3 my-5'>
                 <Input {...registerProductInfoUpdate('name')} variant='gray' label='Tên sản phẩm' error={errorUpdate.name?.message}/>
                 <Input {...registerProductInfoUpdate('description')} variant='gray' label='Mô tả sản phẩm' placeholder='Mô tả sản phẩm'/>
-                <Input min={0} type='number' {...registerProductInfoUpdate('price', { valueAsNumber: true })} variant='gray' label='Giá sản phẩm' error={errorUpdate.price?.message}/>
+                <Input min={1} type='number' {...registerProductInfoUpdate('price', { valueAsNumber: true })} variant='gray' label='Giá sản phẩm' error={errorUpdate.price?.message}/>
               </div>
               <div className='flex gap-2 items-center my-3 w-full justify-center'>
                 { loading ?

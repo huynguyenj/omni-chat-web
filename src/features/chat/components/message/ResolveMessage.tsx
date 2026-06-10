@@ -7,6 +7,7 @@ import AwaitedChatSkeleton from '@/components/ui/skeleton/AwaitedChatSkeleton'
 import useContextValid from '@/hooks/useContextValid'
 import ChatLayoutFuncContext from '../../context/ChatLayoutFuncProvider'
 import type { ResolveMessageType } from '../../types/message-type'
+import { ScrollArea } from '@/components/ui/scrollbar/ScrollArea'
 
 export default function ResolveMessage() {
   const context = useContext(SelectionMessageContext)
@@ -37,7 +38,7 @@ export default function ResolveMessage() {
       { loading ?
         <AwaitedChatSkeleton count={1}/>
         :
-        <>
+        <ScrollArea className='h-115'>
           {resolveMessageTab ?
             resolveMessageTab.map((data) => (
               <div key={data.conversationId} className={`${context?.conversationId === data.conversationId && 'border-l-6 border-secondary bg-[#ebf3fb]'} hover:bg-[#F9FAFB] cursor-pointer`} onClick={() => handleChooseConversation(data)}>
@@ -54,8 +55,7 @@ export default function ResolveMessage() {
             :
             <p className='text-sm-body-desktop'>Chưa có tin nhắn cần được xử lí</p>
           }
-
-        </>
+        </ScrollArea>
       }
     </div>
   )

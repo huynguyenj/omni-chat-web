@@ -217,7 +217,7 @@ export default function ProductBatchList({ productId }: { productId: string }) {
         <PopupBasic title='Tạo lô sản phẩm mới' onClose={() => setIsOpenCreateBatch(false)}>
           <div className='flex items-center gap-3 my-3'>
             <Input {...register('manuFactureDate', { valueAsDate: true })} variant='gray' label='Ngày sản xuất' type='date'/>
-            <Input {...register('quantity', { valueAsNumber: true })} variant='gray' label='Số lượng sản phẩm' type='number'/>
+            <Input {...register('quantity', { valueAsNumber: true })} variant='gray' label='Số lượng sản phẩm' type='number' min={1}/>
           </div>
           <Button variant='outline' onClick={handleSubmit(handleAddBatch)} className='w-full my-2'>
             <PlusIcon/>

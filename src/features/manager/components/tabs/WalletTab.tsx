@@ -166,7 +166,8 @@ function WalletTopUpModal({
             </label>
             <input
               id="wallet-topup-amount"
-              type="text"
+              type="number"
+              min={1000}
               inputMode="numeric"
               value={amountInput}
               onChange={e => onAmountChange(e.target.value)}
