@@ -76,6 +76,6 @@ export default function useGetListTasks({ currentPage }: { currentPage: number }
       setListTasks(data)
     }
     fetchTasks()
-  }, [filters, staffId])
+  }, [filters, staffId, currentPage])
   return { handleFilterByDate, handleFilterByType, loading, setFilter, listTasks }
 }

@@ -10,7 +10,7 @@ const keywordSchema = z.object({
   weight: z.number( { error: 'Độ ưu tiên không được để trống' })
     .refine((val) => !isNaN(val), {
       error: 'Độ ưu tiên không được để trống'
-    }),
+    }).min(0.1, { error: 'Độ ưu tiên phải lớn hơn 0' }),
   keywordText: z.string().min(1, { error: 'Hãy điền từ keyword' })
 })
 
