@@ -102,5 +102,11 @@ export const router = createBrowserRouter([
     lazy: {
       Component: async () => (await import('@/pages/global/PaymentPage')).default
     }
+  },
+  {
+    path: PUBLIC_PATH.PAYCHECK_CUSTOMER,
+    lazy: {
+      Component: async () => (await import('@/pages/global/PaycheckPage')).default
+    }
   }
 ])

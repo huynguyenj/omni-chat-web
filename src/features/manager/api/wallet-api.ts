@@ -31,7 +31,7 @@ export const ManagerWalletApi = {
     const {
       customerName,
       pageNumber = 1,
-      pageSize = 20
+      pageSize = 5
     } = query
 
     const endpoint = resolveCustomerProfilePagingEndpoint()

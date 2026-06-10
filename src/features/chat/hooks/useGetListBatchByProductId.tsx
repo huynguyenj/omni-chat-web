@@ -6,7 +6,7 @@ import type { BatchType } from '../types/batch-type'
 export default function useGetListBatchByProductId({ productId }: { productId?: string }) {
   const { execute, loading } = useApiCall<PaginationStructure<BatchType>>()
   const [listBatch, setListBatch] = useState<PaginationStructure<BatchType>>()
-  const [newFilter, setNewFilter] = useState(false)
+  const [newFilter, setNewFilter] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   useEffect(() => {
     if (!productId) return

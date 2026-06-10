@@ -9,6 +9,7 @@ import {
   MapPin,
   Package,
   Phone,
+  Search,
   User,
   Users,
   X
@@ -22,6 +23,10 @@ import { getOrderStatusPill, MANAGER_ORDER_STATUS_FILTERS } from '../../const/or
 import PostSaleRequestsSection from './PostSaleRequestsSection'
 import type { ManagerOrderItem, ManagerOrderLineItem, ManagerOrderStatus, ManagerOrderStatusFilter } from '../../types/order-type'
 import { OrderCardSkeleton } from '@/components/ui/skeleton/OrderCardSkeleton'
+import { formatMoney } from '@/utils/format'
+import { formatDate } from '@/utils/date-resolver'
+import Input from '@/components/ui/input/Input'
+import useDebounce from '@/hooks/useDebounce'
 
 function readStr(obj: Record<string, unknown>, keys: string[]): string | undefined {
   for (const k of keys) {
@@ -81,17 +86,6 @@ function getLineItems(order: ManagerOrderItem): ManagerOrderLineItem[] {
       lineTotal: order.totalAmount
     }
   ]
-}
-
-function formatMoney(n: number) {
-  return `${n.toLocaleString('vi-VN')}đ`
-}
-
-function formatDateShort(iso: string) {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString('vi-VN')
 }
 
 type OrderDetailPostSaleContext = {
@@ -194,7 +188,7 @@ function OrderDetailModalBody({
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-600 mb-1">Ngày đặt</p>
-            <p className="text-base font-semibold text-[#003366]">{formatDateShort(order.orderDate)}</p>
+            <p className="text-base font-semibold text-[#003366]">{formatDate(order.orderDate)}</p>
           </div>
         </div>
 
@@ -335,7 +329,7 @@ function OrderCard({
           <div className="flex flex-col gap-1.5 text-xs text-gray-500">
             <span className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 shrink-0" />
-              {formatDateShort(order.orderDate)}
+              {formatDate(order.orderDate)}
             </span>
             {order.customerPhone && (
               <span className="flex items-center gap-1.5">
@@ -376,6 +370,7 @@ export default function OrdersTab() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailPostSaleContext, setDetailPostSaleContext] = useState<OrderDetailPostSaleContext | null>(null)
   const [postSaleListRefreshKey, setPostSaleListRefreshKey] = useState(0)
+  const [searchText, setSearchText] = useState('')
   const pageSize = 6
 
   const openOrderDetailById = async (orderId: string, psr?: OrderDetailPostSaleContext | null) => {
@@ -418,7 +413,8 @@ export default function OrdersTab() {
         pageSize,
         orderStatuses: selectedStatus === 'all'
           ? undefined
-          : [selectedStatus]
+          : [selectedStatus],
+        search: searchText
       })
       const items = response?.data?.items ?? []
       const pages = response?.data?.meta?.total_pages ?? 1
@@ -430,26 +426,28 @@ export default function OrdersTab() {
     } finally {
       setIsLoading(false)
     }
-  }, [page, pageSize, selectedStatus])
+  }, [page, pageSize, selectedStatus, searchText])
 
   useEffect(() => {
     void fetchOrders()
   }, [fetchOrders])
 
+  const handleSearch = (text: string) => {
+    setSearchText(text)
+  }
+
+  const debounce = useDebounce(handleSearch, 300)
   return (
     <div className="space-y-4">
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-[#003366] text-sm-title-desktop font-semibold">Đơn hàng giao</h2>
-            <p className="text-sm-body-desktop text-soft-gray mt-1">
-              Danh sách đơn hàng có trạng thái {
-                MANAGER_ORDER_STATUS_FILTERS.find((s) => s.value === selectedStatus)?.label ?? selectedStatus
-              }
-            </p>
           </div>
         </div>
-
+        <div className='mb-5'>
+          <Input variant='gray' icon={Search} placeholder='Tìm đơn hàng theo mã đơn hàng, tên khách hàng' onChange={(e) => debounce(e.target.value)}/>
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           {MANAGER_ORDER_STATUS_FILTERS.map((status) => {
             const active = selectedStatus === status.value

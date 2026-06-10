@@ -13,8 +13,9 @@ import PaginationBar from '@/components/ui/pagination/PaginationBar'
 import { ManagerWalletApi } from '../../api/wallet-api'
 import type { ManagerCustomerWalletItem, ManagerWalletInfo, ManagerWalletTransaction } from '../../types/wallet-type'
 import { CustomerWalletSkeleton } from '@/components/ui/skeleton/CustomerWalletSkeleton'
+import { formatMoney } from '@/utils/format'
+import { formatDate } from '@/utils/date-resolver'
 
-const WALLET_PAGE_SIZE = 6
 
 function normalizeTransaction(raw: unknown): ManagerWalletTransaction {
   const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
@@ -50,34 +51,34 @@ function normalizeWalletInfo(raw: unknown): ManagerWalletInfo {
   }
 }
 
-function normalizeCustomerWallet(raw: unknown): ManagerCustomerWalletItem {
-  const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-  const walletRaw =
-    item.getWalletResponse ??
-    item.get_wallet_response ??
-    item.walletResponse ??
-    item.wallet ??
-    item.customerWallet ??
-    item.customer_wallet
+// function normalizeCustomerWallet(raw: unknown): ManagerCustomerWalletItem {
+//   const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+//   const walletRaw =
+//     item.getWalletResponse ??
+//     item.get_wallet_response ??
+//     item.walletResponse ??
+//     item.wallet ??
+//     item.customerWallet ??
+//     item.customer_wallet
 
-  return {
-    id: String(item.id ?? ''),
-    customerName: String(item.customerName ?? 'Khách hàng'),
-    email: item.email == null ? null : String(item.email),
-    phoneNumber: item.phoneNumber == null ? null : String(item.phoneNumber),
-    avatarUrl: item.avatarUrl == null ? null : String(item.avatarUrl),
-    zaloSenderId: item.zaloSenderId == null ? null : String(item.zaloSenderId),
-    facebookSenderId: item.facebookSenderId == null ? null : String(item.facebookSenderId),
-    instagramSenderId: item.instagramSenderId == null ? null : String(item.instagramSenderId),
-    currentProviderName: item.currentProviderName == null ? null : String(item.currentProviderName),
-    totalOrder: pickNum(item.totalOrder, item.total_order, item.orderCount),
-    customerDate: String(item.customerDate ?? item.customer_date ?? ''),
-    totalPayment: pickNum(item.totalPayment, item.total_payment, item.paymentTotal),
-    getWalletResponse: normalizeWalletInfo(
-      walletRaw && typeof walletRaw === 'object' ? walletRaw : {}
-    )
-  }
-}
+//   return {
+//     id: String(item.id ?? ''),
+//     customerName: String(item.customerName ?? 'Khách hàng'),
+//     email: item.email == null ? null : String(item.email),
+//     phoneNumber: item.phoneNumber == null ? null : String(item.phoneNumber),
+//     avatarUrl: item.avatarUrl == null ? null : String(item.avatarUrl),
+//     zaloSenderId: item.zaloSenderId == null ? null : String(item.zaloSenderId),
+//     facebookSenderId: item.facebookSenderId == null ? null : String(item.facebookSenderId),
+//     instagramSenderId: item.instagramSenderId == null ? null : String(item.instagramSenderId),
+//     currentProviderName: item.currentProviderName == null ? null : String(item.currentProviderName),
+//     totalOrder: pickNum(item.totalOrder, item.total_order, item.orderCount),
+//     customerDate: String(item.customerDate ?? item.customer_date ?? ''),
+//     totalPayment: pickNum(item.totalPayment, item.total_payment, item.paymentTotal),
+//     getWalletResponse: normalizeWalletInfo(
+//       walletRaw && typeof walletRaw === 'object' ? walletRaw : {}
+//     )
+//   }
+// }
 
 /** Tổng hợp KPI: ví tiền (amount), tổng nợ (totalDebt). */
 function summarizeWalletKpis(customers: ManagerCustomerWalletItem[]) {
@@ -92,16 +93,6 @@ function summarizeWalletKpis(customers: ManagerCustomerWalletItem[]) {
   )
 }
 
-function formatDateTime(iso: string) {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleString('vi-VN')
-}
-
-function formatMoney(amount: number) {
-  return `${amount.toLocaleString('vi-VN')}đ`
-}
 
 function parseMoneyInput(raw: string): number {
   const digits = raw.replace(/[^\d]/g, '')
@@ -260,7 +251,7 @@ function WalletTransactionModal({
                       <p className="font-medium text-[#003366]">{transactionTypeLabel(tx.transactionType)}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-gray-500">
                         <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                        {formatDateTime(tx.createDate)}
+                        {formatDate(tx.createDate)}
                       </p>
                       <p className="mt-1 font-semibold text-[#16a34a]">{formatMoney(tx.amount)}</p>
                     </div>
@@ -285,6 +276,7 @@ function customerInitial(name: string) {
 
 export default function WalletTab() {
   const [walletPage, setWalletPage] = useState(1)
+  const [walletTotalPage, setWalletTotalPage] = useState(1)
   const [walletLoading, setWalletLoading] = useState(false)
   const [walletError, setWalletError] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
@@ -326,38 +318,29 @@ export default function WalletTab() {
     setWalletLoading(true)
     setWalletError(null)
     try {
-      const merged: ManagerCustomerWalletItem[] = []
-      let pageNumber = 1
-      let totalPages = 1
+      let pageNumber = walletPage
 
-      while (pageNumber <= totalPages) {
-        const response = await ManagerWalletApi.getCustomerWalletPaging({
-          pageNumber,
-          pageSize: 100
-        })
-        const body = response
-        if (body.is_success === false || body.data == null) {
-          throw new Error(body.message || 'Không thể tải danh sách ví khách hàng.')
-        }
+      const response = await ManagerWalletApi.getCustomerWalletPaging({
+        pageNumber,
+        pageSize: 5
+      })
+      // const body = response
+      // if (body.is_success === false || body.data == null) {
+      //   throw new Error(body.message || 'Không thể tải danh sách ví khách hàng.')
+      // }
 
-        const items = Array.isArray(body.data.items)
-          ? body.data.items.map((entry) => normalizeCustomerWallet(entry))
-          : []
-        merged.push(...items)
-        totalPages = Math.max(1, Number(body.data.meta?.total_pages ?? 1))
-        pageNumber += 1
-      }
+      setWalletPage(pageNumber)
+      setWalletTotalPage(response.data.meta.total_pages)
+      pageNumber += 1
 
-      const uniqueById = new Map<string, ManagerCustomerWalletItem>()
-      for (const item of merged) uniqueById.set(item.id, item)
-      setAllCustomers([...uniqueById.values()])
+      setAllCustomers(response.data.items)
     } catch {
       setWalletError('Không thể tải danh sách ví khách hàng.')
       setAllCustomers([])
     } finally {
       setWalletLoading(false)
     }
-  }, [])
+  }, [walletPage])
 
   useEffect(() => {
     void loadCustomers()
@@ -417,26 +400,17 @@ export default function WalletTab() {
     })
   }, [allCustomers, searchText])
 
-  const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(filteredCustomers.length / WALLET_PAGE_SIZE)),
-    [filteredCustomers]
-  )
-
   useEffect(() => {
     setWalletPage(1)
   }, [searchText])
 
-  useEffect(() => {
-    if (walletPage > totalPages) setWalletPage(totalPages)
-  }, [walletPage, totalPages])
 
-  const pagedCustomers = useMemo(() => {
-    const start = (walletPage - 1) * WALLET_PAGE_SIZE
-    return filteredCustomers.slice(start, start + WALLET_PAGE_SIZE)
-  }, [filteredCustomers, walletPage])
+  // const pagedCustomers = useMemo(() => {
+  //   const start = (walletPage - 1) * WALLET_PAGE_SIZE
+  //   return filteredCustomers.slice(start, start + WALLET_PAGE_SIZE)
+  // }, [filteredCustomers, walletPage])
 
   const walletKpis = useMemo(() => summarizeWalletKpis(filteredCustomers), [filteredCustomers])
-
   return (
     <div className="space-y-4 rounded-xl bg-[#F8F9FA] p-3 md:p-4">
       <Card className="border border-gray-200/90 bg-white p-6 shadow-sm">
@@ -494,94 +468,96 @@ export default function WalletTab() {
           </Button> */}
         </div>
 
-        {walletLoading && (
+        { walletLoading ? (
           <CustomerWalletSkeleton/>
-        )}
-        <div className="space-y-4">
-          {!walletLoading && pagedCustomers.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-3 py-12 text-center text-sm text-gray-600">
+        ) :
+          <div className="space-y-4">
+            {!walletLoading && allCustomers.length === 0 && (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-3 py-12 text-center text-sm text-gray-600">
               Chưa có dữ liệu ví tiền.
-            </div>
-          )}
-
-          {pagedCustomers.map(customer => (
-            <Card
-              key={customer.id}
-              className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-            >
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:justify-between lg:gap-8">
-                <div className="flex w-full shrink-0 gap-4 lg:w-80">
-                  {customer.avatarUrl ? (
-                    <img
-                      src={customer.avatarUrl}
-                      alt={customer.customerName}
-                      className="h-14 w-14 shrink-0 rounded-full border border-gray-200 object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50 text-base font-bold text-[#3366CC]">
-                      {customerInitial(customer.customerName)}
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1 overflow-hidden">
-                    <p
-                      className="line-clamp-2 text-lg font-bold leading-tight text-[#003366] break-words"
-                      title={customer.customerName}
-                    >
-                      {customer.customerName}
-                    </p>
-                    <p className="mt-1 truncate text-sm text-gray-500" title={customer.email ?? undefined}>
-                      {customer.email || '—'}
-                    </p>
-                    <p className="mt-0.5 truncate text-sm text-gray-500">{customer.phoneNumber || '—'}</p>
-                  </div>
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="rounded-xl border border-gray-100 bg-[#F8F9FA] px-4 py-3">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Hoạt động khác</p>
-                    <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
-                      <div>
-                        <span className="text-gray-500">Tổng đơn: </span>
-                        <span className="font-bold text-[#003366] tabular-nums">
-                          {customer.totalOrder.toLocaleString('vi-VN')}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Tổng thanh toán: </span>
-                        <span className="font-bold tabular-nums text-[#003366]">{formatMoney(customer.totalPayment)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex shrink-0 flex-col justify-center gap-2 border-t border-gray-100 pt-4 lg:w-56 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-                  <Button
-                    type="button"
-                    className="h-11 w-full rounded-xl border border-[#BFD8FF] bg-[#EAF3FF] font-semibold text-[#1E5BB8] hover:bg-[#DCEBFF]"
-                    onClick={() => void openTransactionHistory(customer)}
-                    disabled={historyLoading && historyCustomer?.id === customer.id}
-                  >
-                    Lịch sử giao dịch
-                  </Button>
-                  <Button
-                    type="button"
-                    className="h-11 w-full rounded-xl border border-emerald-200 bg-emerald-50 font-semibold text-emerald-800 hover:bg-emerald-100"
-                    onClick={() => openTopUp(customer)}
-                    disabled={topUpSubmitting && topUpCustomer?.id === customer.id}
-                  >
-                    Nạp tiền
-                  </Button>
-                </div>
               </div>
-            </Card>
-          ))}
-        </div>
+            )}
+
+            {allCustomers.map(customer => (
+              <Card
+                key={customer.id}
+                className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:justify-between lg:gap-8">
+                  <div className="flex w-full shrink-0 gap-4 lg:w-80">
+                    {customer.avatarUrl ? (
+                      <img
+                        src={customer.avatarUrl}
+                        alt={customer.customerName}
+                        className="h-14 w-14 shrink-0 rounded-full border border-gray-200 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50 text-base font-bold text-[#3366CC]">
+                        {customerInitial(customer.customerName)}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <p
+                        className="line-clamp-2 text-lg font-bold leading-tight text-[#003366] break-words"
+                        title={customer.customerName}
+                      >
+                        {customer.customerName}
+                      </p>
+                      <p className="mt-1 truncate text-sm text-gray-500" title={customer.email ?? undefined}>
+                        {customer.email || '—'}
+                      </p>
+                      <p className="mt-0.5 truncate text-sm text-gray-500">{customer.phoneNumber || '—'}</p>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="rounded-xl border border-gray-100 bg-[#F8F9FA] px-4 py-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Hoạt động khác</p>
+                      <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">Tổng đơn: </span>
+                          <span className="font-bold text-[#003366] tabular-nums">
+                            {customer.totalOrder.toLocaleString('vi-VN')}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Tổng thanh toán: </span>
+                          <span className="font-bold tabular-nums text-[#003366]">{formatMoney(customer.totalPayment)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 flex-col justify-center gap-2 border-t border-gray-100 pt-4 lg:w-56 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                    <Button
+                      type="button"
+                      className="h-11 w-full rounded-xl border border-[#BFD8FF] bg-[#EAF3FF] font-semibold text-[#1E5BB8] hover:bg-[#DCEBFF]"
+                      onClick={() => void openTransactionHistory(customer)}
+                      disabled={historyLoading && historyCustomer?.id === customer.id}
+                    >
+                    Lịch sử giao dịch
+                    </Button>
+                    <Button
+                      type="button"
+                      className="h-11 w-full rounded-xl border border-emerald-200 bg-emerald-50 font-semibold text-emerald-800 hover:bg-emerald-100"
+                      onClick={() => openTopUp(customer)}
+                      disabled={topUpSubmitting && topUpCustomer?.id === customer.id}
+                    >
+                    Nạp tiền
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+        }
 
         <div className="mt-8 space-y-4">
-          <p className="text-center text-sm font-medium text-gray-600">
+          {/* <p className="text-center text-sm font-medium text-gray-600">
             Trang {walletPage} / {totalPages}
-          </p>
-          <PaginationBar currentPage={walletPage} setPage={setWalletPage} totalPage={totalPages} />
+          </p> */}
+          <PaginationBar currentPage={walletPage} setPage={setWalletPage} totalPage={walletTotalPage} />
         </div>
       </Card>
 

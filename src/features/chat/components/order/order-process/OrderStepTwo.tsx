@@ -138,8 +138,8 @@ export default function OrderStepTwo({
                         <div className='flex items-center gap-3 my-4 bg-[#F5F7FA] py-3 px-4 rounded-xl'>
                           <Checkbox id='check-batch' onCheckedChange={handleCheckNewestBatch} checked={checked}/>
                           <div>
-                            <label htmlFor="check-batch" className='text-sm-body-desktop font-semibold text-primary'>Tự động chọn lô hàng mới nhất (FIFO)</label>
-                            <p className='text-[0.85rem] text-soft-gray'>Hệ thống sẽ tự động chọn lô có hạn sử dụng xa nhất</p>
+                            <label htmlFor="check-batch" className='text-sm-body-desktop font-semibold text-primary'>Tự động lọc lô hàng cũ nhất (FIFO)</label>
+                            <p className='text-[0.85rem] text-soft-gray'>Hệ thống sẽ tự động chọn lô có hạn sử dụng cũ nhất</p>
                           </div>
                         </div>
                         <p className='text-sm-body-desktop text-primary font-medium'>Chọn lô hàng (có thể chọn nhiều)</p>
