@@ -83,7 +83,7 @@ export default function ProductsTab() {
           </Button>
         </div>
         <div className="mb-4">
-          <Input variant='gray' icon={Search} placeholder='Tìm kiếm theo tên sản phẩm...' onChange={(e) => debounce(e.target.value)}/>
+          <Input variant='gray' icon={Search} placeholder='Tìm kiếm theo tên sản phẩm, mã lô' onChange={(e) => debounce(e.target.value)}/>
         </div>
         { loading ?
           <TableSkeleton numberOfColumn={10}/>

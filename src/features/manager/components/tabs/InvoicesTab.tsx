@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  AlertCircle,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  CheckCircle,
-  Clock,
   Loader2,
   Play,
-  RefreshCcw,
-  Search,
-  TrendingUp
+  Search
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
@@ -55,10 +50,10 @@ function formatMoney(n: number) {
   return `${n.toLocaleString('vi-VN')}đ`
 }
 
-function formatKpiMoney(n: number) {
-  if (n === 0) return '0 VNĐ'
-  return `${Math.round(n / 1000).toLocaleString('vi-VN')}K VNĐ`
-}
+// function formatKpiMoney(n: number) {
+//   if (n === 0) return '0 VNĐ'
+//   return `${Math.round(n / 1000).toLocaleString('vi-VN')}K VNĐ`
+// }
 
 function formatDateShort(iso: string) {
   if (!iso) return '—'
@@ -240,35 +235,35 @@ export default function InvoicesTab() {
     setInvoicePage(1)
   }, [statusFilter, searchText])
 
-  const totalRevenue = useMemo(
-    () => allInvoices.reduce((sum, invoice) => sum + invoice.total, 0),
-    [allInvoices]
-  )
-  const totalPaid = useMemo(() => {
-    return allInvoices.reduce((sum, invoice) => {
-      const status = String(invoice.invoiceStatus).toLowerCase()
-      if (status !== 'completed') return sum
+  // const totalRevenue = useMemo(
+  //   () => allInvoices.reduce((sum, invoice) => sum + invoice.total, 0),
+  //   [allInvoices]
+  // )
+  // const totalPaid = useMemo(() => {
+  //   return allInvoices.reduce((sum, invoice) => {
+  //     const status = String(invoice.invoiceStatus).toLowerCase()
+  //     if (status !== 'completed') return sum
 
-      // Some API responses (especially "all" status) return paidAmount as 0.
-      // Fallback to invoice total so paid KPI remains accurate for completed invoices.
-      const paidAmount = Number(invoice.paidAmount ?? 0)
-      const totalAmount = Number(invoice.total ?? 0)
-      const safePaid = paidAmount > 0 ? paidAmount : totalAmount
-      return sum + safePaid
-    }, 0)
-  }, [allInvoices])
-  const totalPending = useMemo(
-    () => allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'pending').reduce((sum, invoice) => sum + invoice.total, 0),
-    [allInvoices]
-  )
-  const totalOverdue = useMemo(
-    () => allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'pendingrefund').reduce((sum, invoice) => sum + invoice.total, 0),
-    [allInvoices]
-  )
-  const totalRefunded = useMemo(
-    () => allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'refunded').reduce((sum, invoice) => sum + invoice.total, 0),
-    [allInvoices]
-  )
+  //     // Some API responses (especially "all" status) return paidAmount as 0.
+  //     // Fallback to invoice total so paid KPI remains accurate for completed invoices.
+  //     const paidAmount = Number(invoice.paidAmount ?? 0)
+  //     const totalAmount = Number(invoice.total ?? 0)
+  //     const safePaid = paidAmount > 0 ? paidAmount : totalAmount
+  //     return sum + safePaid
+  //   }, 0)
+  // }, [allInvoices])
+  // const totalPending = useMemo(
+  //   () => allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'pending').reduce((sum, invoice) => sum + invoice.total, 0),
+  //   [allInvoices]
+  // )
+  // const totalOverdue = useMemo(
+  //   () => allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'pendingrefund').reduce((sum, invoice) => sum + invoice.total, 0),
+  //   [allInvoices]
+  // )
+  // const totalRefunded = useMemo(
+  //   () => allInvoices.filter((invoice) => String(invoice.invoiceStatus).toLowerCase() === 'refunded').reduce((sum, invoice) => sum + invoice.total, 0),
+  //   [allInvoices]
+  // )
   const visibleInvoices = useMemo(() => {
     const byStatus = statusFilter === 'all'
       ? allInvoices
@@ -345,7 +340,7 @@ export default function InvoicesTab() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6">
+        {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6">
           <Card className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -401,7 +396,7 @@ export default function InvoicesTab() {
               </div>
             </div>
           </Card>
-        </div>
+        </div> */}
 
         <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="relative w-full xl:max-w-2xl">
