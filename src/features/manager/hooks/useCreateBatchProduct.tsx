@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 const batchSchema = z.object({
   manuFactureDate: z.date(),
+  expiryDate: z.date(),
   quantity: z.number({ error: 'Số lượng không được để trống' })
 })
 

@@ -29,8 +29,6 @@ export default function ListTasksSection() {
   }
 
   const debouncedSearch = useDebounce(handleSearch, 500)
-  console.log(currentPage);
-  
   return (
     <div className='w-full flex flex-col gap-5'>
       <Card className='grid grid-cols-1 xl:flex gap-3 rounded-2xl border-2 border-border-primary py-4'>
