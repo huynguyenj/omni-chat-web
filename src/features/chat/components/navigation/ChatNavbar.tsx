@@ -55,7 +55,7 @@ export default function ChatNavbar() {
               className='absolute flex flex-col gap-1 min-w-62.5 w-fit right-0 mt-1 py-2 px-1 rounded-lg shadow-[0px_1px_6px_0px_rgba(0,0,0,0.2)] bg-white z-20'>
               <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start font-normal' onClick={() => navigate(PRIVATE_PATH.TASK)}>
                 <BsListTask className='text-green-accent text-[1.2rem]'/>
-                Xem lịch sử tasks
+                Xem lịch sử nhiệm vụ
               </Button>
               <Button className='flex rounded-sm py-1 bg-white text-black w-full hover:bg-gray-200 justify-start font-normal' onClick={() => navigate(PRIVATE_PATH.CLAIM)}>
                 <CgDanger className='text-[#FB2C36] text-[1.2rem]'/>

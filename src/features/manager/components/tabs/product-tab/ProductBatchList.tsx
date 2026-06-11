@@ -67,6 +67,7 @@ export default function ProductBatchList({ productId }: { productId: string }) {
                     <th className='py-2 text-start px-5 w-1/7'>STT</th>
                     <th className='py-2 text-start px-5 w-1/4'>Code</th>
                     <th className='py-2 text-end px-5 w-1/4'>Số lượng</th>
+                    <th className='py-2 text-start px-5 w-1/3'>Ngày sản xuất</th>
                     <th className='py-2 text-start px-5 w-1/3'>Hạn sử dụng</th>
                     <th className='py-2 text-end px-5 w-1/6'>Hành động</th>
                   </tr>
@@ -84,7 +85,10 @@ export default function ProductBatchList({ productId }: { productId: string }) {
                         <p>{batch.quantity}</p>
                       </td>
                       <td className='py-2 px-5 w-1/4 border-r border-b-2 border-border-primary'>
-                        <p>{formatDate(batch.expiryDate)} - {formatTime(batch.expiryDate)}</p>
+                        <p>{formatDate(batch.manuFactureDate)}</p>
+                      </td>
+                      <td className='py-2 px-5 w-1/4 border-r border-b-2 border-border-primary'>
+                        <p>{formatDate(batch.expiryDate)}</p>
                       </td>
                       <td className='py-2 px-5 border-r border-b-2 border-border-primary'>
                         <div className='flex flex-col xl:flex-row justify-end items-center gap-2 '>
@@ -215,8 +219,11 @@ export default function ProductBatchList({ productId }: { productId: string }) {
       <AnimatePresence>
         { isOpenCreateBatch &&
         <PopupBasic title='Tạo lô sản phẩm mới' onClose={() => setIsOpenCreateBatch(false)}>
-          <div className='flex items-center gap-3 my-3'>
-            <Input {...register('manuFactureDate', { valueAsDate: true })} variant='gray' label='Ngày sản xuất' type='date'/>
+          <div>
+            <div className='flex items-center gap-3 my-3'>
+              <Input {...register('manuFactureDate', { valueAsDate: true })} variant='gray' label='Ngày sản xuất' type='date'/>
+              <Input {...register('expiryDate', { valueAsDate: true })} variant='gray' label='Ngày hết hạn' type='date'/>
+            </div>
             <Input {...register('quantity', { valueAsNumber: true })} variant='gray' label='Số lượng sản phẩm' type='number' min={1}/>
           </div>
           <Button variant='outline' onClick={handleSubmit(handleAddBatch)} className='w-full my-2'>
@@ -232,8 +239,9 @@ export default function ProductBatchList({ productId }: { productId: string }) {
                     <div className='flex items-center gap-3'>
                       <div className='flex items-center justify-center text-white bg-secondary w-8 aspect-square rounded-full'>{i+1}</div>
                       <div>
-                        <p className='text-primary font-medium'>Lô #{i+1}</p>
-                        <p>Ngày sản xuất: {formatDate(batch.manuFactureDate)} - {batch.quantity}sp</p>
+                        <p className='text-primary font-medium'>Lô #{i+1} - {batch.quantity}sp</p>
+                        <p>Ngày sản xuất: {formatDate(batch.manuFactureDate)}</p>
+                        <p>Ngày hết hạn: {formatDate(batch.expiryDate)}</p>
                       </div>
                     </div>
                     <Button className='bg-transparent border-none text-red-400 hover:bg-gray-200' onClick={() => handleDeleteBatch(batch)}>

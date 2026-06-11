@@ -236,6 +236,7 @@ function OrderDetailModalBody({
             {lines.map((line, idx) => (
               <div key={`${line.productName}-${idx}`} className="rounded-xl border border-gray-200 bg-white p-3 flex gap-3">
                 <div className="h-14 w-14 shrink-0 rounded-lg bg-[#EAF3FF] flex items-center justify-center border border-[#BFD8FF]">
+                  
                   <Box className="h-6 w-6 text-[#3366CC]" />
                 </div>
                 <div className="min-w-0 flex-1">
