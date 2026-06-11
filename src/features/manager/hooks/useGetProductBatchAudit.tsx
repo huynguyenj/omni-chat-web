@@ -12,13 +12,14 @@ export default function useGetProductBatchAudit() {
   const [filterAction, setFilterAction] = useState('all')
   const [isDescending, setIsDescending] = useState(true)
   const [refreshKey, setRefreshKey] = useState(1)
-
+  const [search, setSearch] = useState('')
   useEffect(() => {
     const fetchProductBatchAudit = async () => {
       const params = new URLSearchParams()
       params.append('pageNumber', currentPage.toString())
       params.append('pageSize', '5')
       params.append('descending', String(isDescending))
+      params.append('search', search)
       if (sortBy) params.append('sortBy', sortBy)
       if (filterAction && filterAction !== 'all') params.append('action', filterAction)
       const apiUrl = `/batch-audit/get?${params}`
@@ -34,7 +35,7 @@ export default function useGetProductBatchAudit() {
       setBatchAudit(apiData.data)
     }
     fetchProductBatchAudit()
-  }, [currentPage, sortBy, isDescending, refreshKey, filterAction])
+  }, [currentPage, sortBy, isDescending, refreshKey, filterAction, search])
 
   const handleRefresh = () => {
     setCurrentPage(1)
@@ -52,5 +53,5 @@ export default function useGetProductBatchAudit() {
     setCurrentPage(1)
     setFilterAction(value)
   }
-  return { listBatchAudit, loading, currentPage, sortBy, isDescending, filterAction, setCurrentPage, handleRefresh, handleSortBy, handleSortDescending, handleFilterAction }
+  return { listBatchAudit, loading, currentPage, sortBy, isDescending, filterAction, setCurrentPage, handleRefresh, handleSortBy, handleSortDescending, handleFilterAction, search, setSearch }
 }

@@ -13,9 +13,11 @@ import Button from '@/components/ui/button/Button'
 import { AdvSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/AdvSelect'
 import useGetDetailAudit from '../../hooks/useGetDetailAudit'
 import { PRODUCT_PACKAGE_TYPE } from '../../const/product'
+import useDebounce from '@/hooks/useDebounce'
+import Input from '@/components/ui/input/Input'
 
 export default function ProductBatchAuditTab() {
-  const { currentPage, filterAction, isDescending, listBatchAudit, sortBy, loading, setCurrentPage, handleFilterAction, handleSortBy, handleSortDescending } = useGetProductBatchAudit()
+  const { currentPage, filterAction, isDescending, listBatchAudit, sortBy, loading, setCurrentPage, handleFilterAction, handleSortBy, handleSortDescending, setSearch } = useGetProductBatchAudit()
   const { auditDetail, handleGetAuditDetail } = useGetDetailAudit()
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const handleDetailOpen = (auditId: string) => {
@@ -30,6 +32,10 @@ export default function ProductBatchAuditTab() {
       <p className={`${isIncrease ? 'text-green-accent' : 'text-red-400'} font-medium`}>{newValue}</p>
     </div>
   }
+  const handleSearch = (text:string) => {
+    setSearch(text)
+  }
+  const debounce = useDebounce(handleSearch, 400)
   return (
     <div className='space-y-6 text-sm-body-desktop'>
       <Card className='p-6 text-sm-body-desktop'>
@@ -39,7 +45,8 @@ export default function ProductBatchAuditTab() {
             <p className="text-sm-body-desktop text-soft-gray mt-1">Danh sách lịch sử xuất nhập kho từ hệ thống</p>
           </div>
         </div>
-        <div>
+        <div className='mb-4'>
+          <Input variant='gray' onChange={(e) => debounce(e.target.value)} placeholder='Tìm kiếm theo tên sản phẩm, mã lô'/>
         </div>
         <div className='flex justify-between items-center'>
           <div className='flex gap-2 items-center mb-3 w-[40%]'>

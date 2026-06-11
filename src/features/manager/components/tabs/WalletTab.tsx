@@ -1,10 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import {
-  BadgeDollarSign,
   Clock3,
   Search,
-  Wallet,
   X
 } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
@@ -15,6 +13,8 @@ import type { ManagerCustomerWalletItem, ManagerWalletInfo, ManagerWalletTransac
 import { CustomerWalletSkeleton } from '@/components/ui/skeleton/CustomerWalletSkeleton'
 import { formatMoney } from '@/utils/format'
 import { formatDate, formatTime } from '@/utils/date-resolver'
+import Input from '@/components/ui/input/Input'
+import useDebounce from '@/hooks/useDebounce'
 
 
 function normalizeTransaction(raw: unknown): ManagerWalletTransaction {
@@ -81,17 +81,17 @@ function normalizeWalletInfo(raw: unknown): ManagerWalletInfo {
 // }
 
 /** Tổng hợp KPI: ví tiền (amount), tổng nợ (totalDebt). */
-function summarizeWalletKpis(customers: ManagerCustomerWalletItem[]) {
-  return customers.reduce(
-    (acc, customer) => {
-      const w = customer.getWalletResponse
-      acc.totalWallet += w.amount
-      acc.totalDebt += w.totalDebt
-      return acc
-    },
-    { totalWallet: 0, totalDebt: 0 }
-  )
-}
+// function summarizeWalletKpis(customers: ManagerCustomerWalletItem[]) {
+//   return customers.reduce(
+//     (acc, customer) => {
+//       const w = customer.getWalletResponse
+//       acc.totalWallet += w.amount
+//       acc.totalDebt += w.totalDebt
+//       return acc
+//     },
+//     { totalWallet: 0, totalDebt: 0 }
+//   )
+// }
 
 
 function parseMoneyInput(raw: string): number {
@@ -322,7 +322,8 @@ export default function WalletTab() {
 
       const response = await ManagerWalletApi.getCustomerWalletPaging({
         pageNumber,
-        pageSize: 5
+        pageSize: 5,
+        customerName: searchText
       })
       // const body = response
       // if (body.is_success === false || body.data == null) {
@@ -340,7 +341,7 @@ export default function WalletTab() {
     } finally {
       setWalletLoading(false)
     }
-  }, [walletPage])
+  }, [walletPage, searchText])
 
   useEffect(() => {
     void loadCustomers()
@@ -387,22 +388,22 @@ export default function WalletTab() {
     }
   }
 
-  const filteredCustomers = useMemo(() => {
-    const keyword = searchText.trim().toLowerCase()
-    if (!keyword) return allCustomers
-    return allCustomers.filter((customer) => {
-      return (
-        customer.customerName.toLowerCase().includes(keyword) ||
-        customer.id.toLowerCase().includes(keyword) ||
-        String(customer.email ?? '').toLowerCase().includes(keyword) ||
-        String(customer.phoneNumber ?? '').toLowerCase().includes(keyword)
-      )
-    })
-  }, [allCustomers, searchText])
+  // const filteredCustomers = useMemo(() => {
+  //   const keyword = searchText.trim().toLowerCase()
+  //   if (!keyword) return allCustomers
+  //   return allCustomers.filter((customer) => {
+  //     return (
+  //       customer.customerName.toLowerCase().includes(keyword) ||
+  //       customer.id.toLowerCase().includes(keyword) ||
+  //       String(customer.email ?? '').toLowerCase().includes(keyword) ||
+  //       String(customer.phoneNumber ?? '').toLowerCase().includes(keyword)
+  //     )
+  //   })
+  // }, [allCustomers, searchText])
 
-  useEffect(() => {
-    setWalletPage(1)
-  }, [searchText])
+  // useEffect(() => {
+  //   setWalletPage(1)
+  // }, [searchText])
 
 
   // const pagedCustomers = useMemo(() => {
@@ -410,7 +411,11 @@ export default function WalletTab() {
   //   return filteredCustomers.slice(start, start + WALLET_PAGE_SIZE)
   // }, [filteredCustomers, walletPage])
 
-  const walletKpis = useMemo(() => summarizeWalletKpis(filteredCustomers), [filteredCustomers])
+  // const walletKpis = useMemo(() => summarizeWalletKpis(filteredCustomers), [filteredCustomers])
+  const handleSearch = (text: string) => {
+    setSearchText(text)
+  }
+  const debounce = useDebounce(handleSearch, 500)
   return (
     <div className="space-y-4 rounded-xl bg-[#F8F9FA] p-3 md:p-4">
       <Card className="border border-gray-200/90 bg-white p-6 shadow-sm">
@@ -425,7 +430,7 @@ export default function WalletTab() {
           </div>
         )}
 
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-sky-50 p-5">
             <div className="min-w-0">
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-sky-900/70">Ví tiền</p>
@@ -444,15 +449,15 @@ export default function WalletTab() {
               <BadgeDollarSign className="h-7 w-7" aria-hidden />
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
+            <Input
+              variant='gray'
               type="text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => debounce(e.target.value)}
               placeholder="Tìm theo tên, email, hoặc SĐT..."
               className="h-11 w-full rounded-2xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-[#003366] outline-none transition-colors placeholder:text-gray-400 focus:border-[#3366CC] focus:ring-2 focus:ring-[#3366CC]/15"
             />
