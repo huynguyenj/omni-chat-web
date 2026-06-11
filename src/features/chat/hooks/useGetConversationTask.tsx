@@ -39,5 +39,8 @@ export default function useGetConversationTask() {
       return
     }
   }
-  return { loading, conversationTasks, handleUpdateTask }
+  const handleRefresh = () => {
+    setIsRefetch(prevState => !prevState)
+  }
+  return { loading, conversationTasks, handleUpdateTask, handleRefresh }
 }
