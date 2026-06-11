@@ -19,7 +19,7 @@ export const createProductSchema = z.object({
 
   price: z.number({ error: 'Giá không được để trống' }).min(1, { error: 'Giá không được âm hoặc bằng 0' }),
 
-  lifeSpan: z.number({ error: 'Hạn sử dụng không được để trống' }).min(1, { error: 'Hạn sử dụng không được bằng 0 hoặc âm' }),
+  // lifeSpan: z.number({ error: 'Hạn sử dụng không được để trống' }).min(1, { error: 'Hạn sử dụng không được bằng 0 hoặc âm' }),
 
   image: z
     .any()
@@ -58,7 +58,7 @@ export default function useCreateProduct({ onRefresh }: UseCreateProductProps) {
     form.append('Description', formData.description || '')
     form.append('BrandId', formData.brandId)
     form.append('Price', String(formData.price))
-    form.append('LifeSpan', String(formData.lifeSpan))
+    // form.append('LifeSpan', String(formData.lifeSpan))
     form.append('Image', formData.image)
     const res = await execute({
       apiUrl: '/products/create',

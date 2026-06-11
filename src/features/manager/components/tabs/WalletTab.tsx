@@ -14,7 +14,7 @@ import { ManagerWalletApi } from '../../api/wallet-api'
 import type { ManagerCustomerWalletItem, ManagerWalletInfo, ManagerWalletTransaction } from '../../types/wallet-type'
 import { CustomerWalletSkeleton } from '@/components/ui/skeleton/CustomerWalletSkeleton'
 import { formatMoney } from '@/utils/format'
-import { formatDate } from '@/utils/date-resolver'
+import { formatDate, formatTime } from '@/utils/date-resolver'
 
 
 function normalizeTransaction(raw: unknown): ManagerWalletTransaction {
@@ -251,7 +251,7 @@ function WalletTransactionModal({
                       <p className="font-medium text-[#003366]">{transactionTypeLabel(tx.transactionType)}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-gray-500">
                         <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                        {formatDate(tx.createDate)}
+                        {formatDate(tx.createDate)} - {formatTime(tx.createDate)}
                       </p>
                       <p className="mt-1 font-semibold text-[#16a34a]">{formatMoney(tx.amount)}</p>
                     </div>
