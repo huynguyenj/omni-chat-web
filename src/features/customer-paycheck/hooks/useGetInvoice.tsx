@@ -15,5 +15,5 @@ export default function useGetInvoice() {
     }
     toast.success('Hãy vào mail để kiểm tra')
   }
-  return{ handleGetPayInvoice, loading }
+  return { handleGetPayInvoice, loading }
 }

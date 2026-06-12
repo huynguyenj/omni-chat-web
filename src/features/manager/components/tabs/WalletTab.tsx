@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import {
   Clock3,
-  Search,
-  X
+  Eye,
+  Search
 } from 'lucide-react'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
@@ -15,6 +15,11 @@ import { formatMoney } from '@/utils/format'
 import { formatDate, formatTime } from '@/utils/date-resolver'
 import Input from '@/components/ui/input/Input'
 import useDebounce from '@/hooks/useDebounce'
+import type { PaycheckTransactionSummary } from '@/features/customer-paycheck/types/pay-check'
+import useGetInvoiceById from '@/features/customer-paycheck/hooks/useGetInvoiceById'
+import PopupBasic from '@/components/ui/popup/PopupBasic'
+import Tag from '@/components/ui/tag/Tag'
+import { payCheckStatus } from '@/features/customer-paycheck/const/status'
 
 
 function normalizeTransaction(raw: unknown): ManagerWalletTransaction {
@@ -196,75 +201,203 @@ function WalletTransactionModal({
 }: {
   open: boolean
   customer: ManagerCustomerWalletItem | null
-  wallet: ManagerWalletInfo | null
+  wallet: PaycheckTransactionSummary | null
   loading: boolean
   error: string | null
   onClose: () => void
 }) {
+  const { handleGetPayInvoiceId, invoice } = useGetInvoiceById()
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false)
   if (!open || !customer) return null
-  const txs = wallet?.transactions ?? []
-
+  const txs = wallet?.customerTransactions ?? []
+  const handleOpenPayInvoice = (invoiceId: string) => {
+    setIsInvoiceOpen(prevState => !prevState)
+    handleGetPayInvoiceId(invoiceId)
+  }
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-      onMouseDown={onClose}
-      role="presentation"
+    <PopupBasic
+      onClose={onClose}
+      title=''
     >
-      <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-lg"
-        onMouseDown={e => e.stopPropagation()}
-      >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-gray-100 bg-white px-5 py-4">
-          <h3 className="pr-2 text-lg font-semibold text-[#003366]">Lịch sử giao dịch — {customer.customerName}</h3>
-          <Button type="button" variant="outline" size="sm" className="h-9 w-9 shrink-0 p-0" onClick={onClose} aria-label="Đóng">
+
+      <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-white px-5 py-4">
+        <h3 className="pr-2 text-lg font-semibold text-[#003366]">Lịch sử giao dịch — {customer.customerName}</h3>
+        {/* <Button type="button" variant="outline" size="sm" className="h-9 w-9 shrink-0 p-0" onClick={onClose} aria-label="Đóng">
             <X className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="p-5">
-          {error && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+          </Button> */}
+      </div>
+      <div className="p-5">
+        {error && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
-          {loading ? (
-            <p className="text-sm text-gray-500">Đang tải lịch sử giao dịch...</p>
-          ) : wallet ? (
-            <>
-              <div className="mb-4 grid grid-cols-1 gap-2 rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm sm:grid-cols-2">
-                <div>
-                  <p className="text-gray-500">Ví tiền</p>
-                  <p className="font-bold tabular-nums text-[#003366]">{formatMoney(wallet.amount)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Tổng nợ</p>
-                  <p className="font-bold tabular-nums text-[#dc2626]">{formatMoney(wallet.totalDebt)}</p>
-                </div>
+        {loading ? (
+          <p className="text-sm text-gray-500">Đang tải lịch sử giao dịch...</p>
+        ) : wallet ? (
+          <>
+            <div className="mb-4 grid grid-cols-1 gap-2 rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm sm:grid-cols-2">
+              <div>
+                <p className="text-gray-500">Ví tiền</p>
+                <p className="font-bold tabular-nums text-[#003366]">{formatMoney(wallet.amount)}</p>
               </div>
+              <div>
+                <p className="text-gray-500">Tổng nợ</p>
+                <p className="font-bold tabular-nums text-[#dc2626]">{formatMoney(wallet.totalDebt)}</p>
+              </div>
+            </div>
 
-              {txs.length === 0 ? (
-                <p className="text-sm text-gray-500">Chưa có giao dịch.</p>
-              ) : (
-                <div className="space-y-3">
-                  {txs.map(tx => (
-                    <div key={tx.id} className="rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm">
+            {txs.length === 0 ? (
+              <p className="text-sm text-gray-500">Chưa có giao dịch.</p>
+            ) : (
+              <div className="space-y-3">
+                {txs.map(tx => (
+                  <div key={tx.id} className="rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm flex justify-between items-center">
+                    <div>
                       <p className="font-medium text-[#003366]">{transactionTypeLabel(tx.transactionType)}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-gray-500">
                         <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         {formatDate(tx.createDate)} - {formatTime(tx.createDate)}
                       </p>
-                      <p className={`mt-1 font-semibold  ${tx.transactionType === 'Deposit' ? 'text-[#16a34a]' : 'text-red-500'}`}>{tx.transactionType === 'Deposit' ? '+' : '-'} {formatMoney(tx.amount)}</p>
+                      {(() => {
+                        const isDeposit = String(tx.transactionType).trim().toLowerCase() === 'deposit'
+                        return (
+                          <p className={`mt-1 font-semibold  ${isDeposit ? 'text-[#16a34a]' : 'text-red-500'}`}>{isDeposit ? '+' : '-'} {formatMoney(tx.amount)}</p>
+                        )
+                      })()}
                     </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : !error ? (
-            <p className="text-sm text-gray-500">Không có dữ liệu ví.</p>
-          ) : null}
-        </div>
+                    { tx.invoiceId !== null ?
+                      <Button className='bg-white text-primary hover:text-white' onClick={() => handleOpenPayInvoice(tx.invoiceId)}><Eye/></Button>
+                      :
+                      <></>
+                    }
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : !error ? (
+          <p className="text-sm text-gray-500">Không có dữ liệu ví.</p>
+        ) : null}
       </div>
-    </div>
+      { isInvoiceOpen &&
+      <PopupBasic onClose={() => setIsInvoiceOpen(false)} title='Hóa đơn'>
+        <Card className="p-6 text-sm-body-desktop">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-primary">
+            Chi tiết hóa đơn
+            </h2>
+            <p className="text-soft-gray">
+            Mã hóa đơn: {invoice?.id}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold text-primary mb-3">
+              Thông tin khách hàng
+              </h3>
+
+              <div className="space-y-2">
+                <p>
+                  <span className="font-medium">Họ tên:</span>{' '}
+                  {invoice?.customerName}
+                </p>
+
+                <p>
+                  <span className="font-medium">Số điện thoại:</span>{' '}
+                  {invoice?.customerPhoneNumber}
+                </p>
+
+                <p>
+                  <span className="font-medium">Email:</span>{' '}
+                  {invoice?.customerEmail}
+                </p>
+
+                <p>
+                  <span className="font-medium">Địa chỉ:</span>{' '}
+                  {invoice?.customerAddress}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-primary mb-3">
+              Thông tin hóa đơn
+              </h3>
+
+              <div className="space-y-2">
+                <p>
+                  <span className="font-medium">Ngày bắt đầu:</span>{' '}
+                  {invoice?.startedDate ? formatDate(invoice.startedDate) : 'N/A'}
+                </p>
+
+                <p>
+                  <span className="font-medium">Ngày kết thúc:</span>{' '}
+                  {invoice?.endedDate ? formatDate(invoice.endedDate) : 'N/A'}
+                </p>
+
+                <p>
+                  <span className="font-medium">Phương thức:</span>{' '}
+                  {invoice?.invoiceMethod}
+                </p>
+
+                <p>
+                  <span className="font-medium">Trạng thái:</span>{' '}
+                  <Tag
+                    variant={
+                      invoice?.invoiceStatus === 'Completed'
+                        ? 'success'
+                        : invoice?.invoiceStatus === 'Pending'
+                          ? 'warn'
+                          : 'danger'
+                    }
+                  >
+                    {payCheckStatus(invoice?.invoiceStatus)}
+                  </Tag>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <hr className="my-6 border-border-primary" />
+
+          <div>
+            <h3 className="font-semibold text-primary mb-4">
+            Thông tin thanh toán
+            </h3>
+
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span>Tổng tiền hóa đơn</span>
+                <span className="font-medium">
+                  {formatMoney(invoice?.total ?? 0) }
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Đã thanh toán</span>
+                <span className="text-green-600 font-medium">
+                  {formatMoney(invoice?.paidAmount ?? 0) }
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Khấu trừ ví</span>
+                <span className="text-blue-600 font-medium">
+                  {formatMoney(invoice?.deductedAmount ?? 0) }
+
+                </span>
+              </div>
+
+              <hr />
+            </div>
+          </div>
+        </Card>
+      </PopupBasic>
+      }
+    </PopupBasic>
   )
 }
 
@@ -282,7 +415,7 @@ export default function WalletTab() {
   const [searchText, setSearchText] = useState('')
   const [allCustomers, setAllCustomers] = useState<ManagerCustomerWalletItem[]>([])
   const [historyCustomer, setHistoryCustomer] = useState<ManagerCustomerWalletItem | null>(null)
-  const [historyWallet, setHistoryWallet] = useState<ManagerWalletInfo | null>(null)
+  const [historyWallet, setHistoryWallet] = useState<PaycheckTransactionSummary | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [topUpCustomer, setTopUpCustomer] = useState<ManagerCustomerWalletItem | null>(null)
@@ -299,7 +432,7 @@ export default function WalletTab() {
       if (body.is_success === false || body.data == null) {
         throw new Error(body.message || 'Không thể tải lịch sử giao dịch.')
       }
-      setHistoryWallet(normalizeWalletInfo(body.data))
+      setHistoryWallet(body.data)
     } catch {
       setHistoryError('Không thể tải lịch sử giao dịch.')
     } finally {
