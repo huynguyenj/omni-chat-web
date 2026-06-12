@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, Eye, Loader2, XCircle } from 'lucide-react'
+import { CheckCircle2, Eye, Loader2, Search, XCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Card from '@/components/ui/card/Card'
 import Button from '@/components/ui/button/Button'
@@ -9,6 +9,8 @@ import type { PostSaleRequestItem } from '../../types/post-sale-request-type'
 import { PostSaleRequestCardSkeleton } from '@/components/ui/skeleton/PostRequestSkeleton'
 import { formatMoney } from '@/utils/format'
 import { formatDate } from '@/utils/date-resolver'
+import useDebounce from '@/hooks/useDebounce'
+import Input from '@/components/ui/input/Input'
 
 function requestStatusUi(status: string): { label: string; badgeClass: string; borderClass: string } {
   const s = String(status)
@@ -100,14 +102,15 @@ export default function PostSaleRequestsSection({
   const [totalPages, setTotalPages] = useState(1)
   const [statusFilter, setStatusFilter] = useState<PostSaleFilterStatus>('all')
   const [processingAction, setProcessingAction] = useState<{ id: string; type: 'approve' | 'reject' } | null>(null)
-  // const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState('')
   const fetchList = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
       const params: Parameters<typeof PostSaleRequestApi.getPostSaleRequests>[0] = {
         pageNumber: page,
-        pageSize
+        pageSize,
+        search: searchText
       }
       const res = await PostSaleRequestApi.getPostSaleRequests(params)
       if (res.is_success === false || res.data == null) {
@@ -123,7 +126,7 @@ export default function PostSaleRequestsSection({
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize])
+  }, [page, pageSize, searchText])
 
   useEffect(() => {
     void fetchList()
@@ -164,11 +167,11 @@ export default function PostSaleRequestsSection({
     }
   }
 
-  // const handleSearch = (text: string) => {
-  //   setSearchText(text)
-  // }
+  const handleSearch = (text: string) => {
+    setSearchText(text)
+  }
 
-  // const debounce = useDebounce(handleSearch, 300)
+  const debounce = useDebounce(handleSearch, 300)
   return (
     <Card className="p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
@@ -176,9 +179,7 @@ export default function PostSaleRequestsSection({
           <h2 className="text-[#003366] text-sm-title-desktop font-medium">Yêu cầu hoàn trả</h2>
           <p className="text-sm text-gray-500 mt-1">Các yêu cầu hoàn trả từ nhân viên cần xử lý</p>
         </div>
-        <div className='mb-5'>
-          {/* <Input variant='gray' icon={Search} placeholder='Tìm đơn hàng theo mã đơn hàng, tên khách hàng' onChange={(e) => debounce(e.target.value)}/> */}
-        </div>
+
         <div className="flex flex-wrap gap-2 shrink-0">
           {STATUS_FILTERS.map((option) => {
             const active = statusFilter === option.value
@@ -197,7 +198,9 @@ export default function PostSaleRequestsSection({
           })}
         </div>
       </div>
-
+      <div className='mb-5'>
+        <Input variant='gray' icon={Search} placeholder='Tìm đơn hàng theo mã đơn hàng, tên khách hàng' onChange={(e) => debounce(e.target.value)}/>
+      </div>
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
       )}

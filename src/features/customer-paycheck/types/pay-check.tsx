@@ -47,6 +47,8 @@ export interface PaycheckTransaction {
   amount: number;
   createDate: string;
   transactionType: PaycheckTransactionType;
+  paymentStatus: string
+  invoiceId: string
 }
 
 export interface PaycheckTransactionSummary {
@@ -54,5 +56,5 @@ export interface PaycheckTransactionSummary {
   amount: number;
   totalDebt: number;
   netAmount: number;
-  transactions: PaycheckTransaction[];
+  customerTransactions: PaycheckTransaction[];
 }
