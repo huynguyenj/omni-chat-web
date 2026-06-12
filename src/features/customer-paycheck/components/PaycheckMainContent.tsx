@@ -21,6 +21,8 @@ import { FaMoneyBill } from 'react-icons/fa6'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
 import useGetInvoice from '../hooks/useGetInvoice'
 import { MdAttachMoney } from 'react-icons/md'
+import useGetInvoiceById from '../hooks/useGetInvoiceById'
+import Tag from '@/components/ui/tag/Tag'
 
 function transactionTypeLabel(type: string) {
   const key = String(type).trim().toLowerCase()
@@ -37,11 +39,13 @@ export default function PaycheckMainContent() {
   const [isOpen, setIsOpen] = useState(false)
   const [isWalletOpen, setIsWalletOpen] = useState(false)
   const [isAllocateOpen, setIsAllocateOpen] = useState(false)
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false)
   const { loading, paycheckHistory, currentPage, setCurrentPage, handleRefresh } = useGetAllInvoiceHistory({ customerId })
   const { handleGetInvoice, paycheckDetail } = useGetInvoiceDetail()
   const { wallet, loading: walletLoading } = useGetCustomerWallet({ customerId })
   const { handleSubmit, loading: allocateLoading, onSubmit, register, reset, setInvoiceId, errors } = useAllocateWallet({ onRefresh: handleRefresh })
   const { handleGetPayInvoice } = useGetInvoice()
+  const { handleGetPayInvoiceId, invoice } = useGetInvoiceById()
   const handleOpenDetail = (invoiceId: string) => {
     handleGetInvoice(invoiceId)
     setIsOpen(prevState => !prevState)
@@ -53,6 +57,10 @@ export default function PaycheckMainContent() {
     setInvoiceId(invoiceId)
     setIsAllocateOpen(prevState => !prevState)
     reset()
+  }
+  const handleOpenPayInvoice = (invoiceId: string) => {
+    setIsInvoiceOpen(prevState => !prevState)
+    handleGetPayInvoiceId(invoiceId)
   }
   return (
     <div>
@@ -76,7 +84,7 @@ export default function PaycheckMainContent() {
                       <th className='py-2 text-right px-5 w-1/4'>Số tiền khấu trừ</th>
                       <th className='py-2 text-start px-5 w-1/3'>Trạng thái</th>
                       <th className='py-2 text-end px-5 w-1/3'>Phương thức</th>
-                      <th className='py-2 text-end px-5 w-1/3'>Ngày trả</th>
+                      <th className='py-2 text-end px-5 w-1/3'>Ngày hoàn thành</th>
                       <th className='py-2 text-end px-5 w-1/4'>Hành động</th>
                     </tr>
                   </thead>
@@ -232,7 +240,7 @@ export default function PaycheckMainContent() {
                        })()}
                      </div>
                      { tx.invoiceId !== null ?
-                       <Button className='bg-white text-primary hover:text-white'><Eye/></Button>
+                       <Button className='bg-white text-primary hover:text-white' onClick={() => handleOpenPayInvoice(tx.invoiceId)}><Eye/></Button>
                        :
                        <></>
                      }
@@ -269,6 +277,122 @@ export default function PaycheckMainContent() {
           </div>
         </div>
       </PopupBasic>
+      }
+      { isInvoiceOpen &&
+        <PopupBasic onClose={() => setIsInvoiceOpen(false)} title='Hóa đơn'>
+          <Card className="p-6 text-sm-body-desktop">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-primary">
+      Chi tiết hóa đơn
+              </h2>
+              <p className="text-soft-gray">
+      Mã hóa đơn: {invoice?.id}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold text-primary mb-3">
+        Thông tin khách hàng
+                </h3>
+
+                <div className="space-y-2">
+                  <p>
+                    <span className="font-medium">Họ tên:</span>{' '}
+                    {invoice?.customerName}
+                  </p>
+
+                  <p>
+                    <span className="font-medium">Số điện thoại:</span>{' '}
+                    {invoice?.customerPhoneNumber}
+                  </p>
+
+                  <p>
+                    <span className="font-medium">Email:</span>{' '}
+                    {invoice?.customerEmail}
+                  </p>
+
+                  <p>
+                    <span className="font-medium">Địa chỉ:</span>{' '}
+                    {invoice?.customerAddress}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-primary mb-3">
+        Thông tin hóa đơn
+                </h3>
+
+                <div className="space-y-2">
+                  <p>
+                    <span className="font-medium">Ngày bắt đầu:</span>{' '}
+                    {invoice?.startedDate ? formatDate(invoice.startedDate) : 'N/A'}
+                  </p>
+
+                  <p>
+                    <span className="font-medium">Ngày kết thúc:</span>{' '}
+                    {invoice?.endedDate ? formatDate(invoice.endedDate) : 'N/A'}
+                  </p>
+
+                  <p>
+                    <span className="font-medium">Phương thức:</span>{' '}
+                    {invoice?.invoiceMethod}
+                  </p>
+
+                  <p>
+                    <span className="font-medium">Trạng thái:</span>{' '}
+                    <Tag
+                      variant={
+                        invoice?.invoiceStatus === 'Completed'
+                          ? 'success'
+                          : invoice?.invoiceStatus === 'Pending'
+                            ? 'warn'
+                            : 'danger'
+                      }
+                    >
+                      {payCheckStatus(invoice?.invoiceStatus)}
+                    </Tag>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <hr className="my-6 border-border-primary" />
+
+            <div>
+              <h3 className="font-semibold text-primary mb-4">
+      Thông tin thanh toán
+              </h3>
+
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span>Tổng tiền hóa đơn</span>
+                  <span className="font-medium">
+                    {formatMoney(invoice?.total ?? 0) }
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Đã thanh toán</span>
+                  <span className="text-green-600 font-medium">
+                    {formatMoney(invoice?.paidAmount ?? 0) }
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Khấu trừ ví</span>
+                  <span className="text-blue-600 font-medium">
+                    {formatMoney(invoice?.deductedAmount ?? 0) }
+
+                  </span>
+                </div>
+
+                <hr />
+              </div>
+            </div>
+          </Card>
+        </PopupBasic>
       }
     </div>
   )

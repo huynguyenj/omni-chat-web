@@ -1,4 +1,4 @@
-export const payCheckStatus = (status: string) => {
+export const payCheckStatus = (status?: string) => {
   switch (status) {
   case 'Pending': return 'Đang chờ thanh toán'
   case 'Refunded': return 'Hoàn tiền'
