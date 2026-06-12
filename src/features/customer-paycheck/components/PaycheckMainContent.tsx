@@ -19,11 +19,14 @@ import Alert from '@/components/ui/alert/Alert'
 import Input from '@/components/ui/input/Input'
 import { FaMoneyBill } from 'react-icons/fa6'
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner'
+import useGetInvoice from '../hooks/useGetInvoice'
+import { MdAttachMoney } from 'react-icons/md'
 
 function transactionTypeLabel(type: string) {
   const key = String(type).trim().toLowerCase()
-  if (key === 'deposit') return 'Nạp tiền vào ví'
-  if (key === 'credit') return 'Hoàn tiền lại ví'
+  if (key === 'deposit') return 'Tiền vào ví'
+  if (key === 'credit') return 'Tiền sử dụng'
+  if (key === 'allocateforinvoice') return 'Tiền thanh toán'
   if (key === 'debit') return 'Ghi nợ'
   return type || 'Khác'
 }
@@ -38,6 +41,7 @@ export default function PaycheckMainContent() {
   const { handleGetInvoice, paycheckDetail } = useGetInvoiceDetail()
   const { wallet, loading: walletLoading } = useGetCustomerWallet({ customerId })
   const { handleSubmit, loading: allocateLoading, onSubmit, register, reset, setInvoiceId, errors } = useAllocateWallet({ onRefresh: handleRefresh })
+  const { handleGetPayInvoice } = useGetInvoice()
   const handleOpenDetail = (invoiceId: string) => {
     handleGetInvoice(invoiceId)
     setIsOpen(prevState => !prevState)
@@ -113,6 +117,12 @@ export default function PaycheckMainContent() {
                               <FaMoneyBill className='text-secondary size-5'/>
                             </Button>
                             }
+                            {
+                              paycheck.invoiceStatus === 'Pending' &&
+                              <Button className='p-0 bg-transparent hover:bg-transparent hover:opacity-60' onClick={() => handleGetPayInvoice(paycheck.id)}>
+                                <MdAttachMoney className='text-secondary size-5'/>
+                              </Button>
+                            }
                           </div>
                         </td>
                       </tr>
@@ -129,7 +139,6 @@ export default function PaycheckMainContent() {
             :
             <NodataCard content='Không có dữ liệu phiếu thanh toán'/>
           }
-
         </>
       }
       { isOpen &&
@@ -203,18 +212,30 @@ export default function PaycheckMainContent() {
                </div>
              </div>
 
-             {wallet.transactions.length === 0 ? (
+             {wallet.customerTransactions.length === 0 ? (
                <p className="text-sm text-gray-500">Chưa có giao dịch.</p>
              ) : (
                <div className="space-y-3">
-                 {wallet.transactions.map(tx => (
-                   <div key={tx.id} className="rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm">
-                     <p className="font-medium text-[#003366]">{transactionTypeLabel(tx.transactionType)}</p>
-                     <p className="mt-0.5 flex items-center gap-1 text-gray-500">
-                       <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                       {formatDate(tx.createDate)} - {formatTime(tx.createDate)}
-                     </p>
-                     <p className="mt-1 font-semibold text-[#16a34a]">{formatMoney(tx.amount)}</p>
+                 {wallet.customerTransactions.map(tx => (
+                   <div key={tx.id} className="rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm flex justify-between items-center">
+                     <div>
+                       <p className="font-medium text-[#003366]">{transactionTypeLabel(tx.transactionType)}</p>
+                       <p className="mt-0.5 flex items-center gap-1 text-gray-500">
+                         <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                         {formatDate(tx.createDate)} - {formatTime(tx.createDate)}
+                       </p>
+                       {(() => {
+                         const isDeposit = String(tx.transactionType).trim().toLowerCase() === 'deposit'
+                         return (
+                           <p className={`mt-1 font-semibold  ${isDeposit ? 'text-[#16a34a]' : 'text-red-500'}`}>{isDeposit ? '+' : '-'} {formatMoney(tx.amount)}</p>
+                         )
+                       })()}
+                     </div>
+                     { tx.invoiceId !== null ?
+                       <Button className='bg-white text-primary hover:text-white'><Eye/></Button>
+                       :
+                       <></>
+                     }
                    </div>
                  ))}
                </div>
@@ -230,7 +251,7 @@ export default function PaycheckMainContent() {
       { isAllocateOpen &&
       <PopupBasic onClose={() => setIsAllocateOpen(false)} title='Sử dụng ví tiền'>
         <div className='my-2'>
-          <Input {...register('deductedAmount')} variant='gray' min={0} error={errors.deductedAmount?.message} placeholder='10.000'/>
+          <Input {...register('deductedAmount', { valueAsNumber: true })} type={'number'} variant='gray' min={0} error={errors.deductedAmount?.message} placeholder='10.000'/>
           <Alert variant='danger' className='rounded-[10px] my-2'>
             <div className='flex gap-2 items-center'>
               <AlertCircle className='size-4'/>

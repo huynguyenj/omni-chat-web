@@ -106,12 +106,13 @@ export const PostSaleRequestApi = {
   getPostSaleRequests: async (
     query: PostSaleRequestListQuery = {}
   ): Promise<ApiResponseStructure<PostSaleRequestListResponse>> => {
-    const { pageNumber = 1, pageSize = 20, sortBy = 'requestedTime', descending } = query
+    const { pageNumber = 1, pageSize = 20, sortBy = 'requestedTime', descending, search } = query
 
     const params: Record<string, unknown> = {
       pageNumber,
       pageSize,
-      sortBy
+      sortBy,
+      search
     }
     if (typeof descending === 'boolean') {
       params.descending = descending
