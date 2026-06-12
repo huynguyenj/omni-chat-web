@@ -40,6 +40,13 @@ export interface PaycheckDetail {
   orderItems: OrderItems[]
 }
 
+export interface InvoiceType extends Paycheck {
+   customerEmail: string
+   customerName: string
+   customerPhoneNumber: string
+   customerAddress: string
+}
+
 export type PaycheckTransactionType = 'Credit' | 'Debit';
 
 export interface PaycheckTransaction {
