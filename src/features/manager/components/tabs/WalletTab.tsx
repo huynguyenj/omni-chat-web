@@ -103,12 +103,12 @@ function parseMoneyInput(raw: string): number {
 
 function transactionTypeLabel(type: string) {
   const key = String(type).trim().toLowerCase()
-  if (key === 'deposit') return 'Nạp tiền vào ví'
-  if (key === 'credit') return 'Hoàn tiền lại ví'
+  if (key === 'deposit') return 'Tiền vào ví'
+  if (key === 'credit') return 'Tiền sử dụng'
+  if (key === 'allocateforinvoice') return 'Tiền thanh toán'
   if (key === 'debit') return 'Ghi nợ'
   return type || 'Khác'
 }
-
 function WalletTopUpModal({
   customer,
   amountInput,
@@ -253,7 +253,7 @@ function WalletTransactionModal({
                         <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         {formatDate(tx.createDate)} - {formatTime(tx.createDate)}
                       </p>
-                      <p className="mt-1 font-semibold text-[#16a34a]">{formatMoney(tx.amount)}</p>
+                      <p className={`mt-1 font-semibold  ${tx.transactionType === 'Deposit' ? 'text-[#16a34a]' : 'text-red-500'}`}>{tx.transactionType === 'Deposit' ? '+' : '-'} {formatMoney(tx.amount)}</p>
                     </div>
                   ))}
                 </div>

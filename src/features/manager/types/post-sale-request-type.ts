@@ -31,4 +31,5 @@ export interface PostSaleRequestListQuery {
   pageSize?: number
   sortBy?: string
   descending?: boolean
+  search?: string
 }

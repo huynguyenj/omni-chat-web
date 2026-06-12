@@ -9,7 +9,7 @@ export default function useGetCustomerWallet({ customerId }: { customerId?: stri
   useEffect(() => {
     const fetchWallet = async () => {
       const apiData = await execute({
-        apiUrl: `/wallets/${customerId}`,
+        apiUrl: `/wallets/wallet/${customerId}`,
         method: 'get',
         type:'private'
       })
